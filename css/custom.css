@@ -845,20 +845,23 @@ a#site-name:hover:before {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 #nav a.site-page {
   clip-path: none !important;
-  padding: 8px 20px !important;
-  border-radius: 20px !important;
-  background: rgba(255, 255, 255, 0.1) !important;
+  padding: 8px 18px !important;
+  border-radius: 8px !important;
+  background: rgba(255, 255, 255, 0.08) !important;
   color: #fff !important;
   font-size: 14px;
   transition: all 0.25s ease;
 }
 #nav a.site-page:hover {
-  background: rgba(73, 177, 245, 0.8) !important;
-  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+#nav a.site-page:not(.hide-aside) {
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #333 !important;
 }
 
 /* 顶部小横条（触发区） */
@@ -869,7 +872,7 @@ a#site-name:hover:before {
   transform: translateX(-50%);
   width: 120px;
   height: 5px;
-  background: linear-gradient(90deg, transparent, #49b1f5, transparent);
+  background: linear-gradient(90deg, transparent, #ffd700, transparent);
   border-radius: 0 0 8px 8px;
   cursor: pointer;
   z-index: 99999;
@@ -877,7 +880,7 @@ a#site-name:hover:before {
 }
 #nav-toggle-bar:hover {
   height: 8px;
-  background: linear-gradient(90deg, transparent, #ff7242, transparent);
+  background: linear-gradient(90deg, transparent, #ffb700, transparent);
 }
 
 /* 横条和顶栏之间的透明连接桥（防止鼠标移出时顶栏收起） */

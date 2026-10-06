@@ -12,7 +12,7 @@
       clearTimeout(closeTimer);
       nav.classList.add('nav-hover');
       bar.style.height = '8px';
-      bar.style.background = 'linear-gradient(90deg, transparent, #ff7242, transparent)';
+      bar.style.background = 'linear-gradient(90deg, transparent, #ffb700, transparent)';
     }
 
     function scheduleClose() {
@@ -20,7 +20,7 @@
       closeTimer = setTimeout(function () {
         nav.classList.remove('nav-hover');
         bar.style.height = '5px';
-        bar.style.background = 'linear-gradient(90deg, transparent, #49b1f5, transparent)';
+        bar.style.background = 'linear-gradient(90deg, transparent, #ffd700, transparent)';
       }, 300);
     }
 
