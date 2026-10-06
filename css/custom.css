@@ -109,13 +109,14 @@
   background-color: #49b1f5;
 }
 
-/* ---------- 2. 全局背景渐变（优化篇 §1.4，深色模式下压暗） ---------- */
+/* ---------- 2. 全局背景（参考 superq314.github.io：鲸鱼星空全屏背景） ---------- */
 #web_bg {
-  background-image: linear-gradient(to top, #fff1eb 0%, #ace0f9 100%);
-  background-attachment: fixed;
+  background: url(https://picsum.photos/id/1041/1920/1080) no-repeat center center fixed !important;
+  background-size: cover !important;
 }
 [data-theme="dark"] #web_bg {
-  background-image: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+  background: url(https://picsum.photos/id/1041/1920/1080) no-repeat center center fixed !important;
+  background-size: cover !important;
 }
 
 /* ---------- 3. 卡片 / 文章页半透明背景（优化篇 §1.4） ---------- */
@@ -125,14 +126,18 @@
 .layout_page > div:first-child:not(.recent-posts),
 .layout_post > #page,
 .read-mode .layout_post > #post {
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 [data-theme="dark"] .layout_post > #post,
 [data-theme="dark"] #aside_content .card-widget,
 [data-theme="dark"] #recent-posts > .recent-post-item,
 [data-theme="dark"] .layout_page > div:first-child:not(.recent-posts),
 [data-theme="dark"] .layout_post > #page {
-  background: rgba(30, 30, 40, 0.55);
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 /* ---------- 4. 头像圆形 / 公告居中 ---------- */
@@ -795,9 +800,33 @@ a#site-name:hover:before {
 }
 
 /* ======================================================
- * 隐藏式顶栏（参考 superq314.github.io 效果）
- * 默认只显示小横条，hover 展开完整导航
+ * 毛玻璃顶栏（hover 自动展开，默认收起）
  * ====================================================== */
+
+/* 彩色几何多边形装饰（参考 superq314.github.io） */
+#body-wrap::before {
+  content: '';
+  position: fixed;
+  top: 50%;
+  left: -5%;
+  width: 300px;
+  height: 300px;
+  background: linear-gradient(135deg, rgba(255, 100, 100, 0.3), transparent);
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  z-index: -1;
+  transform: translateY(-50%);
+}
+#body-wrap::after {
+  content: '';
+  position: fixed;
+  top: 30%;
+  right: -5%;
+  width: 400px;
+  height: 400px;
+  background: linear-gradient(225deg, rgba(150, 100, 255, 0.3), transparent);
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+  z-index: -1;
+}
 
 /* 顶栏默认隐藏在上方 */
 #nav {
