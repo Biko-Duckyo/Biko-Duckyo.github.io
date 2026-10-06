@@ -1,0 +1,878 @@
+/* ======================================================
+ * superBrain custom.css
+ * 对照 https://superq314.github.io/tags/Butterfly/ 四篇教程整合：
+ *   - Butterfly主题-初始配置 / 美化 / 优化 / 标签外挂
+ * 并借鉴 haiyong.site 的社交图标大圆按钮 UI
+ * ====================================================== */
+
+/* ---------- 0. 首页社交图标：圆形按钮 + 白色图标（参考截图样式） ---------- */
+#page-header #site_social_icons {
+  margin-top: 1.5rem;
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+}
+#page-header #site_social_icons .social-icon {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  margin: 0 !important;
+  color: #fff !important;
+  font-size: 22px !important;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  transition: transform 0.25s ease, background 0.25s ease;
+  text-decoration: none;
+}
+#page-header #site_social_icons .social-icon:hover {
+  transform: translateY(-4px);
+}
+#page-header #site_social_icons .social-icon i,
+#page-header #site_social_icons .social-icon::before {
+  color: #fff !important;
+  font-size: 22px !important;
+}
+/* GitHub 黑底白猫 */
+#page-header #site_social_icons .social-icon:nth-child(1) {
+  background: rgba(0,0,0,0.55) !important;
+  backdrop-filter: blur(4px);
+}
+/* Email / QQ / 知乎：透明背景，白色图标 */
+#page-header #site_social_icons .social-icon:nth-child(2),
+#page-header #site_social_icons .social-icon:nth-child(3),
+#page-header #site_social_icons .social-icon:nth-child(4) {
+  background: transparent !important;
+}
+
+/* 微信号胶囊按钮 */
+#wechat-capsule {
+  margin: 1.2rem auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 10px 28px;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff;
+  font-size: 15px;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+  transition: background 0.25s ease;
+  cursor: default;
+}
+#wechat-capsule:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+#wechat-capsule i {
+  font-size: 18px;
+}
+
+/* ---------- 1. 滚动条（优化篇 §1.2） ---------- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background-color: rgba(73, 177, 245, 0.2);
+  border-radius: 2em;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #49b1f5;
+  background-image: -webkit-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.4) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.4) 50%,
+    rgba(255, 255, 255, 0.4) 75%,
+    transparent 75%,
+    transparent
+  );
+  border-radius: 2em;
+}
+::-webkit-scrollbar-corner {
+  background-color: transparent;
+}
+::-moz-selection {
+  color: #fff;
+  background-color: #49b1f5;
+}
+::selection {
+  color: #fff;
+  background-color: #49b1f5;
+}
+
+/* ---------- 2. 全局背景渐变（优化篇 §1.4，深色模式下压暗） ---------- */
+#web_bg {
+  background-image: linear-gradient(to top, #fff1eb 0%, #ace0f9 100%);
+  background-attachment: fixed;
+}
+[data-theme="dark"] #web_bg {
+  background-image: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+}
+
+/* ---------- 3. 卡片 / 文章页半透明背景（优化篇 §1.4） ---------- */
+.layout_post > #post,
+#aside_content .card-widget,
+#recent-posts > .recent-post-item,
+.layout_page > div:first-child:not(.recent-posts),
+.layout_post > #page,
+.read-mode .layout_post > #post {
+  background: rgba(255, 255, 255, 0.55);
+}
+[data-theme="dark"] .layout_post > #post,
+[data-theme="dark"] #aside_content .card-widget,
+[data-theme="dark"] #recent-posts > .recent-post-item,
+[data-theme="dark"] .layout_page > div:first-child:not(.recent-posts),
+[data-theme="dark"] .layout_post > #page {
+  background: rgba(30, 30, 40, 0.55);
+}
+
+/* ---------- 4. 头像圆形 / 公告居中 ---------- */
+#aside-content .card-info .avatar-img img,
+#sidebar #sidebar-menus .avatar-img img {
+  border-radius: 50%;
+}
+.card-widget.card-announcement {
+  margin: 0;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* ---------- 5. 站点标题字体 ---------- */
+#site-title {
+  font-family: 'Titillium Web', sans-serif;
+  letter-spacing: 2px;
+}
+
+/* ---------- 6. 首页文章卡片 hover 上浮 ---------- */
+#recent-posts > .recent-post-item {
+  transition: all 0.3s ease;
+}
+#recent-posts > .recent-post-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* ---------- 7. 页脚心跳图标 ---------- */
+#footer #footer-wrap #heartbeat {
+  color: #ff6b81;
+  animation: heartbeat 1.5s infinite;
+  display: inline-block;
+}
+@keyframes heartbeat {
+  0% { transform: scale(1); }
+  14% { transform: scale(1.3); }
+  28% { transform: scale(1); }
+  42% { transform: scale(1.3); }
+  70% { transform: scale(1); }
+}
+
+/* ---------- 8. 文章内联颜色块（美化篇 §12.1） ---------- */
+span#inline-yellow,
+span#inline-green,
+span#inline-blue,
+span#inline-purple {
+  display: inline;
+  padding: .2em .6em .3em;
+  font-size: 80%;
+  font-weight: bold;
+  line-height: 1;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: .3em;
+}
+span#inline-yellow { background-color: #f0ad4e; }
+span#inline-green  { background-color: #5cb85c; }
+span#inline-blue   { background-color: #2780e3; }
+span#inline-purple { background-color: #9954bb; }
+
+/* ---------- 9. 下载按钮样式（美化篇 §12.2） ---------- */
+a#download {
+  display: inline-block;
+  padding: 0 10px;
+  color: var(--font-color);
+  background: transparent;
+  border: 2px solid var(--font-color);
+  border-radius: 2px;
+  transition: all .5s ease;
+  font-weight: bold;
+  text-decoration: none;
+}
+a#download:hover {
+  background: var(--font-color);
+  color: #fff;
+}
+
+/* ---------- 10. 启动加载动画（preloader source:1 美化） ---------- */
+#loading-box .loading-img,
+#loading-box .loader {
+  border-top-color: #49b1f5;
+}
+
+/* ---------- 11. 导航栏标题栏在深色模式下的过渡 ---------- */
+#nav {
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* ---------- 12. 右下角工具栏按钮 hover 动效 ---------- */
+#rightside button,
+#rightside a {
+  transition: all 0.3s ease;
+}
+#rightside button:hover,
+#rightside a:hover {
+  transform: scale(1.1);
+}
+
+/* ---------- 13. 强制右下角工具栏始终可见 ---------- */
+#rightside {
+  opacity: 1 !important;
+  transform: translateZ(0) !important;
+}
+#rightside #rightside-config-hide,
+#rightside #rightside-config-show {
+  display: flex !important;
+}
+
+/* ---------- 14. live2d 小猫与音乐播放器层级 ---------- */
+#live2dcanvas,
+#L2Dwidget {
+  z-index: 9998 !important;
+}
+.aplayer.aplayer-fixed.aplayer-narrow .aplayer-body {
+  z-index: 9997 !important;
+}
+
+/* ======================================================
+ * fixed card widget（参考 akilar.top/posts/451ac5f8/）
+ * 手机端左侧边缘悬浮按钮，点击居中弹出侧栏卡片
+ * ====================================================== */
+
+/* 弹出卡片：垂直居中固定定位 */
+.fixed-card-widget:not(#card-toc) {
+  visibility: visible !important;
+  display: block !important;
+  position: fixed !important;
+  bottom: 0;
+  left: 0;
+  top: 0;
+  right: 0;
+  margin: auto;
+  max-width: 300px;
+  max-height: 500px;
+  width: auto;
+  height: auto;
+  overflow-y: scroll;
+  z-index: 999;
+  animation: rotateX 0.5s ease;
+  animation-fill-mode: forwards;
+}
+.fixed-card-widget:not(#card-toc)::-webkit-scrollbar {
+  width: 0;
+}
+
+/* 标签云卡片适配 */
+.card-tags.fixed-card-widget .card-tag-cloud {
+  max-height: 460px;
+  overflow: scroll;
+}
+.card-tags.fixed-card-widget .card-tag-cloud::-webkit-scrollbar {
+  display: none;
+}
+
+/* 手机端才显示悬浮按钮组 */
+div#fixedcard-dashboard {
+  display: none;
+}
+@media screen and (max-width: 768px) {
+  div#fixedcard-dashboard {
+    display: flex !important;
+    position: fixed;
+    top: 150px;
+    left: 0;
+    width: fit-content;
+    height: 40px;
+    opacity: 0.3;
+    transition: all 0.5s;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 5px 10px;
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+    z-index: 1000;
+    flex-direction: column;
+    height: auto;
+    width: 40px;
+    align-items: center;
+  }
+  div#fixedcard-dashboard:hover {
+    opacity: 1;
+  }
+  div#fixedcard-dashboard button {
+    width: 30px !important;
+    height: 30px !important;
+    margin: 4px 0;
+    display: flex !important;
+    opacity: 1 !important;
+    pointer-events: all !important;
+    color: #757273;
+    background: transparent;
+    border: none;
+    align-items: center;
+    justify-content: center;
+  }
+  [data-theme="dark"] div#fixedcard-dashboard {
+    background: rgba(55, 55, 55, 0.9);
+  }
+  [data-theme="dark"] div#fixedcard-dashboard button {
+    color: #bcbdbd;
+  }
+}
+
+/* 卡片开启动画 */
+@keyframes rotateX {
+  from { transform: rotateX(90deg); }
+  to { transform: rotateX(0deg); }
+}
+
+/* 遮罩层 */
+div#quit-box {
+  position: fixed;
+  display: block;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 99;
+  background: rgba(25, 25, 25, 0.3);
+}
+[data-theme="dark"] div#quit-box {
+  background: rgba(147, 146, 128, 0.3);
+}
+
+/* ======================================================
+ * 相关推荐版块卡片化（参考 akilar.top/posts/194e1534/）
+ * 把 .relatedPosts 从突兀的全宽块改成圆角卡片
+ * ====================================================== */
+.relatedPosts {
+  margin: 2rem 0 !important;
+  padding: 1.5rem 1.2rem !important;
+  background: var(--card-bg) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--card-box-shadow) !important;
+  transition: box-shadow 0.3s ease;
+}
+.relatedPosts:hover {
+  box-shadow: var(--card-hover-box-shadow) !important;
+}
+.relatedPosts > .headline {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--light-grey);
+  font-size: 1.1em;
+  font-weight: bold;
+}
+.relatedPosts > .headline i {
+  margin-right: 8px;
+  color: var(--btn-color);
+}
+.relatedPosts .relatedPosts-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.relatedPosts .relatedPosts-list > div {
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  background: var(--content-bg);
+}
+.relatedPosts .relatedPosts-list > div:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+}
+.relatedPosts .relatedPosts-list .cover {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+}
+.relatedPosts .relatedPosts-list .title {
+  display: block;
+  padding: 8px 10px;
+  font-size: 0.9em;
+  line-height: 1.4;
+  color: var(--font-color);
+}
+.relatedPosts .relatedPosts-list .date {
+  display: block;
+  padding: 0 10px 8px;
+  font-size: 0.75em;
+  color: var(--second-font-color);
+}
+
+/* ---------- 13. 右侧功能按钮默认展开（不再藏进齿轮） ---------- */
+#rightside #rightside-config-hide {
+  display: flex !important;
+  flex-direction: column;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateX(0) !important;
+  pointer-events: auto !important;
+}
+
+/* ---------- 14. 首页 banner 大图上方导航栏透明覆盖 ---------- */
+#page-header.full_page {
+  background-size: cover;
+  background-position: center;
+}
+[data-theme="dark"] #page-header #site-info,
+[data-theme="dark"] #page-header #site-title,
+[data-theme="dark"] #page-header #site-subtitle {
+  color: #fff;
+}
+
+/* ======================================================
+ * SAO 风格作者属性卡片（参考 akilar.top/posts/e5cda1b6/）
+ * ====================================================== */
+#aside-content .card-widget.card-info.sao-card {
+  padding: 15px;
+  perspective: 1000px;
+  background: var(--card-bg);
+  border-radius: 12px;
+}
+#aside-content .card-widget.card-info.sao-card .sao-container {
+  position: relative;
+  width: 100%;
+  min-height: 220px;
+  transition: transform 0.8s;
+  transform-style: preserve-3d;
+}
+#aside-content .card-widget.card-info.sao-card:hover .sao-container {
+  transform: rotateY(180deg);
+}
+#aside-content .card-widget.card-info.sao-card .sao-front,
+#aside-content .card-widget.card-info.sao-card .sao-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+#aside-content .card-widget.card-info.sao-card .sao-back {
+  transform: rotateY(180deg);
+}
+#aside-content .card-widget.card-info.sao-card .sao-avatar {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  border: 3px solid #59e636;
+  box-shadow: 0 0 15px rgba(89,230,54,0.5);
+  object-fit: cover;
+}
+#aside-content .card-widget.card-info.sao-card .sao-title {
+  font-size: 0.8em;
+  color: #59e636;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+  text-shadow: 0 0 8px rgba(89,230,54,0.6);
+}
+#aside-content .card-widget.card-info.sao-card .sao-lv {
+  font-size: 1.3em;
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255,215,0,0.6);
+  margin-bottom: 4px;
+}
+#aside-content .card-widget.card-info.sao-card .sao-name {
+  font-size: 1.1em;
+  color: var(--font-color);
+  margin-bottom: 12px;
+}
+#aside-content .card-widget.card-info.sao-card .sao-bar-item {
+  width: 90%;
+  margin: 6px 0;
+  font-size: 0.8em;
+}
+#aside-content .card-widget.card-info.sao-card .sao-bar-label {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 3px;
+  color: var(--second-font-color);
+}
+#aside-content .card-widget.card-info.sao-card .sao-bar-track {
+  height: 8px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+#aside-content .card-widget.card-info.sao-card .sao-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 1s ease;
+}
+#aside-content .card-widget.card-info.sao-card .sao-desc {
+  margin-top: 10px;
+  font-size: 0.85em;
+  color: var(--second-font-color);
+  text-align: center;
+  padding: 0 10px;
+}
+[data-theme="dark"] #aside-content .card-widget.card-info.sao-card .sao-title {
+  color: #59e636;
+}
+
+/* ======================================================
+ * SAO 风格侧栏卡片梯形标题栏（参考 akilar.top/posts/eb030e5a/）
+ * ====================================================== */
+@font-face {
+  font-family: 'SAOUI';
+  src: url('https://npm.elemecdn.com/akilar-candyassets/fonts/SAOUI.ttf');
+  font-display: swap;
+}
+#aside-content .card-widget:not(.card-info) {
+  overflow: visible !important;
+  margin-top: 45px !important;
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 10px;
+  border-top-right-radius: 10px;
+  border-top-left-radius: 0 !important;
+  font-family: 'SAOUI';
+  color: rgba(60,60,61,0.7);
+  font-weight: bold;
+}
+#aside-content .card-widget.card-clock {
+  overflow: hidden !important;
+  border-radius: 8px !important;
+  margin-top: 0 !important;
+}
+#aside-content .item-headline {
+  font-family: 'SAOUI';
+  color: rgba(60,60,61,0.7);
+  font-weight: bold;
+  position: absolute;
+  z-index: 4;
+  height: 27px;
+  width: 65%;
+  top: -27px;
+  left: 7px;
+}
+#aside-content .item-headline i,
+#aside-content .item-headline span,
+#aside-content .item-headline a {
+  position: relative;
+  z-index: 2;
+}
+#aside-content .item-headline:after {
+  content: '';
+  position: absolute;
+  top: -3px;
+  right: 0;
+  bottom: 0;
+  left: -3px;
+  z-index: 1;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid rgba(255,255,255,0.9);
+  border-bottom: 0 solid #fff;
+  transform: perspective(20px) rotateX(3deg);
+  border-top-right-radius: 5px !important;
+  border-top-left-radius: 5px !important;
+}
+#aside-content .item-headline:before {
+  display: block;
+  width: 140%;
+  margin-top: 2px;
+  height: 2px;
+  content: '';
+  background: rgba(160,159,160,0.9);
+  border-radius: 5px;
+  top: 40px;
+  left: 0;
+  position: relative;
+}
+@media screen and (max-width: 800px) {
+  #aside-content .item-headline { left: 8px; }
+}
+[data-theme="dark"] #aside-content .card-widget:not(.card-info) {
+  color: rgba(255,255,255,0.7) !important;
+}
+[data-theme="dark"] #aside-content .item-headline {
+  color: rgba(255,255,255,0.7) !important;
+}
+[data-theme="dark"] #aside-content .item-headline:after {
+  background: rgba(0,0,0,0.5);
+  border: 1px solid rgba(0,0,0,0.5);
+  border-bottom: 0 solid rgba(0,0,0,0.5);
+}
+[data-theme="dark"] #aside-content .item-headline:before {
+  background: rgba(255,255,255,0.9);
+}
+
+/* ======================================================
+ * 左上角标题悬停显示描述（参考 akilar.top/posts/23fdf850/）
+ * ====================================================== */
+a#site-name:hover:before {
+  position: fixed;
+  width: fit-content;
+  margin: auto;
+  left: 0;
+  right: 0;
+  top: 12%;
+  border-radius: 10px;
+  text-align: center;
+  z-index: 100;
+  content: attr(data-title);
+  font-size: 18px;
+  color: #fff;
+  padding: 12px 20px;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  max-width: 600px;
+}
+@media screen and (max-width: 768px) {
+  a#site-name {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: middle;
+  }
+}
+
+/* ======================================================
+ * Ironheart 钢铁之心加载动画（参考 akilar.top/posts/3d221bf2/）
+ * ====================================================== */
+#ironheart-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+#ironheart-loader.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.ironheart-box {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+.ironheart-ring {
+  position: absolute;
+  inset: 0;
+  border: 3px solid transparent;
+  border-radius: 50%;
+}
+.ironheart-ring.r1 {
+  border-top-color: #49b1f5;
+  border-right-color: #49b1f5;
+  animation: ironheart-spin 1.2s linear infinite;
+}
+.ironheart-ring.r2 {
+  inset: 15px;
+  border-bottom-color: #ff7242;
+  border-left-color: #ff7242;
+  animation: ironheart-spin-rev 1.8s linear infinite;
+}
+.ironheart-core {
+  position: absolute;
+  inset: 40px;
+  background: linear-gradient(135deg, #49b1f5, #ff7242);
+  border-radius: 50%;
+  animation: ironheart-pulse 1.5s ease-in-out infinite;
+}
+.ironheart-text {
+  position: absolute;
+  bottom: -40px;
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  color: #999;
+  letter-spacing: 2px;
+}
+[data-theme="dark"] #ironheart-loader {
+  background: #1a1a2e;
+}
+@keyframes ironheart-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes ironheart-spin-rev {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+@keyframes ironheart-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.8); opacity: 0.7; }
+}
+
+/* ======================================================
+ * Banner 鼠标视差效果（参考 akilar.top/posts/780a2cea/）
+ * ====================================================== */
+#page-header {
+  transition: background-position 0.3s ease-out;
+}
+@media (max-width: 768px) {
+  #page-header { transition: none !important; }
+}
+
+/* ======================================================
+ * 顶栏导航按钮菱形切角效果（参考 akilar.top/posts/eac2c3d0/）
+ * ====================================================== */
+#nav a.site-page {
+  clip-path: polygon(8px 0, calc(100% - 8px) 0, 100% 50%, calc(100% - 8px) 100%, 8px 100%, 0 50%);
+  padding: 6px 18px;
+  transition: all 0.3s ease;
+}
+#nav a.site-page:hover {
+  background: var(--button-bg, #49b1f5);
+  color: #fff !important;
+}
+
+/* ======================================================
+ * 页脚振翅蝴蝶动画
+ * ====================================================== */
+.footer-butterfly {
+  display: inline-block;
+  position: relative;
+  width: 24px;
+  height: 20px;
+  margin: 0 6px;
+  vertical-align: middle;
+  cursor: pointer;
+}
+.footer-butterfly::before,
+.footer-butterfly::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 12px;
+  height: 20px;
+  background: linear-gradient(135deg, #49b1f5, #6f7ed6);
+  border-radius: 50% 50% 50% 0;
+  transform-origin: right center;
+  animation: butterfly-flap-l 0.4s ease-in-out infinite alternate;
+}
+.footer-butterfly::after {
+  right: 0;
+  background: linear-gradient(225deg, #49b1f5, #6f7ed6);
+  border-radius: 50% 50% 0 50%;
+  transform-origin: left center;
+  animation-name: butterfly-flap-r;
+}
+@keyframes butterfly-flap-l {
+  from { transform: rotateY(0deg) scaleX(1); }
+  to   { transform: rotateY(60deg) scaleX(0.6); }
+}
+@keyframes butterfly-flap-r {
+  from { transform: rotateY(0deg) scaleX(1); }
+  to   { transform: rotateY(-60deg) scaleX(0.6); }
+}
+[data-theme="dark"] .footer-butterfly::before,
+[data-theme="dark"] .footer-butterfly::after {
+  background: linear-gradient(135deg, #6f7ed6, #49b1f5);
+}
+
+/* ======================================================
+ * 隐藏式顶栏（参考 superq314.github.io 效果）
+ * 默认只显示小横条，hover 展开完整导航
+ * ====================================================== */
+
+/* 顶栏默认隐藏在上方 */
+#nav {
+  top: -60px !important;
+  transition: top 0.35s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  background: rgba(30, 30, 40, 0.85) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+#nav.nav-hover {
+  top: 0 !important;
+}
+
+/* 顶栏内导航按钮：圆角胶囊样式（参考 superq314.github.io） */
+#nav #nav-group {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+#nav a.site-page {
+  clip-path: none !important;
+  padding: 8px 20px !important;
+  border-radius: 20px !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+  font-size: 14px;
+  transition: all 0.25s ease;
+}
+#nav a.site-page:hover {
+  background: rgba(73, 177, 245, 0.8) !important;
+  transform: translateY(-2px);
+}
+
+/* 顶部小横条（触发区） */
+#nav-toggle-bar {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 5px;
+  background: linear-gradient(90deg, transparent, #49b1f5, transparent);
+  border-radius: 0 0 8px 8px;
+  cursor: pointer;
+  z-index: 99999;
+  transition: all 0.3s;
+}
+#nav-toggle-bar:hover {
+  height: 8px;
+  background: linear-gradient(90deg, transparent, #ff7242, transparent);
+}
+
+/* 横条和顶栏之间的透明连接桥（防止鼠标移出时顶栏收起） */
+#nav-bridge {
+  position: fixed;
+  top: 5px;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  z-index: 99998;
+  pointer-events: none;
+  transition: top 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+#nav.nav-hover ~ #nav-bridge {
+  top: 60px;
+}
+
+/* 深色模式适配 */
+[data-theme="dark"] #nav {
+  background: rgba(20, 20, 30, 0.85) !important;
+}
+
+/* 手机端不启用隐藏顶栏 */
+@media (max-width: 768px) {
+  #nav { top: 0 !important; background: rgba(30,30,40,0.9) !important; }
+  #nav-toggle-bar, #nav-bridge { display: none; }
+}
