@@ -884,3 +884,30 @@ a#site-name:hover:before {
   #nav { top: 0 !important; background: rgba(30,30,40,0.9) !important; }
   #nav-toggle-bar, #nav-bridge { display: none; }
 }
+
+/* ======================================================
+ * 首页文章轮播右侧圆点分页（复刻 superq314.github.io）
+ * 普通点：11×11 半透明灰圆；激活点：11×30 竖条
+ * ====================================================== */
+.blog-slider__pagination {
+  position: absolute !important;
+  right: 20px !important;
+  top: 100px !important;
+  width: 11px !important;
+}
+.blog-slider__pagination .swiper-pagination-bullet {
+  width: 11px !important;
+  height: 11px !important;
+  border-radius: 10px !important;
+  margin: 8px 0 !important;
+  background: rgba(133, 133, 133, 0.35) !important;
+  opacity: 1 !important;
+  transition: height 0.3s ease, background 0.3s ease !important;
+}
+.blog-slider__pagination .swiper-pagination-bullet-active {
+  height: 30px !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+[data-theme="dark"] .blog-slider__pagination .swiper-pagination-bullet-active {
+  background: rgba(255, 255, 255, 0.9) !important;
+}
