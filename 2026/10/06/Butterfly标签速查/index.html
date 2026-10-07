@@ -1,0 +1,430 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>Butterfly 标签外挂使用手册 | Biko的个人小站</title><meta name="author" content="Biko"><meta name="copyright" content="Biko"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0d0d0d"><meta name="description" content="标签外挂是 Hexo 独有功能，不是标准 Markdown，只在 Butterfly 主题生效。  Note 提示块基本用法123&#123;% note [颜色] [图标] [样式] %&#125;内容&#123;% endnote %&#125;  三种样式对比simplemodernflat经典风格，左侧色块。 123456&#123;% note simple %&#125;默认提示&amp;#1">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Butterfly 标签外挂使用手册">
+<meta property="og:url" content="https://biko-duckyo.github.io/2026/10/06/Butterfly%E6%A0%87%E7%AD%BE%E9%80%9F%E6%9F%A5/index.html">
+<meta property="og:site_name" content="Biko的个人小站">
+<meta property="og:description" content="标签外挂是 Hexo 独有功能，不是标准 Markdown，只在 Butterfly 主题生效。  Note 提示块基本用法123&#123;% note [颜色] [图标] [样式] %&#125;内容&#123;% endnote %&#125;  三种样式对比simplemodernflat经典风格，左侧色块。 123456&#123;% note simple %&#125;默认提示&amp;#1">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg">
+<meta property="article:published_time" content="2026-10-06T06:00:00.000Z">
+<meta property="article:modified_time" content="2026-10-05T16:00:00.000Z">
+<meta property="article:author" content="Biko">
+<meta property="article:tag" content="Butterfly">
+<meta property="article:tag" content="Hexo">
+<meta property="article:tag" content="标签外挂">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "Butterfly 标签外挂使用手册",
+  "url": "https://biko-duckyo.github.io/2026/10/06/Butterfly%E6%A0%87%E7%AD%BE%E9%80%9F%E6%9F%A5/",
+  "image": "https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg",
+  "datePublished": "2026-10-06T06:00:00.000Z",
+  "dateModified": "2026-10-05T16:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Biko",
+      "url": "https://biko-duckyo.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://biko-duckyo.github.io/2026/10/06/Butterfly%E6%A0%87%E7%AD%BE%E9%80%9F%E6%9F%A5/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.14/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!true && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', 'ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#49b1f5","bgDark":"#1f1f1f","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'Butterfly 标签外挂使用手册',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/custom.css"><link rel="stylesheet" href="//at.alicdn.com/t/c/font_3764468_7jp6rqh1vde.css"><!-- hexo injector head_end start --><link rel="stylesheet" href="/footer-beautify/runtime.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="/clock/clock.min.css" /><link rel="stylesheet" href="https://npm.elemecdn.com/hexo-butterfly-tag-plugins-plus@1.0.19/lib/assets/font-awesome-animation.min.css" media="defer" onload="this.media='all'"><link rel="stylesheet" href="https://npm.elemecdn.com/hexo-butterfly-tag-plugins-plus@1.0.19/lib/tag_plugins.css" media="defer" onload="this.media='all'"><script src="https://npm.elemecdn.com/hexo-butterfly-tag-plugins-plus@1.0.19/lib/assets/carousel-touch.js"></script><link rel="stylesheet" href="https://npm.elemecdn.com/hexo-butterfly-wowjs/lib/animate.min.css" media="print" onload="this.media='screen'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 8.1.2"></head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">5</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">8</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-heartbeat"></i><span> 赋闲</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/galleryGroup/"><i class="fa-fw fas fa-images"></i><span> 相册</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> 电影</span></a></li><li><a class="site-page child" href="/games/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/bangumis/"><i class="fa-fw fas fa-gamepad"></i><span> 追番</span></a></div><div class="menus_item"><a class="site-page" href="/books/"><i class="fa-fw fas fa-gamepad"></i><span> 书单</span></a></div><div class="menus_item"><a class="site-page" href="/HTML/resume/index.html"><i class="fa-fw fas fa-id-card"></i><span> myself</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly/"><i class="fa-fw fas fa-heart"></i><span> butterfly主题</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Biko的个人小站</span></a><a class="nav-page-title" href="/"><span class="site-name">Butterfly 标签外挂使用手册</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-heartbeat"></i><span> 赋闲</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/galleryGroup/"><i class="fa-fw fas fa-images"></i><span> 相册</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> 电影</span></a></li><li><a class="site-page child" href="/games/"><i class="fa-fw fas fa-gamepad"></i><span> 游戏</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/bangumis/"><i class="fa-fw fas fa-gamepad"></i><span> 追番</span></a></div><div class="menus_item"><a class="site-page" href="/books/"><i class="fa-fw fas fa-gamepad"></i><span> 书单</span></a></div><div class="menus_item"><a class="site-page" href="/HTML/resume/index.html"><i class="fa-fw fas fa-id-card"></i><span> myself</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly/"><i class="fa-fw fas fa-heart"></i><span> butterfly主题</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">Butterfly 标签外挂使用手册</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-10-06T06:00:00.000Z" title="发表于 2026-10-06 14:00:00">2026-10-06</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-10-05T16:00:00.000Z" title="更新于 2026-10-06 00:00:00">2026-10-06</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/Hexo-%E6%95%99%E7%A8%8B/">Hexo 教程</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">606</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>2分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>标签外挂是 Hexo 独有功能，不是标准 Markdown，只在 Butterfly 主题生效。</p>
+<hr>
+<h2 id="Note-提示块"><a href="#Note-提示块" class="headerlink" title="Note 提示块"></a>Note 提示块</h2><h3 id="基本用法"><a href="#基本用法" class="headerlink" title="基本用法"></a>基本用法</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;% note [颜色] [图标] [样式] %&#125;</span><br><span class="line">内容</span><br><span class="line">&#123;% endnote %&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="三种样式对比"><a href="#三种样式对比" class="headerlink" title="三种样式对比"></a>三种样式对比</h3><div class="tabs"><div class="nav-tabs"><button type="button" class="tab active">simple</button><button type="button" class="tab">modern</button><button type="button" class="tab">flat</button></div><div class="tab-contents"><div class="tab-item-content active"><p>经典风格，左侧色块。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;% note simple %&#125;默认提示&#123;% endnote %&#125;</span><br><span class="line">&#123;% note primary simple %&#125;主要提示&#123;% endnote %&#125;</span><br><span class="line">&#123;% note success simple %&#125;成功提示&#123;% endnote %&#125;</span><br><span class="line">&#123;% note info simple %&#125;信息提示&#123;% endnote %&#125;</span><br><span class="line">&#123;% note warning simple %&#125;警告提示&#123;% endnote %&#125;</span><br><span class="line">&#123;% note danger simple %&#125;危险提示&#123;% endnote %&#125;</span><br></pre></td></tr></table></figure></div><div class="tab-item-content"><p>圆角卡片风格。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;% note modern %&#125;默认提示&#123;% endnote %&#125;</span><br><span class="line">&#123;% note success modern %&#125;成功提示&#123;% endnote %&#125;</span><br><span class="line">&#123;% note warning modern %&#125;警告提示&#123;% endnote %&#125;</span><br></pre></td></tr></table></figure></div><div class="tab-item-content"><p>扁平背景风格。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;% note flat %&#125;默认提示&#123;% endnote %&#125;</span><br><span class="line">&#123;% note success flat %&#125;成功提示&#123;% endnote %&#125;</span><br><span class="line">&#123;% note warning flat %&#125;警告提示&#123;% endnote %&#125;</span><br></pre></td></tr></table></figure></div></div><div class="tab-to-top"><button type="button" aria-label="scroll to top"><i class="fas fa-arrow-up"></i></button></div></div>
+
+<h3 id="自定义图标"><a href="#自定义图标" class="headerlink" title="自定义图标"></a>自定义图标</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;% note blue &#x27;fas fa-bullhorn&#x27; %&#125;📢 通知内容&#123;% endnote %&#125;</span><br><span class="line">&#123;% note pink &#x27;fas fa-car-crash&#x27; %&#125;⚠️ 小心安全&#123;% endnote %&#125;</span><br><span class="line">&#123;% note green &#x27;fab fa-github&#x27; %&#125;GitHub 仓库&#123;% endnote %&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可选颜色：default &#x2F; blue &#x2F; pink &#x2F; red &#x2F; purple &#x2F; orange &#x2F; green</p>
+<p>图标用 FontAwesome 类名。</p>
+<hr>
+<h2 id="Tabs-标签切换"><a href="#Tabs-标签切换" class="headerlink" title="Tabs 标签切换"></a>Tabs 标签切换</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&#123;% tabs 唯一名称, 默认激活序号 %&#125;</span><br><span class="line">&lt;!-- tab 选项1 --&gt;</span><br><span class="line">内容1</span><br><span class="line">&lt;!-- endtab --&gt;</span><br><span class="line"></span><br><span class="line">&lt;!-- tab 选项2 --&gt;</span><br><span class="line">内容2</span><br><span class="line">&lt;!-- endtab --&gt;</span><br><span class="line">&#123;% endtabs %&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>名称不能重复，每篇文章里只能用一次同名 tabs。</p>
+</blockquote>
+<hr>
+<h2 id="Gallery-相册"><a href="#Gallery-相册" class="headerlink" title="Gallery 相册"></a>Gallery 相册</h2><h3 id="相册组"><a href="#相册组" class="headerlink" title="相册组"></a>相册组</h3><figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">&quot;gallery-group-main&quot;</span>&gt;</span></span><br><span class="line">&#123;% galleryGroup 名称 描述 链接 封面图 %&#125;</span><br><span class="line">&#123;% galleryGroup 名称 描述 链接 封面图 %&#125;</span><br><span class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="单相册"><a href="#单相册" class="headerlink" title="单相册"></a>单相册</h3><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123;% gallery %&#125;</span><br><span class="line">![图1](/img/1.jpg)</span><br><span class="line">![图2](/img/2.jpg)</span><br><span class="line">&#123;% endgallery %&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="按钮"><a href="#按钮" class="headerlink" title="按钮"></a>按钮</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;% btn https://github.com, 访问 GitHub, fab fa-github %&#125;</span><br></pre></td></tr></table></figure>
+
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>链接</td>
+<td>跳转地址</td>
+</tr>
+<tr>
+<td>文本</td>
+<td>按钮文字</td>
+</tr>
+<tr>
+<td>图标</td>
+<td>FontAwesome 图标类名</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="复选框"><a href="#复选框" class="headerlink" title="复选框"></a>复选框</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&#123;% check 完成的任务 %&#125;</span><br><span class="line">&#123;% check 未完成的任务 %&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="文字样式"><a href="#文字样式" class="headerlink" title="文字样式"></a>文字样式</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&#123;% bold 加粗文字 %&#125;</span><br><span class="line">&#123;% underline 下划线文字 %&#125;</span><br><span class="line">&#123;% delete 删除线文字 %&#125;</span><br><span class="line">&#123;% sup 上标 %&#125;</span><br><span class="line">&#123;% sub 下标 %&#125;</span><br><span class="line">&#123;% inlinebug 标签 %&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="行内代码高亮"><a href="#行内代码高亮" class="headerlink" title="行内代码高亮"></a>行内代码高亮</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;% kb Ctrl %&#125; + &#123;% kb C %&#125;</span><br></pre></td></tr></table></figure>
+
+<p>显示为 <code>Ctrl + C</code> 键盘按键样式。</p>
+<hr>
+<h2 id="常用速查表"><a href="#常用速查表" class="headerlink" title="常用速查表"></a>常用速查表</h2><table>
+<thead>
+<tr>
+<th>标签</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>&#123;% note %&#125;</code></td>
+<td>提示块</td>
+</tr>
+<tr>
+<td><code>&#123;% tabs %&#125;</code></td>
+<td>标签切换</td>
+</tr>
+<tr>
+<td><code>&#123;% gallery %&#125;</code></td>
+<td>相册</td>
+</tr>
+<tr>
+<td><code>&#123;% btn %&#125;</code></td>
+<td>按钮</td>
+</tr>
+<tr>
+<td><code>&#123;% check %&#125;</code></td>
+<td>复选框</td>
+</tr>
+<tr>
+<td><code>&#123;% checkbox %&#125;</code></td>
+<td>勾选框</td>
+</tr>
+<tr>
+<td><code>&#123;% timeline %&#125;</code></td>
+<td>时间线</td>
+</tr>
+<tr>
+<td><code>&#123;% button %&#125;</code></td>
+<td>下载按钮</td>
+</tr>
+</tbody></table>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://biko-duckyo.github.io">Biko</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://biko-duckyo.github.io/2026/10/06/Butterfly%E6%A0%87%E7%AD%BE%E9%80%9F%E6%9F%A5/">https://biko-duckyo.github.io/2026/10/06/Butterfly%E6%A0%87%E7%AD%BE%E9%80%9F%E6%9F%A5/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://biko-duckyo.github.io" target="_blank">Biko的个人小站</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/Hexo/">Hexo</a><a class="post-meta__tags" href="/tags/Butterfly/">Butterfly</a><a class="post-meta__tags" href="/tags/%E6%A0%87%E7%AD%BE%E5%A4%96%E6%8C%82/">标签外挂</a></div><div class="post-share"><div class="social-share" data-image="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related full-width" href="/2026/10/06/Butterfly%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE/" title="Butterfly 主题安装与基础配置"><img class="cover" src="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Butterfly 主题安装与基础配置</div></div><div class="info-2"><div class="info-item-1">安装主题Git 安装（推荐）NPM 安装Gitee 镜像1git clone -b master https://github.com/jerryc127/hexo-theme-butterfly.git themes/butterfly  升级： 12cd themes/butterflygit pull1npm i hexo-theme-butterfly  升级： 1npm update hexo-theme-butterfly   NPM 安装文件在 node_modules 里，不在 themes 目录。 1git clone -b master https://gitee.com/immyw/hexo-theme-butterfly.git themes/butterfly  适合国内网络慢的情况。  应用主题修改根目录 _config.yml： 1theme: butterfly  安装渲染器1npm install hexo-renderer-pug hexo-renderer-stylus --save  配置文件分离（重要）在根目录创建 _config.but...</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2026/10/06/Butterfly%E5%AE%89%E8%A3%85%E4%B8%8E%E9%85%8D%E7%BD%AE/" title="Butterfly 主题安装与基础配置"><img class="cover" src="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-10-06</div><div class="info-item-2">Butterfly 主题安装与基础配置</div></div><div class="info-2"><div class="info-item-1">安装主题Git 安装（推荐）NPM 安装Gitee 镜像1git clone -b master https://github.com/jerryc127/hexo-theme-butterfly.git themes/butterfly  升级： 12cd themes/butterflygit pull1npm i hexo-theme-butterfly  升级： 1npm update hexo-theme-butterfly   NPM 安装文件在 node_modules 里，不在 themes 目录。 1git clone -b master https://gitee.com/immyw/hexo-theme-butterfly.git themes/butterfly  适合国内网络慢的情况。  应用主题修改根目录 _config.yml： 1theme: butterfly  安装渲染器1npm install hexo-renderer-pug hexo-renderer-stylus --save  配置文件分离（重要）在根目录创建 _config.but...</div></div></div></a><a class="pagination-related" href="/2026/10/06/Hexo+GitHub%E6%90%AD%E5%BB%BA%E6%8C%87%E5%8D%97/" title="Hexo + GitHub 搭建个人博客完整指南"><img class="cover" src="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-10-06</div><div class="info-item-2">Hexo + GitHub 搭建个人博客完整指南</div></div><div class="info-2"><div class="info-item-1">环境准备Node.jsWindowsMacLinux推荐使用 nvs（Node Version Switcher）管理版本： 12345# 下载 nvsgit clone https://github.com/jasongin/nvs.gitcd nvs./nvs.sh add ltsnvs use lts  或直接去 nodejs.org 下载 LTS 安装包。123456# 使用 Homebrewbrew install node# 验证node -vnpm -v123456# Ubuntu/Debiancurl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -sudo apt install -y nodejs# Fedorasudo dnf install nodejs  GitWindowsMacLinux去 git-scm.com 下载安装包，一路下一步。安装后右键菜单会出现 “Git Bash Here”。1brew install git12345# Ubuntu/Debiansudo ap...</div></div></div></a><a class="pagination-related" href="/2026/10/06/Hexo%E4%BC%98%E5%8C%96%E8%B7%AF%E7%BA%BF/" title="Hexo 博客优化完整路线"><img class="cover" src="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg" alt="cover"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-10-06</div><div class="info-item-2">Hexo 博客优化完整路线</div></div><div class="info-2"><div class="info-item-1">优化路线总览1搭建博客 → GitHub Actions → 第三方托管 → 静态资源优化 → CDN 加速   博客搭建WindowsUbuntuAndroid最推荐的本地开发环境。  安装 Node.js LTS 安装 Git npm install hexo-cli -g hexo init 初始化 适合服务器部署和命令行熟悉者。建议先配置好 zsh + vim 开发环境。用 Termux 终端模拟器，功能有限。适合临时写文章，不适合长期开发。   GitHub Actions 自动部署把本地的 hexo g -d 放到线上自动跑。 好处：  本地只写文章，git push 就自动部署 源码版本管理，出错随时回滚 增量提交，速度快  需要在 GitHub 仓库新建 .github/workflows/deploy.yml。  托管平台对比VercelNetlifyCloudflare PagesGitee Pages 优点：免费 CDN，部署简单 缺点：国内访问慢 适合：面向海外读者  优点：功能丰富，支持表单 缺点：国内访问慢 适合：需要额外功能  优点：全球 CDN，免...</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Biko</div><div class="author-info-description">一只努力学习的菜鸟甜甜圈～</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">5</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">8</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">1</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/superBrain"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/superBrain" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:1078857679@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a><a class="social-icon" href="tencent://AddContact/?fromId=50&amp;fromSubId=1&amp;subcmd=all&amp;uin=1078857679" target="_blank" title="QQ"><i class="iconfont icon-qq" style="color: #12b7f5;"></i></a><a class="social-icon" href="https://www.zhihu.com/people/qin-chao-10-90" target="_blank" title="Zhihu"><i class="iconfont icon-zhihu" style="color: #0084ff;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">superBrain！多学技术 提升自己~</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#Note-%E6%8F%90%E7%A4%BA%E5%9D%97"><span class="toc-number">1.</span> <span class="toc-text">Note 提示块</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E7%94%A8%E6%B3%95"><span class="toc-number">1.1.</span> <span class="toc-text">基本用法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89%E7%A7%8D%E6%A0%B7%E5%BC%8F%E5%AF%B9%E6%AF%94"><span class="toc-number">1.2.</span> <span class="toc-text">三种样式对比</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E5%9B%BE%E6%A0%87"><span class="toc-number">1.3.</span> <span class="toc-text">自定义图标</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Tabs-%E6%A0%87%E7%AD%BE%E5%88%87%E6%8D%A2"><span class="toc-number">2.</span> <span class="toc-text">Tabs 标签切换</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Gallery-%E7%9B%B8%E5%86%8C"><span class="toc-number">3.</span> <span class="toc-text">Gallery 相册</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%9B%B8%E5%86%8C%E7%BB%84"><span class="toc-number">3.1.</span> <span class="toc-text">相册组</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%95%E7%9B%B8%E5%86%8C"><span class="toc-number">3.2.</span> <span class="toc-text">单相册</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%8C%89%E9%92%AE"><span class="toc-number">4.</span> <span class="toc-text">按钮</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%A4%8D%E9%80%89%E6%A1%86"><span class="toc-number">5.</span> <span class="toc-text">复选框</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%96%87%E5%AD%97%E6%A0%B7%E5%BC%8F"><span class="toc-number">6.</span> <span class="toc-text">文字样式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E8%A1%8C%E5%86%85%E4%BB%A3%E7%A0%81%E9%AB%98%E4%BA%AE"><span class="toc-number">7.</span> <span class="toc-text">行内代码高亮</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E7%94%A8%E9%80%9F%E6%9F%A5%E8%A1%A8"><span class="toc-number">8.</span> <span class="toc-text">常用速查表</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(/img/banner.jpg);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2022 - 2026 By Biko</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.7.0</a></span></div><div class="footer_custom_text">Hi, welcome to my <a target="_blank" rel="noopener" href="https://superbrain.github.io/">blog</a>!<p><a target="_blank" href="https://hexo.io/"><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&logo=hexo" title="博客框架为Hexo"></a>&nbsp;<a target="_blank" href="https://butterfly.js.org/"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&logo=bitdefender" title="主题采用butterfly"></a>&nbsp;<a target="_blank" href="https://www.jsdelivr.com/"><img src="https://img.shields.io/badge/CDN-jsDelivr-orange?style=flat&logo=jsDelivr" title="本站使用JsDelivr为静态资源提供CDN加速"></a>&nbsp;<a target="_blank" href="https://github.com/"><img src="https://img.shields.io/badge/Source-Github-d021d6?style=flat&logo=GitHub" title="本站项目由Gtihub托管"></a>&nbsp;<a target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&logo=Claris" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可"></a></p></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><script src="/js/tw_cn.js?v=5.7.0"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@6.1.14/dist/fancybox/fancybox.umd.min.js"></script><script src="https://cdn.jsdelivr.net/npm/instant.page@5.2.0/instantpage.min.js" type="module"></script><script src="https://cdn.jsdelivr.net/npm/node-snackbar@0.1.16/dist/snackbar.min.js"></script><div class="js-pjax"></div><div id="ironheart-loader"><div class="ironheart-box"><div class="ironheart-ring r1"></div><div class="ironheart-ring r2"></div><div class="ironheart-core"></div><div class="ironheart-text">Loading...</div></div></div><script defer data-pjax src="/js/custom/ironheart_loader.js"></script><script defer data-pjax src="/js/custom/footer_butterfly.js"></script><div id="nav-toggle-bar"></div><div id="nav-bridge"></div><script defer data-pjax src="/js/custom/hidden_nav.js"></script><script defer data-pjax src="/js/custom/banner_parallax.js"></script><script>setTimeout(function(){var lb=document.getElementById('loading-box');if(lb){lb.classList.add('loaded');document.body.style.overflow='auto';}},3000);document.addEventListener('pjax:complete',function(){setTimeout(function(){var lb=document.getElementById('loading-box');if(lb){lb.classList.add('loaded');document.body.style.overflow='auto';}},1500);});</script><script data-pjax defer src="/js/custom/fixed_card_widget.js"></script><script data-pjax defer src="/js/custom/sao_card.js"></script><script data-pjax defer src="/js/custom/title_hover.js"></script><script>function injectWechatCapsule(){var icons=document.getElementById('site_social_icons');if(icons&&!document.getElementById('wechat-capsule')){var w=document.createElement('div');w.id='wechat-capsule';w.innerHTML='<i class=\"fab fa-weixin\"></i><span>微信：15651005256</span>';icons.parentNode.insertBefore(w,icons.nextSibling);}}if(document.readyState!=='loading'){injectWechatCapsule();}else{document.addEventListener('DOMContentLoaded',injectWechatCapsule);}document.addEventListener('pjax:complete',function(){setTimeout(injectWechatCapsule,300);});</script><script data-pjax defer src="/js/custom/runtime_fallback.js"></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer@1/dist/APlayer.min.js"></script><script src="https://cdn.jsdelivr.net/gh/metowolf/MetingJS@1.2/dist/Meting.min.js"></script><div class="aplayer no-destroy" data-id="2120966270" data-server="netease" data-type="playlist" data-fixed="true" data-mini="true" data-autoplay="true" data-listfolded="true"> </div><script defer="defer" id="ribbon" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/dist/canvas-ribbon.min.js" size="150" alpha="0.6" zIndex="-1" mobile="true" data-click="true"></script><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/dist/activate-power-mode.min.js"></script><script>POWERMODE.colorful = true;
+POWERMODE.shake = false;
+POWERMODE.mobile = true;
+document.body.addEventListener('input', POWERMODE);
+</script><script id="click-heart" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/dist/click-heart.min.js" async="async" mobile="true"></script><script src="https://cdn.jsdelivr.net/npm/pjax@0.2.8/pjax.min.js" defer="defer"></script><script>document.addEventListener('DOMContentLoaded', () => {
+  const pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+  window.pjax = new Pjax({
+    elements: 'a:not([target="_blank"]):not([data-fancybox])',
+    selectors: pjaxSelectors,
+    cacheBust: false,
+    analytics: false,
+    scrollRestoration: false
+  })
+
+  const triggerPjaxFn = (val) => {
+    if (!val) return
+    Object.values(val).forEach(fn => {
+      try {
+        fn()
+      } catch (err) {
+        console.debug('Pjax callback failed:', err)
+      }
+    })
+  }
+
+  document.addEventListener('pjax:send', () => {
+    // removeEventListener
+    btf.removeGlobalFnEvent('pjaxSendOnce')
+    btf.removeGlobalFnEvent('themeChange')
+
+    // reset readmode
+    const $bodyClassList = document.body.classList
+    if ($bodyClassList.contains('read-mode')) $bodyClassList.remove('read-mode')
+
+    triggerPjaxFn(window.globalFn.pjaxSend)
+  })
+
+  document.addEventListener('pjax:complete', () => {
+    btf.removeGlobalFnEvent('pjaxCompleteOnce')
+    document.querySelectorAll('script[data-pjax]').forEach(item => {
+      if (!item.parentNode) return
+      const newScript = document.createElement('script')
+      const content = item.text || item.textContent || ''
+      Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+      newScript.appendChild(document.createTextNode(content))
+      item.parentNode.replaceChild(newScript, item)
+    })
+
+    triggerPjaxFn(window.globalFn.pjaxComplete)
+  })
+
+  document.addEventListener('pjax:error', e => {
+    const responseURL = e.request && e.request.responseURL
+    if (e.request && e.request.status === 404) {
+      false
+        ? pjax.loadUrl('/404.html')
+        : responseURL && (window.location.href = responseURL)
+    } else if (responseURL) {
+      window.location.href = responseURL
+    }
+  })
+})</script><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.7.0"></script></div></div><!-- hexo injector body_end start --><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><p id="ghbdages"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" data-title="博客框架为 Hexo" title=""><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" data-title="主题 Butterfly" title=""><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="https://pages.github.com/" style="margin-inline:5px" data-title="本站托管于 GitHub Pages" title=""><img src="https://img.shields.io/badge/Hosted-GitHub_Pages-181717?style=flat&amp;logo=github" alt=""/></a><a class="github-badge" target="_blank" href="https://github.com/superBrain/superBrain.github.io" style="margin-inline:5px" data-title="本站项目由 GitHub 托管" title=""><img src="https://img.shields.io/badge/Source-Github-d021d6?style=flat&amp;logo=GitHub" alt=""/></a><a class="github-badge" target="_blank" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" data-title="本站采用 CC BY-NC-SA 4.0 协议" title=""><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=creativecommons" alt=""/></a></p>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'undefined'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="/footer-beautify/runtime.js"></script><script data-pjax>
+  function butterfly_clock_injector_config(){
+    var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+    var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img class="entered loading" id="card-clock-loading" src="/clock/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading"/></div></div></div></div></div>';
+    console.log('已挂载butterfly_clock')
+    parent_div_git.insertAdjacentHTML("afterbegin",item_html)
+    }
+  var elist = '/posts/'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_clock_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_clock_injector_config();
+  }
+  </script><script src="https://pv.sohu.com/cityjson?ie=utf-8"></script><script data-pjax src="/clock/clock.min.js"></script><script async src="//at.alicdn.com/t/font_2032782_8d5kxvn09md.js"></script><div class="js-pjax"><script async="async">var arr = document.getElementsByClassName('recent-post-item');
+for(var i = 0;i<arr.length;i++){
+    arr[i].classList.add('wow');
+    arr[i].classList.add('animate__zoomIn');
+    arr[i].setAttribute('data-wow-duration', '1s');
+    arr[i].setAttribute('data-wow-delay', '');
+    arr[i].setAttribute('data-wow-offset', '');
+    arr[i].setAttribute('data-wow-iteration', '');
+  }</script><script async="async">var arr = document.getElementsByClassName('card-widget');
+for(var i = 0;i<arr.length;i++){
+    arr[i].classList.add('wow');
+    arr[i].classList.add('animate__slideInRight');
+    arr[i].setAttribute('data-wow-duration', '1s');
+    arr[i].setAttribute('data-wow-delay', '');
+    arr[i].setAttribute('data-wow-offset', '');
+    arr[i].setAttribute('data-wow-iteration', '');
+  }</script></div><script defer src="https://npm.elemecdn.com/hexo-butterfly-wowjs/lib/wow.min.js"></script><script defer src="https://npm.elemecdn.com/hexo-butterfly-wowjs/lib/wow_init.js"></script><!-- hexo injector body_end end --><script src="https://cdn.jsdelivr.net/npm/live2d-widget@^3.1.3/lib/L2Dwidget.min.js"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"/live2dw/assets/hijiki.model.json"},"display":{"position":"right","width":150,"height":300},"mobile":{"show":false},"pluginJsPath":"lib/"});</script></body></html>
