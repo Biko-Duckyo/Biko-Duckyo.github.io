@@ -1,61 +1,112 @@
+// ======================================================
+// Butterfly 侧边栏电子钟 3.0（和风天气 + FontAwesome 图标版）
+// ======================================================
+(function () {
+  var QWEATHER_KEY = '78d33f3239ad4ae0a55f89a9d2a9f99b';
+  var API_HOST = 'https://nt54dwdrmw.re.qweatherapi.com';
+  var DEFAULT_LOCATION = '101190101';
 
-   fetch('https://wttr.in/'+returnCitySN["cip"]+'?format="%l+\\+%c+\\+%t+\\+%h"').then(res=>res.text()).then(
-    data => {
-       if(document.getElementById('hexo_electric_clock')){
-        var res_text = data.replace(/not found/g,'not found,not found').replace(/"/g,'').replace(/\+/g,'').replace(/,/g,'\\').replace(/ /g,'').replace(/°C/g,'');
-        res_list = res_text.split('\\');
-        var clock_box = document.getElementById('hexo_electric_clock');
-        clock_box_html = `
-          <div class="clock-row">
-            <span id="card-clock-clockdate" class="card-clock-clockdate"></span>
-            <span class="card-clock-weather">${res_list[2]} ${res_list[3]} *C</span>
-            <span class="card-clock-humidity">💧 ${res_list[4]}</span>
-          </div>
-          <div class="clock-row">
-            <span id="card-clock-time" class="card-clock-time"></span>
-          </div>
-          <div class="clock-row">
-            <span class="card-clock-ip">${returnCitySN["cip"]}</span>
-            <span class="card-clock-location">${res_list[0]}</span>
-            <span id="card-clock-dackorlight" class="card-clock-dackorlight"></span>
-          </div>
-          `;
-        var week = ['SUN', 'MON', 'TUE', 'WED','THU' ,'FRI', 'SAT'];
-        var card_clock_loading_dom = document.getElementById('card-clock-loading');
-        card_clock_loading_dom.innerHTML='';
-        clock_box.innerHTML= clock_box_html;
-        function updateTime() {
-            var cd = new Date();
-            var card_clock_time = zeroPadding(cd.getHours(), 2) + ':' + zeroPadding(cd.getMinutes(), 2) + ':' + zeroPadding(cd.getSeconds(), 2);
-            var card_clock_date = zeroPadding(cd.getFullYear(), 4) + '-' + zeroPadding(cd.getMonth()+1, 2) + '-' + zeroPadding(cd.getDate(), 2) + ' '+ week[cd.getDay()];
-            var card_clock_dackorlight = cd.getHours();
-            var card_clock_dackorlight_str;
-            if(card_clock_dackorlight >12) {
-                card_clock_dackorlight -= 12;
-                card_clock_dackorlight_str = " PM";
-            }else{
-                card_clock_dackorlight_str = " AM";
-            }
-            if(document.getElementById('card-clock-time')){
-            var card_clock_time_dom = document.getElementById('card-clock-time');
-            var card_clock_date_dom = document.getElementById('card-clock-clockdate');
-            var card_clock_dackorlight_dom = document.getElementById('card-clock-dackorlight');
-            card_clock_time_dom.innerHTML= card_clock_time;
-            card_clock_date_dom.innerHTML= card_clock_date;
-            card_clock_dackorlight_dom.innerHTML= card_clock_dackorlight_str
-                }
-        }
+  // 和风天气 code → FontAwesome 图标
+  var ICON_MAP = {
+    '100': 'sun', '150': 'sun',
+    '101': 'cloud-sun', '151': 'cloud-sun', '152': 'cloud-sun', '153': 'cloud-sun',
+    '102': 'cloud-sun', '103': 'cloud-sun',
+    '104': 'cloud',
+    '300': 'cloud-showers-heavy', '301': 'cloud-showers-heavy',
+    '302': 'bolt', '303': 'bolt', '304': 'bolt',
+    '305': 'cloud-showers-heavy', '306': 'cloud-showers-heavy',
+    '309': 'cloud-sun-rain', '310': 'cloud-showers-heavy',
+    '400': 'snowflake', '401': 'snowflake',
+    '500': 'smog', '501': 'smog',
+    '999': 'truck'
+  };
 
-        function zeroPadding(num, digit) {
-            var zero = '';
-            for(var i = 0; i < digit; i++) {
-                zero += '0';
-            }
-            return (zero + num).slice(-digit);
-        }
-           var timerID = setInterval(updateTime, 1000);
-           updateTime();
-        console.log(res_list)
-       }
+  function initClock() {
+    var clock_box = document.getElementById('hexo_electric_clock');
+    if (!clock_box) return;
+
+    // 加载动画
+    clock_box.innerHTML = '<img id="card-clock-loading" src="/clock/loading.gif" style="height:120px;width:100%;" />';
+
+    var week = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+
+    function updateTime() {
+      var cd = new Date();
+      var h = cd.getHours();
+      var time = zeroPadding(h, 2) + ':' + zeroPadding(cd.getMinutes(), 2) + ':' + zeroPadding(cd.getSeconds(), 2);
+      var date = zeroPadding(cd.getFullYear(), 4) + '-' + zeroPadding(cd.getMonth() + 1, 2) + '-' + zeroPadding(cd.getDate(), 2) + ' ' + week[cd.getDay()];
+      var ampm = h >= 12 ? 'PM' : 'AM';
+
+      var tEl = document.getElementById('card-clock-time');
+      var dEl = document.getElementById('card-clock-clockdate');
+      var aEl = document.getElementById('card-clock-dackorlight');
+      if (tEl) tEl.textContent = time;
+      if (dEl) dEl.textContent = date;
+      if (aEl) aEl.textContent = ampm;
     }
-)
+
+    function zeroPadding(num, digit) {
+      var zero = '';
+      for (var i = 0; i < digit; i++) zero += '0';
+      return (zero + num).slice(-digit);
+    }
+
+    // 和风天气：IP 定位 + 实时天气
+    fetch('https://ipapi.co/json/')
+      .then(function (r) { return r.json(); })
+      .then(function (ipData) {
+        var cityName = ipData.city || 'Nanjing';
+        return fetch(API_HOST + '/geo/v2/city/lookup?location=' + encodeURIComponent(cityName) + '&key=' + QWEATHER_KEY)
+          .then(function (r) { return r.json(); })
+          .then(function (geo) {
+            var locId = (geo.code === '200' && geo.location && geo.location[0]) ? geo.location[0].id : DEFAULT_LOCATION;
+            var city = (geo.code === '200' && geo.location && geo.location[0]) ? geo.location[0].name : '南京';
+            return fetch(API_HOST + '/v7/weather/now?location=' + locId + '&key=' + QWEATHER_KEY)
+              .then(function (r) { return r.json(); })
+              .then(function (w) {
+                if (w.code !== '200') throw new Error('weather error');
+                var icon = ICON_MAP[w.now.icon] || 'cloud';
+                clock_box.innerHTML =
+                  '<div class="clock-row">' +
+                  '  <span class="card-clock-clockdate"></span>' +
+                  '  <span class="card-clock-weather"><i class="fas fa-' + icon + '"></i> ' + w.now.text + ' ' + w.now.temp + '°C</span>' +
+                  '  <span class="card-clock-humidity">💧' + w.now.humidity + '%</span>' +
+                  '</div>' +
+                  '<div class="clock-row">' +
+                  '  <span id="card-clock-time" class="card-clock-time"></span>' +
+                  '</div>' +
+                  '<div class="clock-row">' +
+                  '  <span class="card-clock-ip">' + (ipData.ip || '127.0.0.1') + '</span>' +
+                  '  <span class="card-clock-location">' + city + '</span>' +
+                  '  <span id="card-clock-dackorlight" class="card-clock-dackorlight"></span>' +
+                  '</div>';
+                setInterval(updateTime, 1000);
+                updateTime();
+              });
+          });
+      })
+      .catch(function () {
+        // 失败兜底：只显示时间
+        clock_box.innerHTML =
+          '<div class="clock-row">' +
+          '  <span id="card-clock-clockdate" class="card-clock-clockdate"></span>' +
+          '  <span class="card-clock-weather">--</span>' +
+          '  <span class="card-clock-humidity"></span>' +
+          '</div>' +
+          '<div class="clock-row">' +
+          '  <span id="card-clock-time" class="card-clock-time"></span>' +
+          '</div>' +
+          '<div class="clock-row">' +
+          '  <span class="card-clock-ip"></span>' +
+          '  <span class="card-clock-location">南京</span>' +
+          '  <span id="card-clock-dackorlight" class="card-clock-dackorlight"></span>' +
+          '</div>';
+        setInterval(updateTime, 1000);
+        updateTime();
+      });
+  }
+
+  if (document.readyState !== 'loading') initClock();
+  else document.addEventListener('DOMContentLoaded', initClock);
+  document.addEventListener('pjax:complete', function () { setTimeout(initClock, 500); });
+})();

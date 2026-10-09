@@ -911,3 +911,77 @@ a#site-name:hover:before {
 [data-theme="dark"] .blog-slider__pagination .swiper-pagination-bullet-active {
   background: rgba(255, 255, 255, 0.9) !important;
 }
+
+/* ======================================================
+ * 全局固定背景：鲸鱼星空图始终铺满整个页面（参考 superq314.github.io）
+ * ====================================================== */
+body {
+  background: url('https://s2.loli.net/2022/04/11/oDZPBRxHn59rbYO.jpg') no-repeat center center fixed !important;
+  background-size: cover !important;
+}
+#body-wrap,
+#footer,
+#page-header.full_page,
+.layout_page,
+#article-container,
+#aside-content .card-widget {
+  background: transparent !important;
+}
+#aside-content .card-widget {
+  background: rgba(30, 30, 40, 0.6) !important;
+  backdrop-filter: blur(10px);
+}
+
+/* 公告栏样式 */
+#aside-content .card-announcement {
+  border-radius: 16px !important;
+}
+#aside-content .card-announcement::before,
+#aside-content .card-announcement .card-background::before {
+  display: none !important;
+}
+#aside-content .card-announcement .item-headline {
+  font-size: 18px;
+  font-weight: bold;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+#aside-content .card-announcement .item-headline i {
+  color: #ff4757;
+}
+#aside-content .card-announcement .announcement_content {
+  line-height: 2;
+  text-align: center;
+  white-space: pre-line;
+}
+/* 隐藏页脚残缺蝴蝶图标 */
+#footer-wrap .footer-butterfly,
+#footer-wrap [class*=butterfly],
+#footer-wrap .iconfont {
+  display: none !important;
+}
+
+/* 右下角齿轮面板：模式切换用太阳/月亮图标 */
+#rightside-config-show button[title*="dark"],
+#rightside-config-show button[title*="night"],
+#rightside-config-show .darkmode-switch {
+  font-size: 18px !important;
+}
+#rightside-config-show button[title*="dark"]::before,
+#rightside-config-show button[title*="night"]::before {
+  font-family: "Font Awesome 5 Free";
+  font-weight: 900;
+}
+body.dark-mode #rightside-config-show button[title*="dark"]::before,
+body.dark-mode #rightside-config-show button[title*="night"]::before {
+  content: "\f185"; /* 太阳 */
+}
+body:not(.dark-mode) #rightside-config-show button[title*="dark"]::before,
+body:not(.dark-mode) #rightside-config-show button[title*="night"]::before {
+  content: "\f186"; /* 月亮 */
+}
+
+@keyframes shine {
+  to { background-position: 200% center; }
+}
+

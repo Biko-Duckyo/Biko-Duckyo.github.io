@@ -79,6 +79,25 @@
       '<i class="fas fa-' + icon + '" style="margin-right:6px;"></i>' +
       '<span>' + now.temp + '° ' + now.text + '</span>' +
       cityHtml + aqiHtml + warnHtml;
+
+    // 同时更新侧边栏时钟卡片上的天气和地点
+    var clockCard = document.getElementById('hexo_electric_clock');
+    if (clockCard) {
+      // 星期英文转中文
+      var weekMap = { MON: '周一', TUE: '周二', WED: '周三', THU: '周四', FRI: '周五', SAT: '周六', SUN: '周日' };
+      var dateEl = clockCard.querySelector('.card-clock-clockdate');
+      if (dateEl) {
+        var txt = dateEl.textContent;
+        for (var en in weekMap) { txt = txt.replace(en, weekMap[en]); }
+        dateEl.textContent = txt;
+      }
+      // 天气：和风数据覆盖
+      var weatherEl = clockCard.querySelector('.card-clock-weather');
+      if (weatherEl) weatherEl.textContent = ' ' + now.text + ' ' + now.temp + '°C';
+      // 地点：和风城市名覆盖
+      var locEl = clockCard.querySelector('.card-clock-location');
+      if (locEl) locEl.textContent = ' ' + data.cityName;
+    }
   }
 
   function loadWeather() {

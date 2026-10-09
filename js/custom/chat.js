@@ -11,20 +11,11 @@
     var style = document.createElement('style');
     style.textContent = `
       #biko-chat-widget {
-        position: fixed; right: 20px; bottom: 340px; z-index: 99998;
+        position: fixed; right: 180px; bottom: 100px; z-index: 99998;
         font-family: -apple-system, "PingFang SC", sans-serif;
       }
-      #biko-chat-toggle {
-        width: 48px; height: 48px; border-radius: 50%;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        border: none; cursor: pointer; color: #fff; font-size: 20px;
-        box-shadow: 0 4px 12px rgba(0,0,0,.2);
-        display: flex; align-items: center; justify-content: center;
-        transition: transform .2s;
-      }
-      #biko-chat-toggle:hover { transform: scale(1.1); }
       #biko-chat-box {
-        position: absolute; right: 0; bottom: 60px; width: 320px; height: 420px;
+        position: absolute; right: 0; bottom: 0; width: 320px; height: 420px;
         background: #fff; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,.2);
         display: none; flex-direction: column; overflow: hidden;
       }
@@ -66,17 +57,35 @@
           <button id="biko-chat-send">发送</button>
         </div>
       </div>
-      <button id="biko-chat-toggle">💬</button>
     `;
     document.body.appendChild(widget);
 
-    document.getElementById('biko-chat-toggle').onclick = function () {
-      document.getElementById('biko-chat-box').classList.toggle('open');
-    };
     document.getElementById('biko-chat-send').onclick = sendMessage;
     document.getElementById('biko-chat-input').onkeydown = function (e) {
       if (e.key === 'Enter') sendMessage();
     };
+
+    // 点击黑猫弹出聊天框
+    function bindCatClick() {
+      var cat = document.getElementById('live2dcanvas');
+      if (cat && !cat.__chatBound) {
+        cat.__chatBound = true;
+        cat.style.cursor = 'pointer';
+        cat.style.zIndex = '999999';
+        cat.addEventListener('click', function (e) {
+          e.stopPropagation();
+          var box = document.getElementById('biko-chat-box');
+          if (box) box.classList.toggle('open');
+        });
+        console.log('黑猫点击已绑定');
+      }
+    }
+    bindCatClick();
+    // live2d 加载慢，轮询绑定
+    var timer = setInterval(function () {
+      bindCatClick();
+      if (document.getElementById('live2dcanvas')?.__chatBound) clearInterval(timer);
+    }, 1000);
   }
 
   function sendMessage() {
