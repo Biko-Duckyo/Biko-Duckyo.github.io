@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f2f5fa">
+<title>音乐 · Biko</title>
+<meta name="description" content="Biko 的音乐播放页：大屏演出视图 + 完整歌单，与全站音符按钮共用同一个播放器。">
+<!-- 独立页（layout:false）不经过主题渲染，需自带主题与图标库 -->
+<link rel="stylesheet" href="/css/vendor/fontawesome.min.css">
+<link rel="stylesheet" href="/css/custom_nav.css">
+<link rel="stylesheet" href="/css/biko_subpage.css">
+<link rel="stylesheet" href="/css/biko_theme_toggle.css">
+<link rel="stylesheet" href="/css/music_page.css">
+<script>
+/* 主题脚本必须在 <head> 同步执行：先套上 data-theme 再渲染，
+   否则浅色偏好会先闪一下深色（FOUC）。键名 theme 与主站主题一致。 */
+(function () {
+  try {
+    var v = localStorage.getItem('theme');
+    if (v !== 'dark' && v !== 'light') {
+      v = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', v);
+    var m = document.querySelector('meta[name="theme-color"]');
+    if (m) m.setAttribute('content', v === 'dark' ? '#0d1018' : '#f2f5fa');
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+</head>
+<body class="biko-subpage biko-music-page">
+
+<header class="topbar-mp">
+  <a class="topback-mp" href="/">&#8592; 返回首页</a>
+  <span class="brand-mp">Music</span>
+</header>
+
+<!-- 昼夜切换：与主站齿轮面板里的明暗按钮同源，共用 subpage_theme.js -->
+<button class="biko-theme-toggle" type="button" id="biko-theme-toggle"
+        title="浅色 / 深色模式切换" aria-label="明暗切换">
+  <i class="biko-theme-toggle__icon" aria-hidden="true"></i>
+</button>
+
+
+<div class="bmpg">
+
+  <div class="bmpg-head">
+    <p class="bmpg-eyebrow">Now Playing</p>
+    <h1>我的音乐收藏</h1>
+    <p class="bmpg-sub">点下面的任意一首即可播放。这里的播放器与站点左下角的音符按钮是同一个引擎，切换时不会出现两个歌单同时响。</p>
+  </div>
+
+  <section class="bmpg-player" id="bmpg-player">
+    <div class="bmpg-art" id="bmpg-art"></div>
+
+    <div class="bmpg-side">
+      <div>
+        <div class="bmpg-kicker">正在播放</div>
+        <h2 class="bmpg-name" id="bmpg-name">加载中…</h2>
+        <p class="bmpg-artist" id="bmpg-artist">正在连接播放器</p>
+      </div>
+
+      <div class="bmpg-bar">
+        <span id="bmpg-ptime">0:00</span>
+        <input id="bmpg-seek" type="range" min="0" max="100" value="0" step="0.1" aria-label="播放进度">
+        <span id="bmpg-dtime">0:00</span>
+      </div>
+
+      <div class="bmpg-ctrl">
+        <button id="bmpg-shuffle" type="button" title="随机播放" aria-label="随机播放" aria-pressed="false">
+          <i class="fas fa-shuffle"></i>
+        </button>
+        <button id="bmpg-prev" type="button" title="上一首" aria-label="上一首">
+          <i class="fas fa-backward-step"></i>
+        </button>
+        <button id="bmpg-play" class="bmpg-play" type="button" title="播放/暂停" aria-label="播放">
+          <i class="fas fa-play"></i>
+        </button>
+        <button id="bmpg-next" type="button" title="下一首" aria-label="下一首">
+          <i class="fas fa-forward-step"></i>
+        </button>
+        <button id="bmpg-mute" type="button" title="静音" aria-label="静音">
+          <i class="fas fa-volume-high"></i>
+        </button>
+        <label class="bmpg-vol">
+          <span class="sr-only">音量</span>
+          <input id="bmpg-vol" type="range" min="0" max="1" value="0.7" step="0.01" aria-label="音量">
+        </label>
+      </div>
+
+      <p class="bmpg-status" id="bmpg-status">准备就绪</p>
+    </div>
+  </section>
+
+  <section class="bmpg-listwrap">
+    <div class="bmpg-listhead">
+      <h2>歌单</h2>
+      <input class="bmpg-filter" id="bmpg-filter" type="search" placeholder="搜索歌名或歌手" aria-label="搜索歌曲">
+      <span class="bmpg-n" id="bmpg-count"></span>
+    </div>
+    <ul class="bmpg-list" id="bmpg-list">
+      <li class="bmpg-empty">正在载入歌单…</li>
+    </ul>
+  </section>
+
+  <p class="bmpg-foot">
+    想换歌单？编辑站点配置里 APlayer 的 <b>data-id</b>（网易云歌单 ID）即可，本页会自动跟随。<br>
+    也可以直接在这里点播，左下角音符按钮会同步显示当前曲目。
+  </p>
+
+</div>
+
+<script src="/js/custom/subpage_theme.js"></script>
+<script>
+/* 按钮 → window.switchNightMode（与主站同名同义，含星球旋转动画） */
+(function () {
+  var btn = document.getElementById('biko-theme-toggle');
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    if (window.switchNightMode) window.switchNightMode();
+  });
+})();
+</script>
+<script src="/js/custom/music_page.js"></script>
+</body>
+</html>

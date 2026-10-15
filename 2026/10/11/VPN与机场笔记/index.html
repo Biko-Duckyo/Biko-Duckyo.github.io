@@ -1,0 +1,730 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>VPN &amp; 机场笔记（资料备份） | Biko的个人小站</title><meta name="author" content="Biko"><meta name="copyright" content="Biko"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0d1018"><meta name="description" content="一份 VPN 与机场订阅的备份笔记：主流代理协议对比、客户端选型、macOS 代理配置、机场选购维度与故障排查踩坑记录。资料整理性质，信息可能过期，请以实际为准。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="VPN &amp; 机场笔记（资料备份）">
+<meta property="og:url" content="https://biko-duckyo.github.io/2026/10/11/VPN%E4%B8%8E%E6%9C%BA%E5%9C%BA%E7%AC%94%E8%AE%B0/index.html">
+<meta property="og:site_name" content="Biko的个人小站">
+<meta property="og:description" content="一份 VPN 与机场订阅的备份笔记：主流代理协议对比、客户端选型、macOS 代理配置、机场选购维度与故障排查踩坑记录。资料整理性质，信息可能过期，请以实际为准。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg">
+<meta property="article:published_time" content="2026-10-11T03:00:00.000Z">
+<meta property="article:modified_time" content="2026-10-10T16:00:00.000Z">
+<meta property="article:author" content="Biko">
+<meta property="article:tag" content="VPN">
+<meta property="article:tag" content="代理">
+<meta property="article:tag" content="机场">
+<meta property="article:tag" content="科学上网">
+<meta property="article:tag" content="资料备份">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "VPN & 机场笔记（资料备份）",
+  "url": "https://biko-duckyo.github.io/2026/10/11/VPN%E4%B8%8E%E6%9C%BA%E5%9C%BA%E7%AC%94%E8%AE%B0/",
+  "image": "https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg",
+  "datePublished": "2026-10-11T03:00:00.000Z",
+  "dateModified": "2026-10-10T16:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Biko",
+      "url": "https://biko-duckyo.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://biko-duckyo.github.io/2026/10/11/VPN%E4%B8%8E%E6%9C%BA%E5%9C%BA%E7%AC%94%E8%AE%B0/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.1/css/all.min.css"><link rel="stylesheet" href="/css/vendor/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="/css/vendor/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!true && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d1018')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', 'f2f5fa')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#7E96B8","bgDark":"#1a2030","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: 'VPN & 机场笔记（资料备份）',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/custom.css"><link rel="stylesheet" href="/css/custom_nav.css"><link rel="stylesheet" href="/css/double_row.css"><link rel="stylesheet" href="/css/home_hub.css"><link rel="stylesheet" href="/css/music_panel.css"><link rel="stylesheet" href="/css/music_page.css"><link rel="stylesheet" href="/nanaly/css/noimpty-ai.css"><link rel="stylesheet" href="/nanaly/css/nanaly-workspace.css"><link rel="stylesheet" href="/nanaly/css/nanaly-notes.css"><link rel="stylesheet" href="/nanaly/css/nanaly-delight.css"><link rel="stylesheet" href="/nanaly/css/nanaly-voice.css"><link rel="stylesheet" href="/nanaly/css/nanaly-agent.css"><link rel="stylesheet" href="/nanaly/css/nanaly-shell.css"><link rel="stylesheet" href="/nanaly/css/nanaly-biko-theme.css"><link rel="stylesheet" href="/css/tag-link.css"><link rel="stylesheet" href="/css/rightmenu.css"><link rel="stylesheet" href="https://at.alicdn.com/t/c/font_3764468_7jp6rqh1vde.css"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-double-row-display@1.00/cardlistpost.min.css"/>
+<style>#recent-posts > .recent-post-item >.recent-post-info > .article-meta-wrap > .tags:before {content:"\A";
+  white-space: pre;}#recent-posts > .recent-post-item >.recent-post-info > .article-meta-wrap > .tags > .article-meta__separator{display:none}</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-butterfly-categories-card@1.0.0/lib/categorybar.css"><link rel="stylesheet" href="/clock/clock.min.css" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-butterfly-swiper/lib/swiper.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-butterfly-swiper/lib/swiperstyle.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-butterfly-tag-plugins-plus@1.0.19/lib/assets/font-awesome-animation.min.css" media="defer" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-butterfly-tag-plugins-plus@1.0.19/lib/tag_plugins.css" media="defer" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/hexo-butterfly-tag-plugins-plus@1.0.19/lib/assets/carousel-touch.js"></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-butterfly-wowjs/lib/animate.min.css" media="print" onload="this.media='screen'"><link rel="stylesheet" href="/footer-beautify/runtime.min.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 8.1.2"><link rel="alternate" href="/atom.xml" title="Biko的个人小站" type="application/atom+xml">
+</head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (true) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">15</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/calendar/"><i class="fa-fw fas fa-calendar-day"></i><span> 迹录</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-heartbeat"></i><span> 赋闲</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/galleryGroup/"><i class="fa-fw fas fa-images"></i><span> 相册</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> 电影</span></a></li><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> 音乐</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/bangumis/"><i class="fa-fw fas fa-gamepad"></i><span> 追番</span></a></div><div class="menus_item"><a class="site-page" href="/books/"><i class="fa-fw fas fa-book"></i><span> 文献</span></a></div><div class="menus_item"><a class="site-page" href="/HTML/resume/index.html"><i class="fa-fw fas fa-id-card"></i><span> myself</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly/"><i class="fa-fw fas fa-heart"></i><span> butterfly主题</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Biko的个人小站</span></a><a class="nav-page-title" href="/"><span class="site-name">VPN &amp; 机场笔记（资料备份）</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/"><i class="fa-fw fas fa-home"></i><span> 首页</span></a></div><div class="menus_item"><a class="site-page" href="/calendar/"><i class="fa-fw fas fa-calendar-day"></i><span> 迹录</span></a></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-list"></i><span> 文章</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/archives/"><i class="fa-fw fas fa-archive"></i><span> 时间轴</span></a></li><li><a class="site-page child" href="/tags/"><i class="fa-fw fas fa-tags"></i><span> 标签</span></a></li><li><a class="site-page child" href="/categories/"><i class="fa-fw fas fa-folder-open"></i><span> 分类</span></a></li></ul></div><div class="menus_item"><span class="site-page group"><i class="fa-fw fas fa-heartbeat"></i><span> 赋闲</span><i class="fas fa-chevron-down"></i></span><ul class="menus_item_child"><li><a class="site-page child" href="/galleryGroup/"><i class="fa-fw fas fa-images"></i><span> 相册</span></a></li><li><a class="site-page child" href="/movies/"><i class="fa-fw fas fa-video"></i><span> 电影</span></a></li><li><a class="site-page child" href="/music/"><i class="fa-fw fas fa-music"></i><span> 音乐</span></a></li></ul></div><div class="menus_item"><a class="site-page" href="/bangumis/"><i class="fa-fw fas fa-gamepad"></i><span> 追番</span></a></div><div class="menus_item"><a class="site-page" href="/books/"><i class="fa-fw fas fa-book"></i><span> 文献</span></a></div><div class="menus_item"><a class="site-page" href="/HTML/resume/index.html"><i class="fa-fw fas fa-id-card"></i><span> myself</span></a></div><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly/"><i class="fa-fw fas fa-heart"></i><span> butterfly主题</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">VPN &amp; 机场笔记（资料备份）</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-10-11T03:00:00.000Z" title="发表于 2026-10-11 11:00:00">2026-10-11</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-10-10T16:00:00.000Z" title="更新于 2026-10-11 00:00:00">2026-10-11</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E8%B5%84%E6%BA%90%E5%A4%87%E4%BB%BD/">资源备份</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">2.4k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>8分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><blockquote>
+<p>⚠️ <strong>说明</strong>：本文为<strong>资料备份与信息收集</strong>性质，整理自公开资料与他人笔记（原始出处：<a target="_blank" rel="noopener" href="https://mikeah2011.github.io/post/vpn">mikeah2011 · VPN &amp; 机场笔记</a>）。机场信息时效性极强，<strong>跑路风险高，永远不要年付</strong>——月付或「不限时小包」最安全。</p>
+<p>本文<strong>不含任何推广导流链接</strong>（原文的邀请码已移除），仅保留判断标准与选购方法论。</p>
+</blockquote>
+<h2 id="永远先看这条"><a href="#永远先看这条" class="headerlink" title="永远先看这条"></a>永远先看这条</h2><ul>
+<li><strong>不要年付。</strong> 月付或不限时小包最安全，机场跑路时损失最小。</li>
+<li><strong>不要只买一家。</strong> 组合推荐：一个月付 + 一个不限时套餐 &#x3D; 最稳方案。</li>
+<li><strong>优先选择运营 1 年以上、有工单&#x2F;Telegram 群、支持 24 小时退款的机场。</strong></li>
+</ul>
+<hr>
+<h2 id="一、主流代理协议对比"><a href="#一、主流代理协议对比" class="headerlink" title="一、主流代理协议对比"></a>一、主流代理协议对比</h2><p>选择协议是科学上网的第一步。以下是目前最主流的四种协议在<strong>加密方式、抗封锁能力、性能、跨平台支持</strong>四个维度的对比：</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>Shadowsocks (SS)</th>
+<th>V2Ray (VMess&#x2F;VLESS)</th>
+<th>Trojan</th>
+<th>WireGuard</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>加密方式</strong></td>
+<td>AEAD (ChaCha20-Poly1305 &#x2F; AES-256-GCM)</td>
+<td>VMess: AES-128-GCM；VLESS: 无内置加密（依赖 TLS）</td>
+<td>TLS 1.3（伪装为 HTTPS 流量）</td>
+<td>ChaCha20-Poly1305 &#x2F; Curve25519</td>
+</tr>
+<tr>
+<td><strong>流量特征</strong></td>
+<td>特征明显，易被 DPI 识别</td>
+<td>VMess 有特征；VLESS+XTLS 几乎无特征</td>
+<td>与正常 HTTPS 网站流量一致</td>
+<td>有独特握手特征，需搭配隧道</td>
+</tr>
+<tr>
+<td><strong>抗封锁能力</strong></td>
+<td>⭐⭐⭐ 中等（需配合 obfs 插件）</td>
+<td>⭐⭐⭐⭐ 较强（VLESS+Reality 极强）</td>
+<td>⭐⭐⭐⭐⭐ 极强</td>
+<td>⭐⭐⭐ 中等（裸连易被识别）</td>
+</tr>
+<tr>
+<td><strong>性能</strong></td>
+<td>高</td>
+<td>中（VMess 稍高开销）</td>
+<td>中高</td>
+<td>极高（内核态实现）</td>
+</tr>
+<tr>
+<td><strong>跨平台</strong></td>
+<td>全平台</td>
+<td>全平台</td>
+<td>全平台</td>
+<td>全平台</td>
+</tr>
+<tr>
+<td><strong>适用场景</strong></td>
+<td>自建、轻度使用</td>
+<td>自建 &#x2F; 机场主流</td>
+<td>对抗 DPI</td>
+<td>组网、内网穿透</td>
+</tr>
+</tbody></table>
+<h3 id="协议趋势"><a href="#协议趋势" class="headerlink" title="协议趋势"></a>协议趋势</h3><ul>
+<li><strong>VLESS + Reality</strong> 正在取代 VMess，成为新标准（无自签证书、抗探测强）</li>
+<li><strong>AnyTLS</strong> 协议开始出现，部分机场陆续支持</li>
+<li><strong>AI 用途</strong>（ChatGPT &#x2F; Claude）推动了高端专线需求——对 IP 质量要求高</li>
+</ul>
+<h3 id="订阅中的符号说明"><a href="#订阅中的符号说明" class="headerlink" title="订阅中的符号说明"></a>订阅中的符号说明</h3><table>
+<thead>
+<tr>
+<th>符号</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>A</code></td>
+<td>少量 AnyTLS 协议节点</td>
+</tr>
+<tr>
+<td><code>*A</code></td>
+<td>大部分 AnyTLS 协议节点</td>
+</tr>
+<tr>
+<td><code>🔒</code></td>
+<td>只能用官方客户端，不支持 Clash 订阅</td>
+</tr>
+<tr>
+<td><code>🔥</code></td>
+<td>阅后即焚订阅模式</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="二、客户端选型"><a href="#二、客户端选型" class="headerlink" title="二、客户端选型"></a>二、客户端选型</h2><table>
+<thead>
+<tr>
+<th>平台</th>
+<th>推荐</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>macOS</td>
+<td>Clash Verge Rev</td>
+<td>免费开源，TUN 模式完善</td>
+</tr>
+<tr>
+<td>Windows</td>
+<td>Clash Verge Rev &#x2F; V2rayN</td>
+<td>V2rayN 更轻量</td>
+</tr>
+<tr>
+<td>iOS</td>
+<td>Shadowrocket</td>
+<td>付费，需外区 Apple ID</td>
+</tr>
+<tr>
+<td>Android</td>
+<td>NekoBox &#x2F; Clash Meta for Android</td>
+<td>支持协议全</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="三、macOS-代理配置"><a href="#三、macOS-代理配置" class="headerlink" title="三、macOS 代理配置"></a>三、macOS 代理配置</h2><h3 id="方案一：Clash-Verge-Rev（推荐）"><a href="#方案一：Clash-Verge-Rev（推荐）" class="headerlink" title="方案一：Clash Verge Rev（推荐）"></a>方案一：Clash Verge Rev（推荐）</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">推荐配置：</span><br><span class="line">  - 端口：7890（HTTP）/ 7891（SOCKS5）/ 7892（Mixed）</span><br><span class="line">  - 模式：Rule（规则分流）</span><br><span class="line">  - TUN 模式：开启（可代理终端、Git 等命令行工具）</span><br><span class="line">  - DNS：fake-ip 模式 + 阿里 DoH</span><br><span class="line">  - 规则集：ACL4SSR（国内直连，国外代理）</span><br></pre></td></tr></table></figure>
+
+<p><strong>终端代理配置（配合 TUN 模式或手动设置）：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 在 ~/.zshrc 中添加</span></span><br><span class="line"><span class="built_in">export</span> http_proxy=http://127.0.0.1:7890</span><br><span class="line"><span class="built_in">export</span> https_proxy=http://127.0.0.1:7890</span><br><span class="line"><span class="built_in">export</span> all_proxy=socks5://127.0.0.1:7891</span><br><span class="line"></span><br><span class="line"><span class="comment"># Git 代理配置</span></span><br><span class="line">git config --global http.proxy http://127.0.0.1:7890</span><br><span class="line">git config --global https.proxy http://127.0.0.1:7890</span><br></pre></td></tr></table></figure>
+
+<p><strong>系统级代理设置：</strong></p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 命令行设置 HTTP 代理</span></span><br><span class="line">networksetup -setwebproxy <span class="string">&quot;Wi-Fi&quot;</span> 127.0.0.1 7890</span><br><span class="line">networksetup -setsecurewebproxy <span class="string">&quot;Wi-Fi&quot;</span> 127.0.0.1 7890</span><br><span class="line">networksetup -setsocksfirewallproxy <span class="string">&quot;Wi-Fi&quot;</span> 127.0.0.1 7891</span><br><span class="line"></span><br><span class="line"><span class="comment"># 关闭代理</span></span><br><span class="line">networksetup -setwebproxystate <span class="string">&quot;Wi-Fi&quot;</span> off</span><br><span class="line">networksetup -setsecurewebproxystate <span class="string">&quot;Wi-Fi&quot;</span> off</span><br><span class="line">networksetup -setsocksfirewallproxystate <span class="string">&quot;Wi-Fi&quot;</span> off</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>💡 如果你使用 Clash Verge Rev 并开了系统代理，以上命令会自动设置，只有排查问题时才需要手动调整。</p>
+</blockquote>
+<h3 id="方案二：Surge（进阶）"><a href="#方案二：Surge（进阶）" class="headerlink" title="方案二：Surge（进阶）"></a>方案二：Surge（进阶）</h3><p>Surge 是 macOS&#x2F;iOS 上功能最强大的网络调试与代理工具，价格较高（$49.99 起），但功能远超 Clash：</p>
+<ul>
+<li>原生支持 HTTP 抓包和请求重写</li>
+<li>支持增强模式（Enhanced Mode）代理所有应用</li>
+<li>低内存占用，稳定性极佳</li>
+<li>支持 iCloud 同步配置</li>
+</ul>
+<h3 id="方案三：Proxifier（仅代理特定应用）"><a href="#方案三：Proxifier（仅代理特定应用）" class="headerlink" title="方案三：Proxifier（仅代理特定应用）"></a>方案三：Proxifier（仅代理特定应用）</h3><p>如果你只想让特定应用走代理（如只让浏览器翻墙、其他直连），Proxifier 是最佳选择，支持按进程名、按 IP 段设置不同规则。</p>
+<h3 id="方案对比"><a href="#方案对比" class="headerlink" title="方案对比"></a>方案对比</h3><table>
+<thead>
+<tr>
+<th>特性</th>
+<th>Clash Verge Rev</th>
+<th>Surge</th>
+<th>Proxifier</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>价格</td>
+<td>免费开源</td>
+<td>$49.99+</td>
+<td>$39.95</td>
+</tr>
+<tr>
+<td>协议支持</td>
+<td>SS&#x2F;VMess&#x2F;VLESS&#x2F;Trojan&#x2F;WG 等</td>
+<td>SS&#x2F;Trojan&#x2F;WG 等</td>
+<td>需配合其他客户端</td>
+</tr>
+<tr>
+<td>抓包能力</td>
+<td>无</td>
+<td>内置</td>
+<td>无</td>
+</tr>
+<tr>
+<td>TUN 模式</td>
+<td>✅</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>规则灵活性</td>
+<td>⭐⭐⭐⭐</td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+</tr>
+<tr>
+<td>上手难度</td>
+<td>简单</td>
+<td>中等</td>
+<td>中等</td>
+</tr>
+<tr>
+<td>推荐人群</td>
+<td>普通用户、开发者</td>
+<td>开发者、网络调试</td>
+<td>特定应用代理需求</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="四、机场选购方法论"><a href="#四、机场选购方法论" class="headerlink" title="四、机场选购方法论"></a>四、机场选购方法论</h2><h3 id="4-1-直连-vs-中转-vs-专线"><a href="#4-1-直连-vs-中转-vs-专线" class="headerlink" title="4.1 直连 vs 中转 vs 专线"></a>4.1 直连 vs 中转 vs 专线</h3><table>
+<thead>
+<tr>
+<th>类型</th>
+<th>原理</th>
+<th>速度</th>
+<th>稳定性</th>
+<th>价格</th>
+<th>适合人群</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>直连</strong></td>
+<td>客户端直接连接境外节点</td>
+<td>受国际带宽影响</td>
+<td>一般</td>
+<td>低</td>
+<td>预算有限、轻度使用</td>
+</tr>
+<tr>
+<td><strong>中转</strong></td>
+<td>经过国内中转服务器再出境</td>
+<td>较快（中转优化路由）</td>
+<td>较好</td>
+<td>中</td>
+<td>日常使用、追求体验</td>
+</tr>
+<tr>
+<td><strong>专线 (IEPL&#x2F;IPLC)</strong></td>
+<td>企业级专线通道</td>
+<td>极快且稳定</td>
+<td>极好</td>
+<td>高</td>
+<td>重度用户、开发者、对稳定性要求高</td>
+</tr>
+</tbody></table>
+<h3 id="4-2-机场评分维度"><a href="#4-2-机场评分维度" class="headerlink" title="4.2 机场评分维度"></a>4.2 机场评分维度</h3><p>选择机场时，建议从以下维度综合评估：</p>
+<ol>
+<li><strong>节点覆盖</strong>：支持多少个国家&#x2F;地区？是否有常用节点（日本、新加坡、美国、香港）</li>
+<li><strong>协议支持</strong>：是否支持 Trojan &#x2F; VLESS 等新协议？（老旧 SS 可能被封）</li>
+<li><strong>流媒体解锁</strong>：是否支持 Netflix、Disney+、ChatGPT 等？</li>
+<li><strong>倍率说明</strong>：部分节点倍率 &gt; 1，实际消耗流量更多，需注意</li>
+<li><strong>在线客服</strong>：是否有工单系统或 Telegram 群组？</li>
+<li><strong>退款政策</strong>：是否支持不满意退款？（至少支持 24 小时内退款）</li>
+<li><strong>历史口碑</strong>：查看是否有跑路风险，选择运营 1 年以上的老机场</li>
+</ol>
+<h3 id="4-3-按预算的选购思路"><a href="#4-3-按预算的选购思路" class="headerlink" title="4.3 按预算的选购思路"></a>4.3 按预算的选购思路</h3><p>这里不列具体机场清单（时效性太差），只给判断标准：</p>
+<table>
+<thead>
+<tr>
+<th>使用强度</th>
+<th>推荐类型</th>
+<th>预算参考</th>
+<th>选购要点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>低频（月 &lt; 100GB）</td>
+<td>直连月付</td>
+<td>¥2 起</td>
+<td>只要便宜、能失联自救</td>
+</tr>
+<tr>
+<td>囤流量</td>
+<td>不限时流量包</td>
+<td>¥20 &#x2F; 1TB 级</td>
+<td>看倍率是否 1:1，注意「阅后即焚」</td>
+</tr>
+<tr>
+<td>追求体验</td>
+<td>中转月付</td>
+<td>¥10 &#x2F; 100GB 级</td>
+<td>看是否有 BGP 中转、晚高峰是否稳</td>
+</tr>
+<tr>
+<td>重度 &#x2F; AI 用途</td>
+<td>专线（IEPL&#x2F;IPLC）</td>
+<td>¥40 起</td>
+<td>IP 质量是关键，看是否原生 IP</td>
+</tr>
+</tbody></table>
+<h3 id="4-4-避坑清单"><a href="#4-4-避坑清单" class="headerlink" title="4.4 避坑清单"></a>4.4 避坑清单</h3><ul>
+<li>❌ <strong>年付</strong>：跑路事件频发，损失最大的就是年付用户</li>
+<li>❌ <strong>只看价格</strong>：¥1 月付往往意味着超售，晚高峰根本跑不动</li>
+<li>❌ <strong>只买一家</strong>：单点故障时你会完全没有备用方案</li>
+<li>❌ <strong>忽略倍率</strong>：倍率标注混乱，实际消耗可能远超套餐名义流量</li>
+<li>✅ <strong>先试用</strong>：优先选提供 1-2GB 试用流量或 1 天试用的机场</li>
+</ul>
+<hr>
+<h2 id="五、故障排查踩坑记录"><a href="#五、故障排查踩坑记录" class="headerlink" title="五、故障排查踩坑记录"></a>五、故障排查踩坑记录</h2><p><strong>案例 1：Clash Verge Rev 与 Surge 同时运行冲突</strong></p>
+<blockquote>
+<p>同时运行两个客户端会导致代理端口冲突（默认都是 7890），表现为浏览器无法上网。解决方法：修改其中一个客户端的端口号，或只保留一个运行。</p>
+</blockquote>
+<p><strong>案例 2：公司 &#x2F; 学校网络封锁代理</strong></p>
+<blockquote>
+<p>部分公司&#x2F;学校网络会通过 DPI 深度包检测封锁代理流量。表现：机场节点全部超时，但手机 4G 正常。解决方法：选择 Trojan 协议节点，或使用 VLESS + Reality 节点（伪装为正常 HTTPS 流量）。</p>
+</blockquote>
+<p><strong>案例 3：路由器代理后局域网设备无法直连</strong></p>
+<blockquote>
+<p>在路由器层面配置代理后，局域网内的 AirDrop、打印机、智能家居设备可能无法被发现。解决方法：在路由器的代理规则中添加局域网 IP 段 <code>192.168.0.0/16</code>、<code>10.0.0.0/8</code> 为直连规则。</p>
+</blockquote>
+<p><strong>案例 4：Git 推送失败但浏览器正常</strong></p>
+<blockquote>
+<p>浏览器走了系统代理，但 Git 默认不读系统代理。解决方法：给 Git 单独配置代理（见上文 macOS 代理配置），或在代理客户端里开启 <strong>TUN 模式</strong>，让所有流量（含终端）都被接管。</p>
+</blockquote>
+<p><strong>案例 5：订阅更新后节点全红</strong></p>
+<blockquote>
+<p>多为订阅链接失效或机场更换域名。解决方法：到机场官网（而非邮件里的旧链接）重新复制订阅地址；若官网也打不开，说明机场可能已跑路。</p>
+</blockquote>
+<hr>
+<h2 id="六、自建订阅转换（可选）"><a href="#六、自建订阅转换（可选）" class="headerlink" title="六、自建订阅转换（可选）"></a>六、自建订阅转换（可选）</h2><p>机场给的订阅格式五花八门，Clash &#x2F; Sing-box &#x2F; Surge 各要各的格式。常见做法是自建一个 <strong>subconverter</strong>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 使用 Docker 部署</span></span><br><span class="line">docker run -d --restart=always \</span><br><span class="line">  -p 25500:25500 \</span><br><span class="line">  --name subconverter \</span><br><span class="line">  tindy2013/subconverter:latest</span><br><span class="line"></span><br><span class="line"><span class="comment"># 访问 http://localhost:25500/sub?target=clash&amp;url=&lt;URL_ENCODED_SUB_URL&gt;</span></span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>⚠️ 订阅转换服务会经手你的订阅链接，<strong>不要用公共的在线转换站</strong>，尽量自建。</p>
+</blockquote>
+<hr>
+<h2 id="七、备份与归档建议"><a href="#七、备份与归档建议" class="headerlink" title="七、备份与归档建议"></a>七、备份与归档建议</h2><p>作为一份「资料备份」，建议按下面的方式维护：</p>
+<ol>
+<li><strong>订阅链接存本地</strong>：存进密码管理器（如 Bitwarden），不要只存在浏览器书签里</li>
+<li><strong>每季度复核一次</strong>：机场域名、价格、状态都可能变化，过期信息及时标注或删除</li>
+<li><strong>保留方法论，弱化清单</strong>：具体的机场名随时会失效，<strong>判断标准（协议、类型、避坑项）才是长期有价值的部分</strong></li>
+<li><strong>记录自己的踩坑</strong>：把每次翻车的原因写下来，比记十个机场名有用</li>
+</ol>
+<hr>
+<h2 id="相关阅读"><a href="#相关阅读" class="headerlink" title="相关阅读"></a>相关阅读</h2><ul>
+<li><a href="/2026/10/11/Hexo%E5%8D%9A%E5%AE%A2%E5%B7%A5%E7%A8%8B%E5%8C%96%E5%AE%9E%E6%88%98/">Hexo 博客工程化实战：从手动部署到自动化内容工厂</a> — 把这类资料笔记做成自动化流水线</li>
+</ul>
+<hr>
+<blockquote>
+<p>📌 <strong>免责声明</strong>：本文仅供技术学习与资料备份之用，内容整理自公开网络资料。请遵守当地法律法规，自行判断与承担使用风险。文中不含任何推广链接与邀请码，所引用的第三方服务与本站无关。</p>
+</blockquote>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://biko-duckyo.github.io">Biko</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://biko-duckyo.github.io/2026/10/11/VPN%E4%B8%8E%E6%9C%BA%E5%9C%BA%E7%AC%94%E8%AE%B0/">https://biko-duckyo.github.io/2026/10/11/VPN%E4%B8%8E%E6%9C%BA%E5%9C%BA%E7%AC%94%E8%AE%B0/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://biko-duckyo.github.io" target="_blank">Biko的个人小站</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/VPN/">VPN</a><a class="post-meta__tags" href="/tags/%E6%9C%BA%E5%9C%BA/">机场</a><a class="post-meta__tags" href="/tags/%E4%BB%A3%E7%90%86/">代理</a><a class="post-meta__tags" href="/tags/%E7%A7%91%E5%AD%A6%E4%B8%8A%E7%BD%91/">科学上网</a><a class="post-meta__tags" href="/tags/%E8%B5%84%E6%96%99%E5%A4%87%E4%BB%BD/">资料备份</a></div><div class="post-share"><div class="social-share" data-image="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/10/11/%E4%B8%9C%E5%8D%97%E5%A4%A7%E5%AD%A6%E5%A2%83%E5%A4%96%E5%8F%82%E4%BC%9A%E5%8A%9E%E7%90%86%E6%B8%85%E5%8D%95/" title="东南大学 · 境外参加国际会议办理清单"><img class="cover" src="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">东南大学 · 境外参加国际会议办理清单</div></div><div class="info-2"><div class="info-item-1">东南大学研究生出国（境）参加国际会议的完整办理清单：从收到录用通知到财务报销，含资助申请、因公出国境审批、签证材料、回国报销与未出境只报签证费的专门流程。</div></div></div></a><a class="pagination-related" href="/2026/10/11/Hexo%E5%8D%9A%E5%AE%A2%E5%B7%A5%E7%A8%8B%E5%8C%96%E5%AE%9E%E6%88%98/" title="Hexo 博客工程化实战：从手动部署到自动化内容工厂"><img class="cover" src="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">Hexo 博客工程化实战：从手动部署到自动化内容工厂</div></div><div class="info-2"><div class="info-item-1">把 Hexo 博客从「本地 hexo g && hexo d」改造为自动化内容工厂：自动部署、构建缓存、AI 辅助选题与写作、SEO 工程化、阅读量分析，附可直接复用的配置与脚本。</div></div></div></a></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">Biko</div><div class="author-info-description">一只努力学习的菜鸟甜甜圈～</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">15</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">23</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/Biko-Duckyo"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/Biko-Duckyo" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:1078857679@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a><a class="social-icon" href="tencent://AddContact/?fromId=50&amp;fromSubId=1&amp;subcmd=all&amp;uin=1078857679" target="_blank" title="QQ"><i class="iconfont icon-qq" style="color: #12b7f5;"></i></a><a class="social-icon" href="https://www.zhihu.com/people/qin-chao-10-90" target="_blank" title="Zhihu"><i class="iconfont icon-zhihu" style="color: #0084ff;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">Biko的个人小站！
+一只全面发展的菜鸟甜甜圈~
+<span class="biko-marquee" role="marquee" aria-label="双手合十成为自己的神，自己所信念的即是信仰"><span class="biko-marquee__track"><span class="biko-marquee__item">双 手 合 十 成 为 自 己 的 神, 自 己 所 信 念 的 即 是 信 仰</span><span class="biko-marquee__item" aria-hidden="true">双 手 合 十 成 为 自 己 的 神, 自 己 所 信 念 的 即 是 信 仰</span></span></span>
+微信号：15651005256
+QQ号：1078857679</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E6%B0%B8%E8%BF%9C%E5%85%88%E7%9C%8B%E8%BF%99%E6%9D%A1"><span class="toc-number">1.</span> <span class="toc-text">永远先看这条</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E4%B8%BB%E6%B5%81%E4%BB%A3%E7%90%86%E5%8D%8F%E8%AE%AE%E5%AF%B9%E6%AF%94"><span class="toc-number">2.</span> <span class="toc-text">一、主流代理协议对比</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%8F%E8%AE%AE%E8%B6%8B%E5%8A%BF"><span class="toc-number">2.1.</span> <span class="toc-text">协议趋势</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%AE%A2%E9%98%85%E4%B8%AD%E7%9A%84%E7%AC%A6%E5%8F%B7%E8%AF%B4%E6%98%8E"><span class="toc-number">2.2.</span> <span class="toc-text">订阅中的符号说明</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%AE%A2%E6%88%B7%E7%AB%AF%E9%80%89%E5%9E%8B"><span class="toc-number">3.</span> <span class="toc-text">二、客户端选型</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81macOS-%E4%BB%A3%E7%90%86%E9%85%8D%E7%BD%AE"><span class="toc-number">4.</span> <span class="toc-text">三、macOS 代理配置</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%A1%88%E4%B8%80%EF%BC%9AClash-Verge-Rev%EF%BC%88%E6%8E%A8%E8%8D%90%EF%BC%89"><span class="toc-number">4.1.</span> <span class="toc-text">方案一：Clash Verge Rev（推荐）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%A1%88%E4%BA%8C%EF%BC%9ASurge%EF%BC%88%E8%BF%9B%E9%98%B6%EF%BC%89"><span class="toc-number">4.2.</span> <span class="toc-text">方案二：Surge（进阶）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%A1%88%E4%B8%89%EF%BC%9AProxifier%EF%BC%88%E4%BB%85%E4%BB%A3%E7%90%86%E7%89%B9%E5%AE%9A%E5%BA%94%E7%94%A8%EF%BC%89"><span class="toc-number">4.3.</span> <span class="toc-text">方案三：Proxifier（仅代理特定应用）</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E6%96%B9%E6%A1%88%E5%AF%B9%E6%AF%94"><span class="toc-number">4.4.</span> <span class="toc-text">方案对比</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E6%9C%BA%E5%9C%BA%E9%80%89%E8%B4%AD%E6%96%B9%E6%B3%95%E8%AE%BA"><span class="toc-number">5.</span> <span class="toc-text">四、机场选购方法论</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#4-1-%E7%9B%B4%E8%BF%9E-vs-%E4%B8%AD%E8%BD%AC-vs-%E4%B8%93%E7%BA%BF"><span class="toc-number">5.1.</span> <span class="toc-text">4.1 直连 vs 中转 vs 专线</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-2-%E6%9C%BA%E5%9C%BA%E8%AF%84%E5%88%86%E7%BB%B4%E5%BA%A6"><span class="toc-number">5.2.</span> <span class="toc-text">4.2 机场评分维度</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-3-%E6%8C%89%E9%A2%84%E7%AE%97%E7%9A%84%E9%80%89%E8%B4%AD%E6%80%9D%E8%B7%AF"><span class="toc-number">5.3.</span> <span class="toc-text">4.3 按预算的选购思路</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#4-4-%E9%81%BF%E5%9D%91%E6%B8%85%E5%8D%95"><span class="toc-number">5.4.</span> <span class="toc-text">4.4 避坑清单</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%95%85%E9%9A%9C%E6%8E%92%E6%9F%A5%E8%B8%A9%E5%9D%91%E8%AE%B0%E5%BD%95"><span class="toc-number">6.</span> <span class="toc-text">五、故障排查踩坑记录</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E8%87%AA%E5%BB%BA%E8%AE%A2%E9%98%85%E8%BD%AC%E6%8D%A2%EF%BC%88%E5%8F%AF%E9%80%89%EF%BC%89"><span class="toc-number">7.</span> <span class="toc-text">六、自建订阅转换（可选）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E5%A4%87%E4%BB%BD%E4%B8%8E%E5%BD%92%E6%A1%A3%E5%BB%BA%E8%AE%AE"><span class="toc-number">8.</span> <span class="toc-text">七、备份与归档建议</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%9B%B8%E5%85%B3%E9%98%85%E8%AF%BB"><span class="toc-number">9.</span> <span class="toc-text">相关阅读</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(/img/banner.jpg);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2022 - 2026 By Biko</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.7.0</a></span></div><div class="footer_custom_text">Hi, welcome to my <a href="https://biko-duckyo.github.io/">blog</a>!<p><a target="_blank" href="https://hexo.io/"><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&logo=hexo" title="博客框架为Hexo"></a>&nbsp;<a target="_blank" href="https://butterfly.js.org/"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&logo=bitdefender" title="主题采用butterfly"></a>&nbsp;<a target="_blank" href="https://www.jsdelivr.com/"><img src="https://img.shields.io/badge/CDN-jsDelivr-orange?style=flat&logo=jsDelivr" title="本站使用JsDelivr为静态资源提供CDN加速"></a>&nbsp;<a target="_blank" href="https://github.com/"><img src="https://img.shields.io/badge/Source-Github-d021d6?style=flat&logo=GitHub" title="本站项目由Gtihub托管"></a>&nbsp;<a target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&logo=Claris" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可"></a></p></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><script src="/js/tw_cn.js?v=5.7.0"></script><script src="/js/vendor/fancybox.umd.min.js"></script><script src="/js/vendor/instantpage.min.js" type="module"></script><script src="/js/vendor/snackbar.min.js"></script><div class="js-pjax"></div><script defer data-pjax>(function(){function rm(){var n=document.getElementById('nav');if(n&&n.parentNode)n.parentNode.removeChild(n)}if(document.readyState!=='loading')rm();else document.addEventListener('DOMContentLoaded',rm);document.addEventListener('pjax:complete',rm)})()</script><script defer data-pjax src="/js/custom/footer_butterfly.js"></script><div id="menu-container" class="menu-container"><div class="biko-nav"><button class="bn-burger" type="button" onclick="Navvisible()" aria-label="打开菜单"><i class="fas fa-bars"></i></button><div class="bn-left"><span class="bn-weather" id="he-plugin-simple"></span><span class="bn-clock" id="message-date-box"></span></div><ul class="bn-menu"><li class="menu-item-main"><a class="site-page" href="/"><i class="fas fa-home fa-fw"></i><span>首页</span></a></li><li class="menu-item-main has-child"><span class="menu-item-parent"><a class="site-page" href="javascript:void(0);"><i class="fas fa-list fa-fw"></i><span>文章</span></a></span><a class="site-page menu-item-child" href="/archives/"><i class="fas fa-archive fa-fw"></i><span>时间轴</span></a><a class="site-page menu-item-child" href="/tags/"><i class="fas fa-tags fa-fw"></i><span>标签</span></a><a class="site-page menu-item-child" href="/categories/"><i class="fas fa-folder-open fa-fw"></i><span>分类</span></a></li><li class="menu-item-main has-child"><span class="menu-item-parent"><a class="site-page" href="javascript:void(0);"><i class="fas fa-heartbeat fa-fw"></i><span>赋闲</span></a></span><a class="site-page menu-item-child" href="/galleryGroup/"><i class="fas fa-images fa-fw"></i><span>相册</span></a><a class="site-page menu-item-child" href="/movies/"><i class="fas fa-video fa-fw"></i><span>电影</span></a><a class="site-page menu-item-child" href="/music/"><i class="fas fa-music fa-fw"></i><span>音乐</span></a></li><li class="menu-item-main"><a class="site-page" href="/bangumis/"><i class="fas fa-film fa-fw"></i><span>追番</span></a></li><li class="menu-item-main"><a class="site-page" href="/books/"><i class="fas fa-book fa-fw"></i><span>文献</span></a></li><li class="menu-item-main"><a class="site-page" href="/HTML/resume/index.html"><i class="fas fa-id-card fa-fw"></i><span>myself</span></a></li><li class="menu-item-main"><a class="site-page" href="/link/"><i class="fas fa-link fa-fw"></i><span>友链</span></a></li></ul><div class="bn-right"><div id="search-button"><a class="bn-icon social-icon search" title="搜索" role="button" tabindex="0" aria-label="搜索" data-bn-label="搜索"><i class="fas fa-search"></i></a></div><a class="bn-icon icon-V" data-bn-no-label="true" onclick="switchNightMode()" title="浅色/深色模式切换" aria-label="明暗切换" data-bn-label="明暗"><svg width="23" height="23" viewBox="0 0 1024 1024"><use id="modeicon" xlink:href="#icon-sun"></use></svg></a></div></div><svg width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true"><defs><symbol id="icon-sun" viewBox="0 0 1024 1024"><path d="M960 512l-128 128v192h-192l-128 128-128-128H192v-192l-128-128 128-128V192h192l128-128 128 128h192v192z" fill="#FFD878"></path><path d="M736 512a224 224 0 1 0-448 0 224 224 0 1 0 448 0z" fill="#FFE4A9"></path><path d="M512 320c105.888 0 192 86.112 192 192s-86.112 192-192 192-192-86.112-192-192 86.112-192 192-192m0-32a224 224 0 1 0 0 448 224 224 0 0 0 0-448z" fill="#4D5152"></path></symbol><symbol id="icon-moon" viewBox="0 0 1024 1024"><path d="M611.37 167.08a445.01 445.01 0 0 1-38.4 161.83 477.82 477.82 0 0 1-244.74 244.4 445.14 445.14 0 0 1-161.1 38.06 85.08 85.08 0 0 0-65.07 135.72A462.08 462.08 0 1 0 747.09 102.06 85.08 85.08 0 0 0 611.37 167.08z" fill="#FFB531"></path></symbol></defs></svg></div><script defer data-pjax src="/js/custom/nav.js"></script><script defer data-pjax src="/js/custom/music_button.js"></script><script src="/js/custom/music_page.js"></script><script defer data-pjax src="/js/custom/home_hub.js"></script><script defer data-pjax src="/js/custom/banner_parallax.js"></script><script>setTimeout(function(){var lb=document.getElementById('loading-box');if(lb){lb.classList.add('loaded');document.body.style.overflow='auto';}},3000);document.addEventListener('pjax:complete',function(){setTimeout(function(){var lb=document.getElementById('loading-box');if(lb){lb.classList.add('loaded');document.body.style.overflow='auto';}},1500);});</script><script data-pjax defer src="/js/custom/fixed_card_widget.js"></script><script data-pjax defer src="/js/custom/title_hover.js"></script><script>function injectWechatCapsule(){var icons=document.getElementById('site_social_icons');if(icons&&!document.getElementById('wechat-capsule')){var w=document.createElement('div');w.id='wechat-capsule';w.innerHTML='<i class=\"fab fa-weixin\"></i><span>微信：15651005256</span>';icons.parentNode.insertBefore(w,icons.nextSibling);}}if(document.readyState!=='loading'){injectWechatCapsule();}else{document.addEventListener('DOMContentLoaded',injectWechatCapsule);}document.addEventListener('pjax:complete',function(){setTimeout(injectWechatCapsule,300);});</script><script data-pjax defer src="/js/custom/runtime_fallback.js"></script><script defer data-pjax src="/js/custom/weather.js"></script><script defer data-pjax src="/js/custom/auto_cover.js"></script><script defer data-pjax src="/js/custom/history.js"></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1/dist/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/aplayer@1/dist/APlayer.min.js"></script><script>(function(){var O=window.APlayer;if(!O||O.__bikoWrap)return;function W(cfg){var ap=new O(cfg);try{window.__BIKO_AP__=ap;}catch(e){}return ap;}W.prototype=O.prototype;try{Object.setPrototypeOf(W,O);}catch(e){}Object.getOwnPropertyNames(O).forEach(function(k){if(k==='length'||k==='prototype'||k==='name')return;try{W[k]=O[k];}catch(e){}});W.__bikoWrap=true;window.APlayer=W;})();</script><script>window.meting_api='https://api.injahow.cn/meting/?server=:server&type=:type&id=:id&r=:r';</script><script src="https://cdn.jsdelivr.net/gh/metowolf/MetingJS@1.2/dist/Meting.min.js"></script><div class="aplayer no-destroy" data-id="2120966270" data-server="netease" data-type="playlist" data-fixed="true" data-mini="true" data-autoplay="false" data-preload="none" data-listfolded="true"> </div><script src="/nanaly/js/nanaly-backup-entry.js"></script><script src="/nanaly/js/nanaly-identity.js"></script><script src="/nanaly/js/nanaly-knowledge.js"></script><script src="/nanaly/js/nanaly-provider.js"></script><script src="/nanaly/js/nanaly-agent.js"></script><script src="/nanaly/js/nanaly-workspace.js"></script><script src="/nanaly/js/nanaly-files.js"></script><script src="/nanaly/js/nanaly-vision.js"></script><script src="/nanaly/js/nanaly-research.js"></script><script src="/nanaly/js/nanaly-tasks.js"></script><script src="/nanaly/js/nanaly-audio.js"></script><script src="/nanaly/js/nanaly-prosody.js"></script><script src="/nanaly/js/nanaly-voice.js"></script><script src="/nanaly/js/nanaly-shell.js"></script><script src="/nanaly/js/noimpty-ai.js"></script><script src="/nanaly/js/nanaly-agent-ui.js"></script><script src="/nanaly/js/nanaly-cat-trigger.js"></script><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward" title="后退"><i class="fas fa-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward" title="前进"><i class="fas fa-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh" title="刷新"><i class="fas fa-arrow-rotate-right"></i></div><div class="rightMenu-item" id="menu-home" title="回首页"><i class="fas fa-house"></i></div></div><div class="rightMenu-group rightMenu-line"><div class="rightMenu-item" id="menu-radompage"><i class="fas fa-shoe-prints"></i><span>随便逛逛</span></div><div class="rightMenu-item" id="menu-darkmode"><i class="fas fa-moon"></i><span>切换模式</span></div><div class="rightMenu-item" id="menu-translate"><i class="fas fa-earth-asia"></i><span>繁简切换</span></div></div></div><div id="rightmenu-mask"></div><script defer src="/js/custom/rightmenu.js"></script><script id="click-heart" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/dist/click-heart.min.js" async="async" mobile="true"></script><script src="/js/vendor/pjax.min.js" defer="defer"></script><script>document.addEventListener('DOMContentLoaded', () => {
+  const pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+  window.pjax = new Pjax({
+    elements: 'a:not([target="_blank"]):not([data-fancybox])',
+    selectors: pjaxSelectors,
+    cacheBust: false,
+    analytics: false,
+    scrollRestoration: false
+  })
+
+  const triggerPjaxFn = (val) => {
+    if (!val) return
+    Object.values(val).forEach(fn => {
+      try {
+        fn()
+      } catch (err) {
+        console.debug('Pjax callback failed:', err)
+      }
+    })
+  }
+
+  document.addEventListener('pjax:send', () => {
+    // removeEventListener
+    btf.removeGlobalFnEvent('pjaxSendOnce')
+    btf.removeGlobalFnEvent('themeChange')
+
+    // reset readmode
+    const $bodyClassList = document.body.classList
+    if ($bodyClassList.contains('read-mode')) $bodyClassList.remove('read-mode')
+
+    triggerPjaxFn(window.globalFn.pjaxSend)
+  })
+
+  document.addEventListener('pjax:complete', () => {
+    btf.removeGlobalFnEvent('pjaxCompleteOnce')
+    document.querySelectorAll('script[data-pjax]').forEach(item => {
+      if (!item.parentNode) return
+      const newScript = document.createElement('script')
+      const content = item.text || item.textContent || ''
+      Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+      newScript.appendChild(document.createTextNode(content))
+      item.parentNode.replaceChild(newScript, item)
+    })
+
+    triggerPjaxFn(window.globalFn.pjaxComplete)
+  })
+
+  document.addEventListener('pjax:error', e => {
+    const responseURL = e.request && e.request.responseURL
+    if (e.request && e.request.status === 404) {
+      true
+        ? pjax.loadUrl('/404.html')
+        : responseURL && (window.location.href = responseURL)
+    } else if (responseURL) {
+      window.location.href = responseURL
+    }
+  })
+})</script><script async data-pjax src="/js/vendor/busuanzi-local.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.7.0"></script></div></div><!-- hexo injector body_end start --><script data-pjax>
+    function butterfly_categories_card_injector_config(){
+      var parent_div_git = document.getElementById('recent-posts');
+      var item_html = '<style>li.categoryBar-list-item{width:32.3%;}.categoryBar-list{max-height: 190px;overflow:auto;}.categoryBar-list::-webkit-scrollbar{width:0!important}@media screen and (max-width: 650px){.categoryBar-list{max-height: 160px;}}</style><div class="recent-post-item" style="height:auto;width:100%;padding:0px;"><div id="categoryBar"><ul class="categoryBar-list"><li class="categoryBar-list-item" style="background:url(https://s2.loli.net/2022/04/11/oDZPBRxHn59rbYO.jpg);"> <a class="categoryBar-list-link" onclick="pjax.loadUrl(&quot;categories/Hexo-教程/&quot;);" href="javascript:void(0);">Hexo 教程</a><span class="categoryBar-list-count">12</span><span class="categoryBar-list-descr">Hexo 教程</span></li><li class="categoryBar-list-item" style="background:url(undefined);"> <a class="categoryBar-list-link" onclick="pjax.loadUrl(&quot;categories/PhD之路/&quot;);" href="javascript:void(0);">PhD之路</a><span class="categoryBar-list-count">1</span><span class="categoryBar-list-descr"></span></li><li class="categoryBar-list-item" style="background:url(undefined);"> <a class="categoryBar-list-link" onclick="pjax.loadUrl(&quot;categories/资源备份/&quot;);" href="javascript:void(0);">资源备份</a><span class="categoryBar-list-count">1</span><span class="categoryBar-list-descr"></span></li></ul></div></div>';
+      console.log('已挂载butterfly_categories_card')
+      parent_div_git.insertAdjacentHTML("afterbegin",item_html)
+      }
+    if( document.getElementById('recent-posts') && (location.pathname ==='/'|| '/' ==='all')){
+    butterfly_categories_card_injector_config()
+    }
+  </script><script data-pjax>
+  function butterfly_clock_injector_config(){
+    var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+    var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img class="entered loading" id="card-clock-loading" src="/clock/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading"/></div></div></div></div></div>';
+    console.log('已挂载butterfly_clock')
+    parent_div_git.insertAdjacentHTML("afterbegin",item_html)
+    }
+  var elist = '/posts/'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_clock_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_clock_injector_config();
+  }
+  </script><script src="https://pv.sohu.com/cityjson?ie=utf-8"></script><script data-pjax src="/clock/clock.min.js"></script><script data-pjax>
+  function butterfly_swiper_injector_config(){
+    var parent_div_git = document.getElementById('recent-posts');
+    var item_html = '<div class="recent-post-item" style="height: auto;width: 100%"><div class="blog-slider swiper-container-fade swiper-container-horizontal" id="swiper_container"><div class="blog-slider__wrp swiper-wrapper" style="transition-duration: 0ms;"><div class="blog-slider__item swiper-slide" style="width: 750px; opacity: 1; transform: translate3d(0px, 0px, 0px); transition-duration: 0ms;"><a class="blog-slider__img" onclick="pjax.loadUrl(&quot;2026/10/06/Hexo+GitHub搭建指南/&quot;);" href="javascript:void(0);" alt=""><img width="48" height="48" src="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg" alt="" onerror="this.src=https://unpkg.zhimg.com/akilar-candyassets/image/loading.gif; this.onerror = null;"/></a><div class="blog-slider__content"><span class="blog-slider__code">2026-10-06</span><a class="blog-slider__title" onclick="pjax.loadUrl(&quot;2026/10/06/Hexo+GitHub搭建指南/&quot;);" href="javascript:void(0);" alt="">Hexo + GitHub 搭建个人博客完整指南</a><div class="blog-slider__text">Hexo + GitHub Pages 搭建个人博客的完整指南：Node.js / Git 环境准备（Windows、macOS、Linux 三平台），Hexo 初始化、主题替换、GitHub 仓库与仓库 Pages 配置、一键部署，以及自定义域名的收尾步骤。</div><a class="blog-slider__button" onclick="pjax.loadUrl(&quot;2026/10/06/Hexo+GitHub搭建指南/&quot;);" href="javascript:void(0);" alt="">详情       </a></div></div><div class="blog-slider__item swiper-slide" style="width: 750px; opacity: 1; transform: translate3d(0px, 0px, 0px); transition-duration: 0ms;"><a class="blog-slider__img" onclick="pjax.loadUrl(&quot;2026/10/06/Hexo优化路线/&quot;);" href="javascript:void(0);" alt=""><img width="48" height="48" src="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg" alt="" onerror="this.src=https://unpkg.zhimg.com/akilar-candyassets/image/loading.gif; this.onerror = null;"/></a><div class="blog-slider__content"><span class="blog-slider__code">2026-10-06</span><a class="blog-slider__title" onclick="pjax.loadUrl(&quot;2026/10/06/Hexo优化路线/&quot;);" href="javascript:void(0);" alt="">Hexo 博客优化完整路线</a><div class="blog-slider__text">Hexo 博客优化完整路线：从搭建环境、GitHub Actions 自动部署，到第三方托管、静态资源压缩与 CDN 加速的全链路优化思路，附带每一环的取舍与实测结论，适合作为长期维护的性能总纲。</div><a class="blog-slider__button" onclick="pjax.loadUrl(&quot;2026/10/06/Hexo优化路线/&quot;);" href="javascript:void(0);" alt="">详情       </a></div></div><div class="blog-slider__item swiper-slide" style="width: 750px; opacity: 1; transform: translate3d(0px, 0px, 0px); transition-duration: 0ms;"><a class="blog-slider__img" onclick="pjax.loadUrl(&quot;2026/10/06/Butterfly安装与配置/&quot;);" href="javascript:void(0);" alt=""><img width="48" height="48" src="https://i.loli.net/2020/05/01/gkihqEjXxJ5UZ1C.jpg" alt="" onerror="this.src=https://unpkg.zhimg.com/akilar-candyassets/image/loading.gif; this.onerror = null;"/></a><div class="blog-slider__content"><span class="blog-slider__code">2026-10-06</span><a class="blog-slider__title" onclick="pjax.loadUrl(&quot;2026/10/06/Butterfly安装与配置/&quot;);" href="javascript:void(0);" alt="">Butterfly 主题安装与基础配置</a><div class="blog-slider__text">Butterfly 主题从零开始的安装与基础配置：Git / NPM / Gitee 镜像三种安装方式、升级方法，以及主题配置文件 _config.butterfly.yml 的常规项说明，适合刚搭好 Hexo 后的第一步动手实践。</div><a class="blog-slider__button" onclick="pjax.loadUrl(&quot;2026/10/06/Butterfly安装与配置/&quot;);" href="javascript:void(0);" alt="">详情       </a></div></div></div><div class="blog-slider__pagination swiper-pagination-clickable swiper-pagination-bullets"></div></div></div>';
+    console.log('已挂载butterfly_swiper')
+    parent_div_git.insertAdjacentHTML("afterbegin",item_html)
+    }
+  var elist = 'undefined'.split(',');
+  var cpage = location.pathname;
+  var epage = '/';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_swiper_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_swiper_injector_config();
+  }
+  </script><script defer src="https://cdn.jsdelivr.net/npm/hexo-butterfly-swiper/lib/swiper.min.js"></script><script defer data-pjax src="https://cdn.jsdelivr.net/npm/hexo-butterfly-swiper/lib/swiper_init.js"></script><script async src="https://at.alicdn.com/t/font_2032782_8d5kxvn09md.js"></script><div class="js-pjax"><script async="async">var arr = document.getElementsByClassName('recent-post-item');
+for(var i = 0;i<arr.length;i++){
+    arr[i].classList.add('wow');
+    arr[i].classList.add('animate__zoomIn');
+    arr[i].setAttribute('data-wow-duration', '1s');
+    arr[i].setAttribute('data-wow-delay', '');
+    arr[i].setAttribute('data-wow-offset', '');
+    arr[i].setAttribute('data-wow-iteration', '');
+  }</script><script async="async">var arr = document.getElementsByClassName('card-widget');
+for(var i = 0;i<arr.length;i++){
+    arr[i].classList.add('wow');
+    arr[i].classList.add('animate__slideInRight');
+    arr[i].setAttribute('data-wow-duration', '1s');
+    arr[i].setAttribute('data-wow-delay', '');
+    arr[i].setAttribute('data-wow-offset', '');
+    arr[i].setAttribute('data-wow-iteration', '');
+  }</script></div><script defer src="https://cdn.jsdelivr.net/npm/hexo-butterfly-wowjs/lib/wow.min.js"></script><script defer src="https://cdn.jsdelivr.net/npm/hexo-butterfly-wowjs/lib/wow_init.js"></script><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><p id="ghbdages"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" data-title="博客框架为 Hexo" title=""><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" data-title="主题 Butterfly" title=""><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="https://pages.github.com/" style="margin-inline:5px" data-title="本站托管于 GitHub Pages" title=""><img src="https://img.shields.io/badge/Hosted-GitHub_Pages-181717?style=flat&amp;logo=github" alt=""/></a><a class="github-badge" target="_blank" href="https://github.com/Biko-Duckyo/Biko-Duckyo.github.io" style="margin-inline:5px" data-title="本站项目由 GitHub 托管" title=""><img src="https://img.shields.io/badge/Source-Github-d021d6?style=flat&amp;logo=GitHub" alt=""/></a><a class="github-badge" target="_blank" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" data-title="本站采用 CC BY-NC-SA 4.0 协议" title=""><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=creativecommons" alt=""/></a></p>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'undefined'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="/footer-beautify/runtime.js"></script><!-- hexo injector body_end end --><script src="https://cdn.jsdelivr.net/npm/live2d-widget@^3.1.3/lib/L2Dwidget.min.js"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"/live2dw/assets/hijiki.model.json"},"display":{"position":"left","width":150,"height":300},"mobile":{"show":false},"pluginJsPath":"lib/"});</script></body></html>

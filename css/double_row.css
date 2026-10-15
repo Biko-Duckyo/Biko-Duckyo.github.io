@@ -1,0 +1,124 @@
+/* ======================================================
+ * 首页文章双栏布局优化（覆盖第三方 cardlistpost.min.css）
+ * ------------------------------------------------------
+ * 参考教程：https://zfe.space/post/hexo-butterfly-article-double-row.html
+ * 第三方 CSS 由 hexo-butterfly-article-double-row 插件注入到 <head>，
+ * 顺序在自定义样式之前，因此这里用同等/更高优先级的选择器覆盖。
+ *
+ * 需要修的三个原始缺陷：
+ *   1) 选择器写错：原为 `img.post_bg`，而主题实际类名是 `img.post-bg`（连字符），
+ *      导致封面尺寸规则从未生效，图片按原始尺寸撑破卡片。
+ *   2) `>.content{display:none}` 把首页文章「内容概述」整段藏掉了，
+ *      与 index_post_content.method=2（显示 description 概述）的意图冲突。
+ *      这里改为显示 3 行省略，双栏下依然有导读。
+ *   3) 封面固定 height:200px 且无 object-fit，宽高比不匹配时图片会被拉变形。
+ * ====================================================== */
+
+/* 栅格：两列自适应，悬停时轻微上浮，与单栏卡片观感一致 */
+#recent-posts {
+  margin-top: -1rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-content: flex-start;
+}
+#recent-posts > .recent-post-item {
+  display: flex;
+  flex-direction: column;
+  width: 49%;
+  height: auto;
+  margin-top: 1rem;
+  /* 原插件未固定高度，这里显式 auto 覆盖主题 .recent-post-item 的定高 */
+  height: auto !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+#recent-posts > .recent-post-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* 封面：TOP 大图，圆角与卡片一致，图片按 cover 裁切不变形 */
+#recent-posts > .recent-post-item .post_cover {
+  width: 100%;
+  /* 用 aspect-ratio 保持稳定比例，避免不同图片高度参差 */
+  height: auto;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: var(--r-card, 8px) var(--r-card, 8px) 0 0;
+}
+/* 修正原始错误选择器 post_bg → post-bg（同时兼容两种写法） */
+#recent-posts > .recent-post-item .post_cover img.post-bg,
+#recent-posts > .recent-post-item .post_cover img.post_bg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.4s ease;
+}
+#recent-posts > .recent-post-item:hover .post_cover img.post-bg {
+  transform: scale(1.04);
+}
+/* 主题的 post_cover 左右浮动的偏移在双栏下会破坏布局，统一清掉 */
+#recent-posts > .recent-post-item .post_cover.left,
+#recent-posts > .recent-post-item .post_cover.right {
+  margin: 0 !important;
+  padding: 0 !important;
+  float: none !important;
+}
+
+/* 信息区：占满卡片宽度，内边距收敛到与卡片网格一致 */
+#recent-posts > .recent-post-item > .recent-post-info {
+  width: 100% !important;
+  margin-top: 0;
+  padding: 12px 16px 16px;
+}
+#recent-posts > .recent-post-item > .recent-post-info > .article-title {
+  font-size: 1.15em;
+  line-height: 1.45;
+  margin: 0.2rem 0 0.5rem;
+  /* 标题最多两行，超出省略，避免长短标题导致卡片高度跳动 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+#recent-posts > .recent-post-item > .recent-post-info > .article-meta-wrap {
+  margin-bottom: 0.5rem;
+}
+
+/* 内容概述：不再整体隐藏；显示 3 行，超出省略 */
+#recent-posts > .recent-post-item > .recent-post-info > .content {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  font-size: 0.9em;
+  line-height: 1.7;
+  color: var(--font-color, #6b7280);
+  opacity: 0.9;
+}
+
+/* 双栏下卡片之间的纵向间距更紧凑一些 */
+#recent-posts > .recent-post-item + .recent-post-item {
+  margin-top: 1rem;
+}
+
+/* 移动端 / 中等宽度：回退单列，避免两列过窄导致排版拥挤 */
+@media screen and (max-width: 900px) {
+  #recent-posts > .recent-post-item {
+    width: 100%;
+  }
+  #recent-posts > .recent-post-item .post_cover {
+    aspect-ratio: 16 / 9;
+  }
+}
+
+/* 首页轮播（swiper）与分类磁贴插件同样挂在 #recent-posts 前，
+   它们自身是整宽块，确保不被 flex 双栏挤压 */
+#recent-posts > .blog-slider,
+#recent-posts > .category-bar {
+  width: 100%;
+  flex: 0 0 100%;
+}

@@ -1,0 +1,278 @@
+/* ============================================================
+ * Biko · 个性化首屏 Home Hub
+ * 鲸鱼星空全屏背景 + 问候胶囊 / 超大站名 / 猫耳时钟 / 建站时长
+ * 蓝灰配色；飘落星点与气泡；CTA「翻开我的小世界」
+ * ============================================================ */
+#biko-hub {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay, 100);
+  overflow: hidden;
+  color: #fff;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(1.03);
+  transition: opacity .7s ease, transform .7s ease;
+  font-family: var(--font-ui);
+}
+#biko-hub.show {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+#biko-hub.leaving {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(1.05);
+}
+
+/* 鲸鱼背景 + 对比遮罩 */
+.biko-hub-bg {
+  position: absolute;
+  inset: 0;
+  background: url('https://s2.loli.net/2022/04/11/oDZPBRxHn59rbYO.jpg') center center / cover no-repeat;
+}
+.biko-hub-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 18% 55%, rgba(12, 18, 30, .62) 0%, rgba(12, 18, 30, .18) 55%, rgba(12, 18, 30, .35) 100%),
+    linear-gradient(180deg, rgba(10, 15, 26, .35) 0%, rgba(10, 15, 26, .12) 40%, rgba(10, 15, 26, .5) 100%);
+}
+
+/* 内容容器：左对齐，落在画面较暗的左侧 */
+.biko-hub-inner {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 0 9vw;
+  max-width: 1200px;
+}
+
+/* 胶囊 */
+.biko-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, .1);
+  border: 1px solid rgba(255, 255, 255, .26);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  font-size: 15px;
+  line-height: 1.2;
+}
+.biko-pill i { color: #c3d2e8; }
+.biko-pill b { color: #dbe6f5; font-weight: 700; margin: 0 2px; }
+
+/* 大标题 */
+.biko-hub-title {
+  margin: 4px 0 0;
+  color: #fff;
+  font-size: clamp(52px, 11vw, 132px);
+  font-weight: 800;
+  line-height: .98;
+  letter-spacing: -2px;
+  text-shadow: 0 6px 30px rgba(0, 0, 0, .4);
+  display: flex;
+  align-items: center;
+  gap: .12em;
+}
+.biko-hub-title .biko-heart {
+  color: #9db4d3;
+  font-size: .62em;
+  transform: translateY(-.1em);
+  animation: biko-heart-beat 1.8s ease-in-out infinite;
+}
+@keyframes biko-heart-beat {
+  0%, 100% { transform: translateY(-.1em) scale(1); }
+  25% { transform: translateY(-.1em) scale(1.18); }
+  45% { transform: translateY(-.1em) scale(1); }
+}
+.biko-hub-sub {
+  font-size: clamp(22px, 3.4vw, 40px);
+  font-weight: 600;
+  margin-top: -2px;
+  text-shadow: 0 3px 16px rgba(0, 0, 0, .4);
+}
+
+/* 猫耳时钟
+ * 耳朵不再是「calc(50% ± 固定 px)」的硬编码猜测（字号/缩放一变就错位），
+ * 改为挂到真实的时分秒盒子两端：.biko-hub-clock 上找出首/末盒子，
+ * 由 CSS 通过 :has() 无法定位兄弟节点，故用 JS 写入 --bh-ear-l / --bh-ear-r
+ * （home_hub.js），此处只保留兜底值，并用 em 跟随字号缩放。 */
+.biko-hub-clock {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 1vw, 10px);
+  margin-top: 14px;
+  padding-top: 20px;
+}
+.biko-ear {
+  position: absolute;
+  top: -6px;
+  width: 0;
+  height: 0;
+  border-left: .27em solid transparent;
+  border-right: .27em solid transparent;
+  border-bottom: .46em solid #9db4d3;
+  font-size: clamp(26px, 4.6vw, 48px);
+}
+.biko-ear::after {
+  content: '';
+  position: absolute;
+  left: -.15em;
+  top: .15em;
+  width: 0;
+  height: 0;
+  border-left: .15em solid transparent;
+  border-right: .15em solid transparent;
+  border-bottom: .25em solid #7e96b8;
+}
+/* 兜底定位（JS 未执行时）；JS 会写入更精确的 --bh-ear-l / --bh-ear-r */
+.biko-ear-l { left: var(--bh-ear-l, calc(50% - 34px)); }
+.biko-ear-r { left: var(--bh-ear-r, calc(50% + 8px)); }
+.biko-time-box {
+  background: rgba(255, 255, 255, .94);
+  color: #4a5b75;
+  font-weight: 800;
+  font-size: clamp(26px, 4.6vw, 48px);
+  line-height: 1;
+  padding: 8px clamp(10px, 1.6vw, 16px);
+  border-radius: var(--r-panel-sm);
+  min-width: 1.55em;
+  text-align: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .25);
+  font-variant-numeric: tabular-nums;
+}
+.biko-colon {
+  font-size: clamp(24px, 4vw, 42px);
+  font-weight: 800;
+  color: rgba(255, 255, 255, .9);
+}
+
+/* 日期 */
+.biko-hub-date {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: clamp(15px, 2vw, 18px);
+  opacity: .92;
+}
+.biko-weekday {
+  padding: 3px 12px;
+  border-radius: var(--r-pill);
+  background: rgba(126, 150, 184, .4);
+  border: 1px solid rgba(210, 226, 245, .35);
+  font-size: .92em;
+}
+
+/* 标语 */
+.biko-hub-tagline {
+  margin: 6px 0 0;
+  font-size: clamp(15px, 2.1vw, 19px);
+  opacity: .86;
+}
+
+/* CTA */
+.biko-hub-cta {
+  margin-top: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 30px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: linear-gradient(135deg, #7e96b8 0%, #9db4d3 100%);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(126, 150, 184, .45);
+  transition: transform .25s ease, box-shadow .25s ease, filter .25s ease;
+}
+.biko-hub-cta:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.06);
+  box-shadow: 0 14px 32px rgba(126, 150, 184, .55);
+}
+.biko-hub-cta i { transition: transform .25s ease; }
+.biko-hub-cta:hover i { transform: translateY(3px); }
+
+/* 飘落层：星点 + 气泡 */
+.biko-hub-fall {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
+}
+.biko-star {
+  position: absolute;
+  bottom: -10px;
+  background: #eef4ff;
+  border-radius: 50%;
+  opacity: 0;
+  animation-name: biko-star-rise, biko-twinkle;
+  animation-timing-function: linear, ease-in-out;
+  animation-iteration-count: infinite, infinite;
+}
+@keyframes biko-star-rise {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  10% { opacity: .9; }
+  90% { opacity: .8; }
+  100% { transform: translateY(-108vh) translateX(20px); opacity: 0; }
+}
+@keyframes biko-twinkle {
+  0%, 100% { filter: brightness(.6); }
+  50% { filter: brightness(1.3); }
+}
+.biko-bubble {
+  position: absolute;
+  bottom: -40px;
+  border-radius: 50%;
+  border: 1px solid rgba(220, 234, 255, .45);
+  background: radial-gradient(circle at 32% 30%, rgba(255, 255, 255, .35), rgba(157, 180, 211, .08) 60%, rgba(126, 150, 184, .05));
+  opacity: 0;
+  animation: biko-bubble-rise linear infinite;
+}
+@keyframes biko-bubble-rise {
+  0% { transform: translateY(0) translateX(0); opacity: 0; }
+  12% { opacity: .85; }
+  50% { transform: translateY(-55vh) translateX(18px); }
+  88% { opacity: .7; }
+  100% { transform: translateY(-112vh) translateX(-14px); opacity: 0; }
+}
+
+/* 移动端 */
+@media (max-width: 768px) {
+  .biko-hub-inner { padding: 0 7vw; gap: 12px; }
+  .biko-pill { font-size: 13px; padding: 7px 14px; }
+  .biko-hub-cta { padding: 12px 24px; font-size: 15px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .biko-star, .biko-bubble, .biko-hub-title .biko-heart { animation: none; }
+}
+
+/* ============================================================
+ * 方案二：首页只保留自定义鲸鱼首屏
+ * 隐藏 Butterfly 占满一屏的原生标题块（#page-header），不再出现第二张“鲸鱼+站名”。
+ * 顶栏统一由 custom_nav.css 的 #menu-container（一条三栏）负责，原生 #nav 隐藏；
+ * 固定顶栏的预留高度也在 custom_nav.css 中全局设置。
+ * ============================================================ */
+body:has(#recent-posts) #page-header {
+  display: none !important;
+}
+/* 兜底：不支持 :has() 时无法按“首页”判定，改由 body.biko-home（home_hub.js 写入）判定，
+ * 避免首页出现第二张“鲸鱼+站名”原生标题块。 */
+@supports not selector(:has(*)) {
+  body.biko-home #page-header { display: none !important; }
+}

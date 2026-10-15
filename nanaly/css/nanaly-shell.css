@@ -1,0 +1,237 @@
+/* 宽敞、安静的玫瑰色聊天小屋。此文件在旧面板样式之后加载。 */
+#nanaly-panel.nanaly-shell {
+  --nanaly-shell-surface: #fffafb;
+  --nanaly-shell-canvas: #fff5f8;
+  --card-bg: var(--nanaly-shell-surface);
+  --nanaly-shell-line: var(--noimpty-border, #e9c5d0);
+  --nanaly-shell-ink: var(--font-color, #5b3745);
+  --nanaly-shell-wash: color-mix(in srgb, var(--card-bg, #fffafb) 92%, var(--noimpty-accent, #e95978));
+  --nanaly-drawer-width: 302px;
+  box-sizing: border-box;
+  inset: auto;
+  left: var(--nanaly-shell-x, calc(100vw - 536px));
+  top: var(--nanaly-shell-y, 16px);
+  width: var(--nanaly-shell-width, 520px);
+  height: var(--nanaly-shell-height, calc(100dvh - 32px));
+  max-width: none;
+  max-height: none;
+  min-width: 0;
+  border: 1px solid var(--nanaly-shell-line);
+  border-radius: 25px;
+  background: var(--card-bg, #fffafb);
+  color: var(--nanaly-shell-ink);
+  box-shadow: 0 22px 80px #50273826, 0 3px 15px #5027380d;
+  backdrop-filter: none;
+  container-type: inline-size;
+  isolation: isolate;
+  transition: opacity .2s ease, transform .2s ease, visibility .2s ease;
+}
+html[data-theme='dark'] #nanaly-panel.nanaly-shell {
+  --nanaly-shell-surface: #271f2b;
+  --nanaly-shell-canvas: #211a25;
+}
+#nanaly-panel.nanaly-shell *, #nanaly-panel.nanaly-shell *::before, #nanaly-panel.nanaly-shell *::after { box-sizing: border-box; }
+#nanaly-panel.nanaly-shell [hidden] { display: none !important; }
+#nanaly-panel.nanaly-shell .nanaly-head {
+  position: relative;
+  min-height: 84px;
+  padding: 18px 18px 13px;
+  gap: 12px;
+  border: 0;
+  background: radial-gradient(ellipse at 0 0, #f3b8ce28, transparent 65%), var(--nanaly-shell-wash);
+}
+#nanaly-panel.nanaly-shell .nanaly-head::after {
+  content: '✦';
+  position: absolute;
+  top: 11px;
+  left: 59px;
+  color: var(--noimpty-accent, #e95978);
+  font-size: 11px;
+  pointer-events: none;
+}
+#nanaly-panel.nanaly-shell .nanaly-head__avatar {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--nanaly-shell-line);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px #bd64861a;
+}
+#nanaly-panel.nanaly-shell .nanaly-head__name { font-size: 17px; letter-spacing: .045em; line-height: 1.5; }
+#nanaly-panel.nanaly-shell .nanaly-head__sub { margin-top: 2px; font-size: 11px; }
+#nanaly-panel.nanaly-shell .nanaly-head__actions { display: flex; gap: 3px; align-items: center; flex: none; }
+#nanaly-panel.nanaly-shell .nanaly-head__btn { width: 32px; height: 34px; border-radius: 11px; font-size: 13px; }
+#nanaly-panel.nanaly-shell .nanaly-head__btn[data-act='close'] { background: var(--card-bg); border: 1px solid var(--nanaly-shell-line); margin-left: 3px; }
+#nanaly-panel.nanaly-shell[data-nanaly-layout='float'] .nanaly-head { cursor: grab; touch-action: none; }
+#nanaly-panel.nanaly-shell.nanaly-shell--resizing { user-select: none; }
+#nanaly-panel.nanaly-shell.nanaly-shell--resizing .nanaly-head { cursor: grabbing; }
+.nanaly-shell-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: none;
+  gap: 12px;
+  padding: 0 18px 14px;
+  background: var(--nanaly-shell-wash);
+  border-bottom: 1px solid var(--nanaly-shell-line);
+}
+.nanaly-shell-modes { display: flex; gap: 3px; padding: 3px; border: 1px solid var(--nanaly-shell-line); border-radius: 12px; background: var(--card-bg); }
+#nanaly-panel .nanaly-shell-mode { min-width: 48px; min-height: 29px; padding: 4px 12px; border: 0; border-radius: 8px; background: transparent; color: var(--card-meta); font: inherit; font-size: 12px; cursor: pointer; }
+#nanaly-panel .nanaly-shell-mode[aria-pressed='true'] { background: var(--noimpty-accent, #e95978); color: #fff; box-shadow: 0 2px 6px #c250752e; }
+.nanaly-shell-hint { font-size: 11px; color: var(--card-meta); text-align: right; }
+.nanaly-shell-actions { display: flex; gap: 6px; align-items: center; flex: none; }
+.nanaly-shell-actions:empty { display: none; }
+#nanaly-panel .nanaly-shell-actions button { min-height: 32px; padding: 5px 10px; border: 1px solid var(--nanaly-shell-line); border-radius: 10px; background: var(--card-bg); color: var(--noimpty-accent); font: inherit; font-size: 12px; cursor: pointer; }
+#nanaly-panel.nanaly-shell .nanaly-workspace-bar { min-height: 49px; padding: 9px 18px; gap: 7px; background: var(--card-bg); }
+#nanaly-panel.nanaly-shell .nanaly-workspace-title { font-size: 12px; font-weight: 600; color: var(--nanaly-shell-ink); }
+#nanaly-panel.nanaly-shell .nanaly-workspace-bar button { padding: 5px 10px; background: transparent; border-color: transparent; color: var(--card-meta); }
+#nanaly-panel.nanaly-shell .nanaly-workspace-bar button:hover,
+#nanaly-panel.nanaly-shell .nanaly-workspace-bar button[aria-expanded='true'] { background: var(--nanaly-shell-wash); color: var(--noimpty-accent); border-color: var(--nanaly-shell-line); box-shadow: none; }
+#nanaly-panel.nanaly-shell .nanaly-body {
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+  padding: 24px 20px 20px;
+  gap: 20px;
+  background-color: var(--nanaly-shell-canvas);
+  background-image: radial-gradient(circle, color-mix(in srgb, var(--noimpty-accent) 14%, transparent) .7px, transparent .8px);
+  background-size: 22px 22px;
+  scrollbar-gutter: stable;
+  scrollbar-color: color-mix(in srgb, var(--noimpty-accent) 35%, transparent) transparent;
+}
+#nanaly-panel.nanaly-shell .nanaly-msg { flex: 0 0 auto; max-width: 94%; padding: 14px 16px; border-radius: 19px; font-size: 14px; line-height: 1.85; overflow-wrap: anywhere; box-shadow: 0 3px 9px #66374506; }
+#nanaly-panel.nanaly-shell .nanaly-msg--her { background: var(--card-bg); border-color: var(--nanaly-shell-line); border-bottom-left-radius: 6px; }
+#nanaly-panel.nanaly-shell .nanaly-msg--me { background: linear-gradient(125deg, #c8486c, #c55483); border-bottom-right-radius: 6px; color: #fff; }
+#nanaly-panel.nanaly-shell .nanaly-msg--sys { padding: 7px 11px; background: var(--nanaly-shell-wash); border: 1px dashed var(--nanaly-shell-line); box-shadow: none; font-size: 12px; }
+#nanaly-panel.nanaly-shell .nanaly-msg pre { max-width: 100%; margin: 12px 0; padding: 33px 14px 14px; background: #28212d; color: #f9edf3; border: 1px solid #9a73813d; white-space: pre; }
+#nanaly-panel.nanaly-shell .nanaly-msg pre code { font-size: 12px; }
+#nanaly-panel.nanaly-shell .nanaly-msg :not(pre) > code { background: var(--nanaly-shell-wash); color: var(--noimpty-accent); }
+#nanaly-panel.nanaly-shell .nanaly-msg--me :not(pre) > code { background: #ffffff20; color: #fff; }
+#nanaly-panel.nanaly-shell .nanaly-msg--her a { color: var(--noimpty-accent); }
+#nanaly-panel.nanaly-shell .nanaly-copy { opacity: .85; top: 5px; }
+#nanaly-panel.nanaly-shell .nanaly-msg table { display: block; max-width: 100%; overflow: auto; border-collapse: collapse; font-size: 12px; }
+#nanaly-panel.nanaly-shell .nanaly-msg :is(th, td) { border: 1px solid var(--nanaly-shell-line); padding: 6px 9px; min-width: 60px; }
+#nanaly-panel.nanaly-shell .nanaly-message-tools { gap: 5px; padding-top: 5px; border-top: 1px solid var(--nanaly-shell-line); margin-top: 6px; }
+#nanaly-panel.nanaly-shell .nanaly-message-tools button { background: transparent; border: 0; color: var(--card-meta); font-size: 11px; }
+#nanaly-panel.nanaly-shell .nanaly-msg--me .nanaly-message-tools button { color: #fff; }
+#nanaly-panel.nanaly-shell .nanaly-speak { opacity: .8; padding: 2px 0; margin-top: 3px; }
+#nanaly-panel.nanaly-shell .nanaly-sources { margin-top: 6px; padding-top: 4px; }
+#nanaly-panel.nanaly-shell .nanaly-usage { opacity: .75; font-size: 10px; }
+#nanaly-panel.nanaly-shell .nanaly-quick { flex-wrap: nowrap; gap: 7px; padding: 10px 18px 5px; overflow-x: auto; scrollbar-width: thin; }
+#nanaly-panel.nanaly-shell .nanaly-quick button { flex: none; padding: 5px 11px; background: var(--card-bg); color: var(--card-meta); border-color: var(--nanaly-shell-line); font-size: 11px; white-space: nowrap; }
+#nanaly-panel.nanaly-shell .nanaly-foot { padding: 13px 17px 18px; gap: 8px; border-top: none; background: var(--card-bg); }
+#nanaly-panel.nanaly-shell .nanaly-foot textarea { min-height: 52px; max-height: 160px; padding: 14px 13px; border-radius: 17px; background: var(--nanaly-shell-wash); font-size: 14px; line-height: 1.6; box-shadow: inset 0 1px 2px #50273804; }
+#nanaly-panel.nanaly-shell .nanaly-foot textarea:focus { box-shadow: 0 0 0 3px color-mix(in srgb, var(--noimpty-accent) 13%, transparent); }
+#nanaly-panel.nanaly-shell :is(.nanaly-send, .nanaly-attach) { height: 43px; width: 40px; border-radius: 14px; margin-bottom: 4px; }
+#nanaly-panel.nanaly-shell .nanaly-send { background: var(--noimpty-accent, #e95978); }
+#nanaly-panel.nanaly-shell .nanaly-attach { background: var(--nanaly-shell-wash); color: var(--noimpty-accent); }
+#nanaly-panel.nanaly-shell .nanaly-setup { flex: 0 0 auto; width: 100%; max-width: 640px; margin: 0 auto; padding: 18px; border: 1px solid var(--nanaly-shell-line); border-radius: 18px; background: var(--card-bg); font-size: 13px; }
+#nanaly-panel.nanaly-shell .nanaly-setup :is(input, select) { border-radius: 11px; padding: 11px 12px; background: var(--nanaly-shell-wash); color: var(--nanaly-shell-ink); max-width: 100%; }
+#nanaly-panel.nanaly-shell .nanaly-setup label { margin-top: 16px; font-size: 12px; }
+#nanaly-panel.nanaly-shell .nanaly-setup h4 { font-size: 17px; margin-bottom: 12px; }
+#nanaly-panel.nanaly-shell .nanaly-workspace-drawer {
+  position: absolute;
+  z-index: 5;
+  inset: var(--nanaly-drawer-top, 180px) auto 12px 12px;
+  width: min(var(--nanaly-drawer-width), calc(100% - 24px));
+  max-height: none;
+  padding: 59px 15px 18px;
+  border: 1px solid var(--nanaly-shell-line);
+  border-radius: 19px;
+  background: var(--card-bg);
+  box-shadow: 8px 12px 32px #50273817;
+  scrollbar-width: thin;
+}
+.nanaly-shell-drawer-heading { position: absolute; z-index: 6; top: calc(var(--nanaly-drawer-top, 180px) + 1px); left: 13px; width: calc(min(var(--nanaly-drawer-width), 100% - 24px) - 2px); min-height: 47px; padding: 14px 82px 10px 15px; border-radius: 18px 18px 0 0; background: var(--card-bg); color: var(--nanaly-shell-ink); font-size: 14px; border-bottom: 1px solid var(--nanaly-shell-line); }
+#nanaly-panel .nanaly-shell-drawer-close { position: absolute; z-index: 7; top: calc(var(--nanaly-drawer-top, 180px) + 9px); left: calc(min(var(--nanaly-drawer-width), 100% - 24px) - 59px); width: 61px; padding: 5px; border: 0; border-radius: 8px; background: var(--nanaly-shell-wash); color: var(--card-meta); font: inherit; font-size: 11px; cursor: pointer; }
+#nanaly-panel .nanaly-shell-scrim { position: absolute; z-index: 4; inset: var(--nanaly-drawer-top, 180px) 0 0; width: 100%; border: 0; background: #3c263d42; cursor: pointer; }
+#nanaly-panel.nanaly-shell[data-nanaly-wide='true'].nanaly-shell--drawer > :is(.nanaly-body, .nanaly-foot, .nanaly-quick, .nanaly-image-tray, .nanaly-file-tray, .nanaly-workspace-recovery, .nanaly-workspace-undo, .nanaly-workspace-status) { margin-left: calc(var(--nanaly-drawer-width) + 18px); }
+#nanaly-panel.nanaly-shell button.nanaly-session { padding: 12px; border-radius: 13px; background: var(--nanaly-shell-wash); text-align: left; }
+#nanaly-panel.nanaly-shell .nanaly-session strong { font-size: 13px; }
+#nanaly-panel.nanaly-shell .nanaly-session span { line-height: 1.6; font-size: 11px; }
+#nanaly-panel.nanaly-shell .nanaly-session-row { display: flex; align-items: stretch; gap: 4px; }
+#nanaly-panel.nanaly-shell .nanaly-session-row > .nanaly-session { flex: 1; min-width: 0; }
+#nanaly-panel.nanaly-shell .nanaly-session-delete { flex: none; align-self: center; }
+#nanaly-panel.nanaly-shell .nanaly-drawer-heading { display: none; }
+#nanaly-panel.nanaly-shell .nanaly-session-actions { position: relative; align-self: center; flex: none; }
+#nanaly-panel.nanaly-shell .nanaly-session-actions > summary { list-style: none; padding: 8px 4px; width: 28px; border-radius: 9px; color: var(--card-meta); cursor: pointer; text-align: center; }
+#nanaly-panel.nanaly-shell .nanaly-session-actions > summary::-webkit-details-marker { display: none; }
+#nanaly-panel.nanaly-shell .nanaly-session-actions[open] > summary { background: var(--nanaly-shell-wash); color: var(--noimpty-accent); }
+#nanaly-panel.nanaly-shell .nanaly-session-menu { position: absolute; z-index: 2; right: 0; top: 100%; display: grid; min-width: 95px; gap: 4px; padding: 5px; border: 1px solid var(--nanaly-shell-line); border-radius: 12px; background: var(--card-bg); box-shadow: 0 5px 14px #5027381a; }
+#nanaly-panel.nanaly-shell .nanaly-session-menu button { white-space: nowrap; background: transparent; border: none; text-align: left; }
+#nanaly-panel.nanaly-shell :is(.nanaly-session-empty, .nanaly-session-intro) { color: var(--card-meta); font-size: 12px; line-height: 1.7; }
+#nanaly-panel.nanaly-shell .nanaly-workspace-recovery,
+#nanaly-panel.nanaly-shell .nanaly-workspace-undo,
+#nanaly-panel.nanaly-shell .nanaly-workspace-status { padding-inline: 18px; flex-shrink: 0; background: var(--nanaly-shell-wash); }
+#nanaly-panel.nanaly-shell :is(.nanaly-image-tray, .nanaly-file-tray) { max-height: 128px; flex: none; overflow-y: auto; padding: 12px 18px 4px; gap: 10px; }
+#nanaly-panel.nanaly-shell .nanaly-file-tray { display: flex; flex-wrap: wrap; }
+#nanaly-panel.nanaly-shell .nanaly-file-attach { flex: none; width: 40px; height: 43px; padding: 2px; margin-bottom: 4px; border: 1px solid var(--nanaly-shell-line); border-radius: 14px; background: var(--nanaly-shell-wash); color: var(--noimpty-accent); font: inherit; font-size: 11px; cursor: pointer; }
+#nanaly-panel.nanaly-shell .nanaly-file-chip { position: relative; display: grid; gap: 3px; min-width: 0; max-width: 100%; padding: 9px 33px 9px 11px; border: 1px solid var(--nanaly-shell-line); border-radius: 12px; background: var(--nanaly-shell-wash); }
+#nanaly-panel.nanaly-shell .nanaly-file-name { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
+#nanaly-panel.nanaly-shell .nanaly-file-detail { display: block; color: var(--card-meta); font-size: 10px; }
+#nanaly-panel.nanaly-shell .nanaly-file-chip > button { position: absolute; top: 6px; right: 4px; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--card-meta); cursor: pointer; }
+#nanaly-panel.nanaly-shell .nanaly-file-card :is(strong, small) { display: block; }
+#nanaly-panel.nanaly-shell .nanaly-file-card small { margin-top: 4px; color: var(--card-meta); font-size: 11px; }
+#nanaly-panel.nanaly-shell .nanaly-file-progress { padding: 5px 0; color: var(--card-meta); font-size: 12px; }
+#nanaly-panel.nanaly-shell :is(.nanaly-file-card, .nanaly-file-history > span) { min-width: 0; max-width: 100%; padding: 9px 12px; border: 1px solid var(--nanaly-shell-line); border-radius: 12px; background: var(--nanaly-shell-wash); font-size: 12px; overflow-wrap: anywhere; }
+#nanaly-panel.nanaly-shell .nanaly-file-history { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
+#nanaly-panel.nanaly-shell .nanaly-voice-settings { position: absolute; z-index: 8; top: 79px; right: 14px; width: min(330px, calc(100% - 28px)); max-height: calc(100% - 100px); overflow: auto; padding: 18px; border: 1px solid var(--nanaly-shell-line); border-radius: 18px; background: var(--card-bg); color: var(--nanaly-shell-ink); box-shadow: 0 12px 40px #50273826; font-size: 12px; }
+#nanaly-panel.nanaly-shell .nanaly-voice-settings :is(input:not([type='checkbox']), select) { width: 100%; min-width: 0; padding: 8px; margin-block: 5px 10px; border: 1px solid var(--nanaly-shell-line); border-radius: 8px; background: var(--nanaly-shell-wash); color: inherit; }
+.nanaly-shell-resize { position: absolute; z-index: 9; touch-action: none; }
+.nanaly-shell-resize--width { top: 24px; bottom: 24px; left: 0; width: 9px; cursor: ew-resize; }
+.nanaly-shell-resize--height { left: 24px; right: 24px; bottom: 0; height: 9px; cursor: ns-resize; }
+.nanaly-shell-resize::after { content: ''; position: absolute; border-radius: 5px; background: var(--noimpty-accent); opacity: .4; transition: opacity .15s ease; }
+.nanaly-shell-resize--width::after { width: 3px; height: 42px; top: calc(50% - 21px); left: 3px; }
+.nanaly-shell-resize--height::after { height: 3px; width: 42px; left: calc(50% - 21px); bottom: 3px; }
+.nanaly-shell-resize:hover::after, .nanaly-shell-resize:focus-visible::after { opacity: 1; }
+.nanaly-shell-resize:focus-visible { outline: 2px solid var(--noimpty-accent); outline-offset: -2px; }
+#nanaly-launcher.nanaly-shell-launcher-hidden { visibility: hidden; pointer-events: none; }
+#nanaly-panel.nanaly-shell--sleeping *, #nanaly-panel.nanaly-shell:not(.is-open) * { animation-play-state: paused !important; }
+@container (max-width: 470px) {
+  #nanaly-panel.nanaly-shell .nanaly-head { min-height: 79px; padding: 15px 13px 10px; gap: 9px; }
+  #nanaly-panel.nanaly-shell .nanaly-head__avatar { width: 37px; height: 37px; border-radius: 13px; }
+  #nanaly-panel.nanaly-shell .nanaly-head__btn { width: 28px; height: 32px; font-size: 12px; }
+  #nanaly-panel.nanaly-shell .nanaly-head__actions { gap: 1px; }
+  #nanaly-panel.nanaly-shell .nanaly-head__name { font-size: 16px; }
+  #nanaly-panel.nanaly-shell .nanaly-head__sub { max-width: 92px; font-size: 10px; }
+  .nanaly-shell-toolbar { padding: 0 13px 12px; }
+  .nanaly-shell-hint { display: none; }
+  #nanaly-panel.nanaly-shell .nanaly-workspace-bar { padding: 8px 13px; gap: 3px; }
+  #nanaly-panel.nanaly-shell .nanaly-workspace-bar button { padding: 5px 8px; }
+  #nanaly-panel.nanaly-shell .nanaly-body { padding: 18px 13px; gap: 17px; }
+  #nanaly-panel.nanaly-shell .nanaly-msg { max-width: 96%; font-size: 14px; padding: 12px 14px; }
+  #nanaly-panel.nanaly-shell .nanaly-foot { padding: 10px 12px 13px; gap: 6px; }
+  #nanaly-panel.nanaly-shell .nanaly-quick { padding-inline: 13px; }
+  #nanaly-panel.nanaly-shell .nanaly-workspace-drawer { --nanaly-drawer-width: 100%; }
+  #nanaly-panel.nanaly-shell :is(.nanaly-shell-drawer-close, .nanaly-shell-drawer-heading) { --nanaly-drawer-width: 100%; }
+}
+@media (max-width: 640px) {
+  #nanaly-panel.nanaly-shell { border-radius: 21px; }
+  #nanaly-panel.nanaly-shell .nanaly-shell-toolbar { display: none; }
+  #nanaly-panel.nanaly-shell .nanaly-shell-hint { display: none; }
+  #nanaly-panel.nanaly-shell .nanaly-head { padding-top: max(14px, env(safe-area-inset-top)); }
+  #nanaly-panel.nanaly-shell .nanaly-head__sub { display: none; }
+  #nanaly-panel.nanaly-shell .nanaly-foot { padding-bottom: max(13px, env(safe-area-inset-bottom)); }
+  #nanaly-panel.nanaly-shell :is(.nanaly-foot textarea, .nanaly-setup input, .nanaly-setup select, .nanaly-workspace-drawer input, .nanaly-workspace-drawer textarea, .nanaly-workspace-drawer select, .nanaly-voice-settings select) { font-size: 16px; }
+}
+@media (max-height: 540px) {
+  #nanaly-panel.nanaly-shell .nanaly-head { min-height: 58px; padding-top: 8px; padding-bottom: 8px; }
+  #nanaly-panel.nanaly-shell .nanaly-head__avatar { width: 32px; height: 32px; }
+  #nanaly-panel.nanaly-shell .nanaly-shell-toolbar { padding-bottom: 6px; }
+  #nanaly-panel.nanaly-shell .nanaly-shell-hint { display: none; }
+  #nanaly-panel.nanaly-shell .nanaly-workspace-bar { min-height: 39px; padding-top: 4px; padding-bottom: 4px; }
+  #nanaly-panel.nanaly-shell .nanaly-foot { padding-top: 7px; padding-bottom: 9px; }
+  #nanaly-panel.nanaly-shell .nanaly-foot textarea { min-height: 42px; max-height: 80px; padding-top: 9px; padding-bottom: 9px; }
+  #nanaly-panel.nanaly-shell .nanaly-body { padding-top: 12px; padding-bottom: 12px; }
+  #nanaly-panel.nanaly-shell .nanaly-image-tray, #nanaly-panel.nanaly-shell .nanaly-file-tray { max-height: 70px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #nanaly-panel.nanaly-shell, #nanaly-panel.nanaly-shell * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+
+/* 旧左下角聊天的音乐避让不适用于右侧/浮动/专注布局。 */
+body:has(#noimpty-music-player:not(.is-collapsed)) #nanaly-panel.nanaly-shell { translate: none; max-height: none; }
+body:has(#noimpty-music-player:not(.is-collapsed)) #nanaly-panel.nanaly-shell .nanaly-foot textarea { max-height: 160px; }
+@media (max-height: 540px) {
+  body:has(#noimpty-music-player:not(.is-collapsed)) #nanaly-panel.nanaly-shell .nanaly-foot textarea { max-height: 80px; }
+}

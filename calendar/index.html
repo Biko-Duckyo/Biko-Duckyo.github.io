@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f2f5fa">
+<title>工作计划历 · Biko</title>
+<meta name="description" content="Biko 的工作计划历：点今天的格子记一条工作，同一天可反复追加，历史日期只读回顾。">
+<!-- 独立页（layout:false）不经过主题渲染，需自带主题与图标库 -->
+<link rel="stylesheet" href="/css/vendor/fontawesome.min.css">
+<link rel="stylesheet" href="/css/biko_subpage.css">
+<link rel="stylesheet" href="/css/biko_theme_toggle.css">
+<link rel="stylesheet" href="/css/worklog_calendar.css">
+<script>
+/* 主题脚本必须在 <head> 同步执行：先套上 data-theme 再渲染，
+   否则浅色偏好会先闪一下深色（FOUC）。键名 theme 与主站主题一致。 */
+(function () {
+  try {
+    var v = localStorage.getItem('theme');
+    if (v !== 'dark' && v !== 'light') {
+      v = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', v);
+    var m = document.querySelector('meta[name="theme-color"]');
+    if (m) m.setAttribute('content', v === 'dark' ? '#0d1018' : '#f2f5fa');
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+</head>
+<body class="biko-subpage biko-worklog-page">
+
+<header class="topbar-mp">
+  <a class="topback-mp" href="/">&#8592; 返回首页</a>
+  <span class="brand-mp">Worklog</span>
+</header>
+
+<!-- 昼夜切换：与主站齿轮面板里的明暗按钮同源，共用 subpage_theme.js -->
+<button class="biko-theme-toggle" type="button" id="biko-theme-toggle"
+        title="浅色 / 深色模式切换" aria-label="明暗切换">
+  <i class="biko-theme-toggle__icon" aria-hidden="true"></i>
+</button>
+
+<main class="wl">
+
+  <header class="wl-head">
+    <p class="wl-eyebrow">Worklog</p>
+    <h1>工作计划历</h1>
+    <p class="wl-sub">
+      点<b>今天</b>的格子记一条，同一天可以反复记、不会覆盖；
+      历史日期只读回顾，鼠标划过任意格子都能看到当天的记录。
+    </p>
+    <div class="wl-stats" id="wl-stats">
+      <div class="wl-stat"><b id="wl-total">0</b><span>条记录</span></div>
+      <div class="wl-stat"><b id="wl-days">0</b><span>活跃天数</span></div>
+      <div class="wl-stat"><b id="wl-streak">0</b><span>天连续</span></div>
+    </div>
+  </header>
+
+  <p class="wl-note" id="wl-note"><i class="fas fa-circle-info"></i><span id="wl-note-text"></span></p>
+
+  <section class="wl-board">
+    <div class="wl-scroll">
+      <div class="wl-canvas">
+        <span class="wl-corner" aria-hidden="true"></span>
+        <div class="wl-months" id="wl-months" aria-hidden="true"></div>
+        <div class="wl-days" aria-hidden="true">
+          <span>一</span><span></span><span>三</span><span></span><span>五</span><span></span><span></span>
+        </div>
+        <div class="wl-grid" id="wl-grid" role="grid" aria-label="工作记录格子墙"></div>
+      </div>
+    </div>
+    <div class="wl-legend" aria-hidden="true">
+      <span>少</span>
+      <i data-lv="0"></i><i data-lv="1"></i><i data-lv="2"></i><i data-lv="3"></i><i data-lv="4"></i>
+      <span>多</span>
+    </div>
+  </section>
+
+  <p class="wl-foot" id="wl-foot">正在载入记录…</p>
+
+</main>
+
+<!-- 悬停卡片（portal：挂 body，避免被格子的滚动容器裁剪） -->
+<div class="wl-tip" id="wl-tip" role="tooltip" aria-hidden="true"></div>
+
+<!-- 输入卡 -->
+<div class="wl-modal" id="wl-modal" hidden>
+  <div class="wl-panel" role="dialog" aria-modal="true" aria-labelledby="wl-panel-title">
+    <div class="wl-panel-head">
+      <h2 id="wl-panel-title">记录这一天</h2>
+      <button class="wl-close" id="wl-close" type="button" title="关闭" aria-label="关闭">
+        <i class="fas fa-xmark"></i>
+      </button>
+    </div>
+
+    <p class="wl-existing-title" id="wl-existing-title">已有记录</p>
+    <ul class="wl-existing" id="wl-existing"></ul>
+
+    <textarea class="wl-input" id="wl-input" maxlength="200"
+              placeholder="今天做了什么…（Ctrl / ⌘ + Enter 保存）"
+              aria-label="工作内容"></textarea>
+
+    <div class="wl-token-row" id="wl-token-row" hidden>
+      <label for="wl-token">首次写入需要口令（仅保存在本机浏览器）</label>
+      <input id="wl-token" type="password" autocomplete="current-password" placeholder="记录口令">
+    </div>
+
+    <div class="wl-panel-foot">
+      <span class="wl-count" id="wl-count">0/200</span>
+      <div class="wl-actions">
+        <button class="wl-btn" id="wl-cancel" type="button">取消</button>
+        <button class="wl-btn wl-btn-primary" id="wl-save" type="button">保存</button>
+      </div>
+    </div>
+
+    <p class="wl-err" id="wl-err"></p>
+  </div>
+</div>
+
+<script src="/js/custom/subpage_theme.js"></script>
+<script>
+/* 按钮 → window.switchNightMode（与主站同名同义，含星球旋转动画） */
+(function () {
+  var btn = document.getElementById('biko-theme-toggle');
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    if (window.switchNightMode) window.switchNightMode();
+  });
+})();
+</script>
+<script src="/js/custom/worklog_calendar.js"></script>
+</body>
+</html>

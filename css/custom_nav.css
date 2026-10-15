@@ -1,0 +1,593 @@
+/* ======================================================
+ * Biko 自定义顶栏（参考 superq314.github.io）
+ * 结构：#menu-container > .biko-nav > [.bn-left | ul.bn-menu | .bn-right]
+ * 左：天气 + 定位 + 时钟（无站名）；中：圆角半透明胶囊 + 向左推拉子菜单；右：搜索 + 明暗
+ * ====================================================== */
+
+:root {
+  --nav-item-bg: rgba(255, 255, 255, 0.10);
+  --nav-item-fg: rgba(255, 255, 255, 0.92);
+  --nav-item-hover: rgba(126, 150, 184, 0.90);
+  --nav-bar-bg: rgba(17, 20, 28, 0.92);
+  --nav-info-bg: rgba(255, 255, 255, 0.06);
+
+  /* ======================================================
+   * 统一圆角刻度（全站唯一来源，禁止再用魔法数字）
+   * 用法：border-radius: var(--r-card);
+   * ====================================================== */
+  --r-pill: 999px;          /* 胶囊：天气/时钟/CTA */
+  --r-control: 10px;        /* 控件：菜单项、图标按钮 */
+  --r-card: 8px;            /* 卡片：侧栏卡、文章卡 */
+  --r-panel: 18px;          /* 浮层面板：音乐面板、聊天面板 */
+  --r-panel-sm: 12px;       /* 浮层面板内嵌块 */
+
+  /* ======================================================
+   * 统一字体栈（全站唯一来源）
+   * 西文用 Titillium Web（与站点标题一致），中文回退到系统中文字体。
+   * ====================================================== */
+  --font-ui: 'Titillium Web', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+             'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC',
+             'Source Han Sans SC', sans-serif;
+
+  /* ======================================================
+   * 统一层级刻度（全站唯一来源，禁止再用魔法数字）
+   * 用法：z-index: var(--z-xxx);
+   * 留白刻意取整十/整百，方便后续在两层之间插入新层。
+   * ====================================================== */
+  --z-base: 1;              /* 顶栏内左/右区内部 */
+  --z-nav: 10;              /* 顶栏容器 #menu-container（fixed） */
+  --z-nav-menu: 11;         /* 顶栏中区菜单（需压住左右区） */
+  --z-card-float: 40;       /* 手机端侧栏悬浮卡（fixed-card-widget） */
+  --z-dropdown: 50;         /* 下拉 / 浮层 */
+  --z-backtop: 60;          /* 回顶按钮 */
+  --z-live2d: 70;           /* 看板娘 + 其点击热区 */
+  --z-live2d-hotspot: 71;   /* 看板娘热区需压在看板娘之上 */
+  --z-rightside: 80;        /* 左下/右下齿轮按钮列（含音乐按钮） */
+  --z-music-panel: 90;      /* 音乐圆角面板 */
+  --z-overlay: 100;         /* 全屏遮罩（首页 Home Hub 首屏） */
+  --z-loader: 100;          /* 加载动画 */
+  --z-sky: 1100;            /* 昼夜切换星球动画（短暂全屏，需盖住一切） */
+  --z-top: 1200;            /* 极端情况兜底：必须最顶层的临时层 */
+}
+
+/* 隐藏 Butterfly 原生 #nav，本套顶栏完全替代它 */
+#nav { display: none !important; }
+
+/* 容器：fixed；内页默认显示，首页欢迎态隐藏、进入后滑入 */
+.menu-container {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  z-index: var(--z-nav);
+  transform: translateY(0);
+  transition: transform .45s cubic-bezier(.4, 0, .2, 1);
+}
+body:has(#recent-posts) #menu-container { transform: translateY(-100%); }
+body:has(#recent-posts).biko-nav-on #menu-container { transform: translateY(0); }
+/* 兜底：不支持 :has() 的浏览器（Safari <15.4 / Firefox <121）无法命中上面两条，
+ * 会导致首页顶栏被永久藏起。@supports not selector(:has(*)) 时改为只依赖 body 上的
+ * .biko-nav-on 类（由 home_hub.js 写入），从而保证顶栏仍能滑入。 */
+@supports not selector(:has(*)) {
+  #menu-container { transform: translateY(-100%); }
+  body.biko-nav-on #menu-container { transform: translateY(0); }
+  body:not(.biko-home) #menu-container { transform: translateY(0); }
+}
+
+/* 兜底：不支持 :has() 时上面所有 body:has(...) 选择器整体失效 → 顶栏会常驻显示
+ * （比被永久藏起更安全）。此处显式声明常驻，避免「时隐时现」的观感。 */
+@supports not selector(:has(*)) {
+  body #menu-container { transform: translateY(0); }
+}
+/* 左/右区均为常显，不再依赖 :hover，故无需 :hover 兜底。 */
+
+/* 顶栏主体（相对定位，供中区绝对居中） */
+.biko-nav {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 60px;
+  padding: 0 16px;
+  gap: 10px;
+  background: var(--nav-bar-bg);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  backdrop-filter: blur(14px) saturate(1.1);
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
+  font-family: var(--font-ui);
+}
+
+/* 浅色模式：顶栏改为浅色玻璃拟态，与浅色正文/侧栏卡片统一，消除「深顶栏 + 浅正文」断裂感。
+ * 首页首屏（Home Hub）为深色鲸鱼星空，顶栏此时本就隐藏，故无影响。 */
+html[data-theme='light'] .biko-nav {
+  --nav-item-bg: rgba(126, 150, 184, 0.12);
+  --nav-item-fg: rgba(40, 55, 80, 0.92);
+  --nav-info-bg: rgba(126, 150, 184, 0.10);
+  background: rgba(236, 240, 246, 0.92);
+  border-bottom-color: rgba(40, 55, 80, .10);
+}
+html[data-theme='light'] .biko-nav .bn-icon,
+html[data-theme='light'] .biko-nav .bn-burger { color: rgba(40, 55, 80, .92); }
+html[data-theme='light'] .biko-nav .bn-icon { background: rgba(126, 150, 184, 0.12); }
+html[data-theme='light'] .biko-nav .bn-menu .menu-item-main:hover { color: #fff; }
+html[data-theme='light'] .biko-nav .bn-burger:hover { color: #fff; }
+html[data-theme='light'] .biko-nav .bn-icon:hover { background: var(--nav-item-hover); color: #fff; }
+html[data-theme='light'] .biko-nav .bn-weather i,
+html[data-theme='light'] .biko-nav .bn-clock i { color: #6b81a3; }
+
+/* 左区：天气 + 定位 + 时钟（信息胶囊）
+ * 注意：不能给 .bn-left 自身设 overflow:hidden（天气是第三方 iframe 挂载点，
+ * 会被裁掉），因此改为「按宽度分段隐藏/收缩内部胶囊」。 */
+.bn-left {
+  flex: 0 1 auto;
+  display: flex; align-items: center; gap: 8px;
+  min-width: 0;
+  z-index: var(--z-base);
+}
+.bn-weather,
+.bn-clock {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 11px;
+  border-radius: var(--r-pill);
+  background: var(--nav-info-bg);
+  color: var(--nav-item-fg);
+  font-size: 13px;
+  line-height: 1.2;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.bn-weather i,
+.bn-clock i { color: #9db4d3; font-size: 12px; }
+.bn-weather .bn-city { opacity: .85; display: inline-flex; align-items: center; gap: 4px; }
+.bn-weather .bn-wx { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; }
+.bn-weather .bn-aqi { margin-left: 4px; font-size: 12px; }
+.bn-clock .bn-weekday { opacity: .72; margin-left: 2px; }
+.bn-weather .bn-city i,
+.bn-weather .bn-wx i { color: #9db4d3; font-size: 12px; }
+/* 气象预警图标：橙色三角（优/良/轻度… 的 AQI 颜色由 JS 内联着色） */
+.bn-weather .bn-warn { color: #ff9800; margin-left: 4px; }
+.bn-clock { font-variant-numeric: tabular-nums; }
+/* 天气胶囊内部结构：.bn-wx-icon（常驻图标）+ .bn-wx-detail（悬停展开的详情） */
+.bn-weather .bn-wx-icon {
+  display: inline-flex; align-items: center; justify-content: center;
+  flex: 0 0 auto;
+  min-width: 20px;
+}
+.bn-weather .bn-wx-detail {
+  display: inline-flex; align-items: center; gap: 6px;
+  min-width: 0;
+  white-space: nowrap;
+}
+.bn-weather .bn-wx-icon .fa-rotate-right { font-size: 12px; }
+
+/* ======================================================
+ * 左区胶囊：天气「图标 + 文字」一律常显（用户要求）
+ * 之前是按 :hover 展开/收起；现在恒为展开态，仅保留悬停时的轻微交互反馈。
+ * ====================================================== */
+.bn-weather {
+  max-width: 200px;
+  opacity: 1;
+  transition: max-width .34s cubic-bezier(.4, 0, .2, 1),
+              opacity .26s ease,
+              padding .34s cubic-bezier(.4, 0, .2, 1),
+              margin .34s cubic-bezier(.4, 0, .2, 1);
+}
+
+/* 右区两个按钮（搜索 / 明暗）：图标 + 文字一律常显 */
+.bn-right .bn-icon {
+  width: auto;
+  padding-right: 12px;
+  overflow: hidden;
+  justify-content: flex-start;
+  transition: width .34s cubic-bezier(.4, 0, .2, 1),
+              background .25s,
+              transform .15s;
+}
+.bn-icon .bn-icon-text {
+  display: inline-block;
+  max-width: 80px;
+  opacity: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  font-size: 13px;
+  transition: max-width .34s cubic-bezier(.4, 0, .2, 1), opacity .26s ease;
+}
+.bn-icon .bn-icon-glyph { flex: 0 0 38px; display: flex; align-items: center; justify-content: center; width: 38px; }
+/* 纯图标按钮（明暗切换）：按用户要求只留 ☀/🌙，不显示文字。
+ * 与带文字按钮同为 38×38 方形，视觉上是一枚独立图标按钮。 */
+.bn-right .bn-icon.bn-icon-only {
+  width: 38px;
+  padding-right: 0;
+  justify-content: center;
+}
+.bn-right .bn-icon.bn-icon-only svg { width: 23px; height: 23px; }
+/* 仅保留悬停时的微浮起反馈，不再改变宽度/文字可见性 */
+.bn-right .bn-icon:hover { transform: translateY(-1px); }
+
+/* 中区菜单：绝对居中于顶栏（真正视口居中）
+ * 避让：max-width = 视口 - (左区宽 + 右区宽 + 两侧安全间隙)。
+ * 注意：左区只在左边占位、右区只在右边占位，所以合计只扣「一次」
+ * (left + right)，不要写成 2*(left+right) —— 那会重复扣减，
+ * 在常见 1400px 视口下把预算压到 ~380px，导致 7 个菜单项被横向滚动裁掉。
+ * 左/右宽度由 JS 写入 --bn-left-w / --bn-right-w（见 nav.js）。 */
+.bn-menu {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex; align-items: center; justify-content: center;
+  list-style: none; margin: 0; padding: 0;
+  height: 60px;
+  --bn-left-w: 0px;
+  --bn-right-w: 0px;
+  max-width: min(
+    100vw - (var(--bn-left-w) + var(--bn-right-w) + 56px),
+    100vw - 40px
+  );
+  overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: none;
+  z-index: var(--z-nav-menu);
+  scroll-behavior: smooth;
+}
+/* 菜单项过多（10 个顶级项）时必然横向滚动：左右边缘加渐隐提示，
+ * 让用户知道「这里可以滑」，而不是内容被硬生生切断。 */
+.bn-menu::before,
+.bn-menu::after {
+  content: '';
+  position: sticky;
+  top: 0;
+  width: 18px;
+  height: 42px;
+  flex: 0 0 18px;
+  pointer-events: none;
+  z-index: 1;
+}
+.bn-menu::before { left: 0; margin-right: -18px; background: linear-gradient(to right, var(--nav-bar-bg), transparent); }
+.bn-menu::after { right: 0; margin-left: -18px; background: linear-gradient(to left, var(--nav-bar-bg), transparent); }
+html[data-theme='light'] .bn-menu::before { background: linear-gradient(to right, rgba(236, 240, 246, .92), transparent); }
+html[data-theme='light'] .bn-menu::after { background: linear-gradient(to left, rgba(236, 240, 246, .92), transparent); }
+
+/* 窄视口兜底：JS 未执行时 --bn-left-w/--bn-right-w 为 0，公式会退化成 100vw-56px，
+ * 仍可能让菜单压到左右区。这里按分段给一个真实预算（左+右+间隙一次性扣除），
+ * 并用 min() 保证恒为正，避免旧写法 100vw-300px 在 600px 下把菜单压没。 */
+@media (max-width: 1100px) {
+  .bn-menu { max-width: min(100vw - 460px, 100vw - 40px); }
+}
+@media (max-width: 900px) {
+  .bn-menu { max-width: min(100vw - 300px, 100vw - 40px); }
+}
+.bn-menu::-webkit-scrollbar { display: none; }
+.bn-menu .menu-item-main { list-style: none; position: relative; }
+
+/* 菜单按钮：半透明浅色圆角胶囊（方案 A） */
+.bn-menu .menu-item-main {
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--nav-item-fg);
+  background: var(--nav-item-bg);
+  min-width: 82px; height: 42px;
+  margin: 4px 3px; flex: 0 0 auto;
+  border-radius: var(--r-control);
+  transition: background .3s ease, color .3s ease;
+  font-size: 15px;
+}
+.bn-menu .menu-item-main > a {
+  color: var(--nav-item-fg); text-decoration: none;
+  display: inline-flex; align-items: center; gap: 6px;
+  width: 100%; height: 100%; justify-content: center;
+}
+.bn-menu .menu-item-main > a i { font-size: 14px; }
+.bn-menu .menu-item-main:hover { color: #fff; background: var(--nav-item-hover); }
+.bn-menu .menu-item-main:hover > a { color: #fff; }
+
+/* ------------------------------------------------------
+ * 子菜单（文章 / 赋闲）：悬停「推拉」展开
+ * 静止：li 与普通项完全等宽（82px），只显示父项文字。
+ * 悬停：父项宽度收 0 让出整条 82px 槽位，3 个子项（3×82=246px）横向铺开；
+ *       li 的 max-width 由 82px 过渡到 246px，移开后收回。
+ * 关键：
+ *   - li 用 max-width 控制可见宽度，overflow:hidden 裁掉静止时溢出的子项，
+ *     因此静止态与其它菜单项严格等宽（不会被 flex 撑宽，也不会把父项文字挤出去）。
+ *   - 父项必须同时把 width 收到 0（仅 opacity:0 仍占据 82px 槽位，
+ *     会导致第 3 个子项被裁掉）。
+ *   - 父项 <a> 需显式声明 color: var(--nav-item-fg)，否则会继承主题
+ *     .site-page/a 的蓝色链接色，在深色顶栏上呈现为突兀的蓝色文字。
+ * ------------------------------------------------------ */
+.bn-menu .menu-item-main.has-child {
+  overflow: hidden;
+  max-width: 82px;
+  /* 内容从左侧对齐：静止时父项正好落在 82px 槽内，子项溢出到右侧被裁掉；
+   * 悬停变宽后子项依次露出，形成从左向右的「推拉」展开。 */
+  justify-content: flex-start;
+  transition: max-width .42s cubic-bezier(.4, 0, .2, 1), background .3s ease, color .3s ease;
+}
+/* 父项：常显的按钮内容，与普通项 <a> 同构；悬停时宽度收 0 让位给子项 */
+.bn-menu .menu-item-parent {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 82px; height: 42px; flex: 0 0 auto;
+  overflow: hidden;
+  transition: width .42s cubic-bezier(.4, 0, .2, 1), opacity .28s ease;
+}
+.bn-menu .menu-item-parent > a {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 6px; width: 82px; height: 100%; flex: 0 0 auto;
+  color: var(--nav-item-fg); text-decoration: none;
+}
+/* 子项：紧挨父项右侧排列，静止时被 li 的 max-width 裁掉（不占可见空间） */
+.bn-menu .menu-item-child {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 6px; color: var(--nav-item-fg); text-decoration: none;
+  width: 82px; min-width: 82px; height: 42px; flex: 0 0 82px;
+  opacity: 0;
+  transition: opacity .3s ease;
+  white-space: nowrap;
+}
+/* 悬停：父项收 0 让位 + li 变宽到正好容纳 3 个子项（3×82=246px） */
+.bn-menu .menu-item-main.has-child:hover,
+.bn-menu .menu-item-main.has-child:focus-within {
+  max-width: 246px;
+  background: var(--nav-item-hover);
+  color: #fff;
+}
+.bn-menu .menu-item-main.has-child:hover .menu-item-parent,
+.bn-menu .menu-item-main.has-child:focus-within .menu-item-parent {
+  width: 0; opacity: 0; pointer-events: none;
+}
+.bn-menu .menu-item-main.has-child:hover .menu-item-child,
+.bn-menu .menu-item-main.has-child:focus-within .menu-item-child {
+  opacity: 1;
+}
+/* 错峰淡入，制造「依次推入」的节奏感 */
+.bn-menu .menu-item-main.has-child:hover .menu-item-child:nth-of-type(1),
+.bn-menu .menu-item-main.has-child:focus-within .menu-item-child:nth-of-type(1) { transition-delay: .08s; }
+.bn-menu .menu-item-main.has-child:hover .menu-item-child:nth-of-type(2),
+.bn-menu .menu-item-main.has-child:focus-within .menu-item-child:nth-of-type(2) { transition-delay: .16s; }
+.bn-menu .menu-item-main.has-child:hover .menu-item-child:nth-of-type(3),
+.bn-menu .menu-item-main.has-child:focus-within .menu-item-child:nth-of-type(3) { transition-delay: .24s; }
+.bn-menu .menu-item-child:hover { background: var(--nav-item-hover); color: #fff; border-radius: var(--r-control); }
+
+/* 右区：搜索 + 明暗 */
+/* .bn-right 整体向左挪：加大右侧留白（padding-right）并把 margin-left:auto 的
+ * 弹性推挤改为「贴右但右移内部间隙」——即让搜索按钮与明暗按钮更靠近右上角内侧。
+ * 说明：顶栏 padding 是 0 16px，这里再补 14px，使两个按钮整体左移 ~14px。 */
+.bn-right {
+  flex: 0 0 auto; display: flex; align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding-right: 14px;
+  z-index: var(--z-base);
+}
+/* 搜索按钮外层包装：结构必须是 #search-button > .search，
+ * 这样主题 local-search.js 的 document.querySelector('#search-button > .search') 才能命中。
+ * 它本身不参与视觉，只做选择器挂载点，故设为透明自适应。 */
+.bn-right #search-button { display: flex; align-items: center; background: transparent; }
+#search-button > .search { flex: 0 0 auto; }
+.bn-icon {
+  width: 38px; height: 38px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--r-control); color: #fff; cursor: pointer; text-decoration: none;
+  background: rgba(255, 255, 255, 0.08);
+  transition: background .25s, transform .15s;
+}
+.bn-icon:hover { background: var(--nav-item-hover); transform: translateY(-1px); }
+.bn-icon svg { fill: currentColor; }
+
+/* 汉堡：桌面隐藏 */
+.bn-burger {
+  display: none;
+  flex: 0 0 auto;
+  width: 38px; height: 38px;
+  align-items: center; justify-content: center;
+  border-radius: var(--r-control); color: #fff; background: transparent; border: 0; cursor: pointer;
+}
+.bn-burger:hover { background: var(--nav-item-hover); }
+
+/* 全局为固定顶栏预留高度 */
+#content-inner.layout { padding-top: 74px !important; }
+
+/* 中等宽度（769~1000px）：左区「天气 + 时钟」两枚胶囊把中区挤到只剩几十像素，
+ * 表现为文字叠文字。此区间直接收起天气胶囊，只保留时钟 + 搜索/明暗。 */
+@media (max-width: 1000px) {
+  .bn-weather { display: none; }
+  .bn-clock { font-size: 12px; padding: 5px 9px; }
+  .bn-clock .bn-weekday { display: none; }
+}
+
+/* 手机端 */
+@media (max-width: 768px) {
+  .biko-nav {
+    height: 54px;
+    padding: 0 max(10px, env(safe-area-inset-left, 0px)) 0 max(10px, env(safe-area-inset-right, 0px));
+    gap: 6px;
+  }
+  .bn-menu { display: none; }
+  .bn-weather { display: none; }
+  .bn-clock { font-size: 12px; gap: 5px; }
+  .bn-clock .bn-weekday { display: inline; }
+  /* 哈飗菜单：触控目标至少 44x44 */
+  .bn-burger {
+    display: flex;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+  }
+  /* 顶栏右侧图标：同样补到 44px，避免手指点不中 */
+  .bn-right .bn-icon,
+  .bn-right #search-button > a {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+@media (max-width: 400px) {
+  .biko-nav { height: 50px; padding: 0 8px; }
+  .bn-clock .bn-weekday { display: none; }
+  .bn-clock { font-size: 11px; }
+}
+/* 横屏手机：顶栏压缩，不占据可视高度 */
+@media (max-width: 900px) and (orientation: landscape) and (max-height: 480px) {
+  .biko-nav { height: 46px; }
+}
+
+/* 触摸设备无 hover 也已常显，无需额外覆盖。 */
+
+/* ======================================================
+ * 首页卡片：完全对齐 superq314.github.io 参考站圆角卡片
+ * 圆角 8px / padding20-24 / 淡阴影 / 标题下分界线
+ * ====================================================== */
+#aside_content .card-widget,
+#aside-content .card-widget {
+  border-radius: var(--r-card) !important;
+  padding: 20px 24px !important;
+  border: 0 !important;
+  overflow: hidden !important;
+  margin-top: 0 !important;
+  box-shadow: 0 3px 8px 6px rgba(7, 17, 27, .05) !important;
+  font-family: var(--font-ui);
+}
+/* 标题：恢复正常文档流，去掉 SAO 斜面，标题与内容之间加一条分界线 */
+#aside_content .card-widget .item-headline,
+#aside-content .card-widget .item-headline,
+#aside-content .item-headline {
+  position: static !important;
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  height: auto !important;
+  width: auto !important;
+  top: auto !important; left: auto !important;
+  font-size: 16px !important;
+  font-weight: 700;
+  padding: 0 0 8px !important;
+  margin: 0 0 12px !important;
+  border-bottom: 1px solid var(--light-grey, #e3e8f7) !important;
+  font-family: inherit !important;
+}
+#aside-content .item-headline:before,
+#aside-content .item-headline:after { display: none !important; content: none !important; }
+#aside_content .card-widget .item-headline i,
+#aside-content .card-widget .item-headline i,
+#aside-content .item-headline i { color: #7e96b8 !important; }
+[data-theme="dark"] #aside_content .card-widget,
+[data-theme="dark"] #aside-content .card-widget {
+  background: #141a26 !important;
+  color: rgba(255, 255, 255, .78);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .3) !important;
+}
+[data-theme="dark"] #aside-content .card-widget .item-headline,
+[data-theme="dark"] #aside-content .item-headline {
+  color: rgba(255, 255, 255, .88) !important;
+  border-bottom-color: rgba(255, 255, 255, .12) !important;
+}
+
+/* 分类 / 标签 / 归档：链接 hover 蓝灰 */
+#aside-content .card-categories ul.card-category-list > .card-category-list-item a:hover,
+#aside-content .card-archives ul.card-archive-list > .card-archive-list-item a:hover,
+#aside-content .card-tags .card-tag-cloud a:hover {
+  color: #7e96b8 !important;
+}
+#aside-content .card-tags .card-tag-cloud a { border-radius: 6px; }
+#aside-content .card-webinfo .webinfo .webinfo-item { padding: 6px 0; }
+
+/* ======================================================
+ * 左下角：齿轮+回顶+音符（最左列）→ 看板娘（右侧相邻），三者互不遮挡
+ * ====================================================== */
+#rightside button,
+#rightside a {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 8px !important;
+  background: rgba(60, 60, 66, .85) !important;
+  color: #fff !important;
+  border: none !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .2) !important;
+  display: flex !important;
+  align-items: center; justify-content: center;
+  font-size: 16px !important;
+  transition: background .25s ease, transform .15s ease !important;
+}
+#rightside button:hover,
+#rightside a:hover {
+  background: rgba(126, 150, 184, .95) !important;
+  transform: translateY(-2px);
+}
+#rightside button:active,
+#rightside a:active { transform: translateY(0) scale(.92); }
+#live2dcanvas { pointer-events: none !important; }
+
+.aplayer-fixed { display: none !important; }
+#music-toggle.is-playing i { animation: biko-music-spin 4s linear infinite; }
+@keyframes biko-music-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+/* 音乐按钮：显式补 hover 特效（此前只有播放时音符旋转，无背景反馈） */
+#music-toggle { transition: background .25s ease, transform .15s ease !important; }
+#music-toggle:hover {
+  background: rgba(126, 150, 184, .95) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* 齿轮面板：日/夜按钮统一显示太阳/月亮图标（配合 nav.js 的 #modeicon） */
+#rightside-config-hide #darkmode i { font-size: 16px !important; color: #fff; }
+
+@media screen and (min-width: 769px) {
+  #rightside {
+    position: fixed !important;
+    left: 16px !important; right: auto !important;
+    bottom: 44px !important;
+    z-index: var(--z-rightside) !important;
+    display: flex !important; flex-direction: column !important; gap: 8px !important;
+  }
+  #rightside #rightside-config-show {
+    display: flex !important; flex-direction: column !important; gap: 8px !important;
+  }
+  #live2d-widget.live2d-widget-container {
+    left: 72px !important; right: auto !important; bottom: 31px !important;
+    width: 150px !important; height: 300px !important;
+    z-index: var(--z-live2d) !important; pointer-events: none !important;
+    transition: bottom .45s cubic-bezier(.4, 0, .2, 1) !important;
+  }
+  #nanaly-cat-hotspot {
+    position: fixed !important; z-index: var(--z-live2d-hotspot) !important;
+    left: 76px !important; bottom: 40px !important;
+    width: 108px !important; height: 158px !important;
+    background: transparent; border: 0; padding: 0; margin: 0; cursor: pointer;
+    transition: bottom .45s cubic-bezier(.4, 0, .2, 1) !important;
+  }
+  body.biko-music-open #live2d-widget.live2d-widget-container { bottom: 228px !important; }
+  body.biko-music-open #nanaly-cat-hotspot { bottom: 238px !important; }
+}
+
+@media screen and (max-width: 768px) {
+  #rightside {
+    position: fixed !important;
+    right: 16px !important; left: auto !important; bottom: 16px !important;
+    z-index: var(--z-rightside) !important;
+    display: flex !important; flex-direction: column !important; gap: 8px !important;
+  }
+  #live2d-widget.live2d-widget-container { display: none !important; }
+  #nanaly-cat-hotspot { display: none !important; }
+}
+
+/* ======================================================
+ * 昼夜切换星球旋转动画（Cuteen）
+ * ====================================================== */
+.Cuteen_DarkSky,
+.Cuteen_DarkSky::before { content: ""; position: fixed; inset: 0; z-index: var(--z-sky); }
+.Cuteen_DarkSky { background: linear-gradient(rgb(76, 63, 109), rgb(108, 98, 187), rgb(147, 177, 237)); opacity: 1; }
+.Cuteen_DarkPlanet {
+  z-index: var(--z-sky); position: fixed;
+  left: -50%; top: -50%; width: 200%; height: 200%;
+  animation: 2s cubic-bezier(0.7, 0, 0, 1) 0s 1 normal none running CuteenPlanetMove;
+  transform-origin: center bottom;
+}
+@keyframes CuteenPlanetMove {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.Cuteen_DarkPlanet::after {
+  position: absolute; left: 35%; top: 40%;
+  width: 9.375rem; height: 9.375rem; border-radius: 50%; content: "";
+  background: linear-gradient(rgb(254, 254, 254), rgb(255, 251, 232));
+  box-shadow: 0 0 60px rgba(255, 251, 232, .6);
+}

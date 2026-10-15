@@ -1,0 +1,110 @@
+/* 娜娜莉的小表情只画在头像里，不摇动对话、输入框或浮动按钮。 */
+#nanaly-launcher,
+#nanaly-panel .nanaly-head__avatar {
+  --cat-fur: #fff7fa;
+  --cat-line: #7f3f52;
+  --cat-ear: var(--noimpty-accent-soft);
+  --cat-eye: #4f4650;
+  --cat-blush: var(--noimpty-accent);
+  --cat-bow: #d94e70;
+  --cat-star: #ffd166;
+}
+.nanaly-cat {
+  display: block;
+  width: 44px;
+  height: 44px;
+  overflow: visible;
+  pointer-events: none;
+}
+.nanaly-head__avatar .nanaly-cat { width: 100%; height: 100%; }
+.nanaly-cat__portrait { transform-box: view-box; transform-origin: 50% 65%; }
+.nanaly-cat__ear,
+.nanaly-cat__fur {
+  fill: var(--cat-fur);
+  stroke: var(--cat-line);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.nanaly-cat__ear-in { fill: var(--cat-ear); }
+.nanaly-cat__ear--left,
+.nanaly-cat__ear-in--left { transform-box: view-box; transform-origin: 30% 43%; }
+.nanaly-cat__ear--right,
+.nanaly-cat__ear-in--right { transform-box: view-box; transform-origin: 70% 43%; }
+.nanaly-cat__tuft { fill: none; stroke: var(--cat-ear); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.nanaly-cat__eyes { fill: var(--cat-eye); }
+.nanaly-cat__glint { fill: #fff; }
+.nanaly-cat__smile-eyes,
+.nanaly-cat__mouth,
+.nanaly-cat__whisker {
+  fill: none;
+  stroke: var(--cat-eye);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+.nanaly-cat__smile-eyes { opacity: 0; }
+.nanaly-cat__cheek { fill: var(--cat-blush); opacity: .65; }
+.nanaly-cat__nose { fill: var(--cat-bow); }
+.nanaly-cat__whisker { stroke: var(--cat-line); stroke-width: 1.3; opacity: .6; }
+.nanaly-cat__bow { fill: var(--cat-bow); stroke: var(--cat-line); stroke-width: 1; }
+.nanaly-cat__bow-knot { fill: var(--cat-ear); }
+.nanaly-cat__star { fill: var(--cat-star); opacity: 0; transform-box: fill-box; transform-origin: center; }
+
+/* 表情状态由独立控制器短暂标记；已有记录不会触发它们。 */
+#nanaly-launcher[data-nanaly-mood='welcome'] .nanaly-cat__eyes,
+#nanaly-launcher[data-nanaly-mood='success'] .nanaly-cat__eyes,
+#nanaly-panel.is-open[data-nanaly-mood='welcome'] .nanaly-cat__eyes,
+#nanaly-panel.is-open[data-nanaly-mood='success'] .nanaly-cat__eyes { opacity: 0; }
+#nanaly-launcher[data-nanaly-mood='welcome'] .nanaly-cat__smile-eyes,
+#nanaly-launcher[data-nanaly-mood='success'] .nanaly-cat__smile-eyes,
+#nanaly-panel.is-open[data-nanaly-mood='welcome'] .nanaly-cat__smile-eyes,
+#nanaly-panel.is-open[data-nanaly-mood='success'] .nanaly-cat__smile-eyes { opacity: 1; }
+
+@media (prefers-reduced-motion: no-preference) {
+  #nanaly-launcher[data-nanaly-mood='welcome'] .nanaly-cat__portrait,
+  #nanaly-panel.is-open[data-nanaly-mood='welcome'] .nanaly-cat__portrait {
+    animation: nanaly-cat-peek .8s cubic-bezier(.22, .75, .24, 1) both;
+  }
+  #nanaly-launcher[data-nanaly-mood='thinking'] :is(.nanaly-cat__ear--left, .nanaly-cat__ear-in--left),
+  #nanaly-panel.is-open[data-nanaly-mood='thinking'] :is(.nanaly-cat__ear--left, .nanaly-cat__ear-in--left) {
+    animation: nanaly-cat-ear-left 2.2s ease-in-out 2;
+  }
+  #nanaly-launcher[data-nanaly-mood='thinking'] :is(.nanaly-cat__ear--right, .nanaly-cat__ear-in--right),
+  #nanaly-panel.is-open[data-nanaly-mood='thinking'] :is(.nanaly-cat__ear--right, .nanaly-cat__ear-in--right) {
+    animation: nanaly-cat-ear-right 2.2s .15s ease-in-out 2;
+  }
+  #nanaly-launcher[data-nanaly-mood='success'] .nanaly-cat__star,
+  #nanaly-panel.is-open[data-nanaly-mood='success'] .nanaly-cat__star {
+    animation: nanaly-cat-star .8s ease-out both;
+  }
+  #nanaly-launcher[data-nanaly-mood='success'] .nanaly-cat__star--two,
+  #nanaly-panel.is-open[data-nanaly-mood='success'] .nanaly-cat__star--two { animation-delay: .1s; }
+  #nanaly-launcher[data-nanaly-mood='success'] .nanaly-cat__star--three,
+  #nanaly-panel.is-open[data-nanaly-mood='success'] .nanaly-cat__star--three { animation-delay: .2s; }
+  @keyframes nanaly-cat-peek {
+    0% { transform: translateY(5px) scale(.94); }
+    45% { transform: translateY(-2px) rotate(-3deg); }
+    75% { transform: translateY(0) rotate(1deg); }
+    100% { transform: translateY(0) scale(1); }
+  }
+  @keyframes nanaly-cat-ear-left {
+    0%, 20%, 45%, 100% { transform: rotate(0); }
+    28% { transform: rotate(-9deg); }
+    36% { transform: rotate(4deg); }
+  }
+  @keyframes nanaly-cat-ear-right {
+    0%, 20%, 45%, 100% { transform: rotate(0); }
+    28% { transform: rotate(9deg); }
+    36% { transform: rotate(-4deg); }
+  }
+  @keyframes nanaly-cat-star {
+    0% { opacity: 0; transform: translateY(3px) scale(.45); }
+    30% { opacity: 1; transform: translateY(-1px) scale(1.08); }
+    70% { opacity: .8; transform: translateY(-3px) scale(.95); }
+    100% { opacity: 0; transform: translateY(-5px) scale(.75); }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nanaly-cat, .nanaly-cat * { animation: none !important; transition: none !important; }
+}
+html.noimpty-private-locked .nanaly-cat * { animation: none !important; }

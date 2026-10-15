@@ -1,0 +1,56 @@
+/* 娜娜莉的批注 —— 直接长在正文里的旁注
+ *
+ * 提醒：这个文件里不要写以三个减号开头的整行。
+ * Hexo 会把它当成 front-matter 分隔符，整份 css 会被静默丢弃。
+ */
+
+.nanaly-note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 0.9em 0 1.2em;
+  padding: 10px 14px 10px 12px;
+  border-left: 3px solid var(--noimpty-accent, #e95978);
+  border-radius: 0 10px 10px 0;
+  background: rgba(126, 150, 184, 0.07);
+  font-size: 0.9em;
+  line-height: 1.75;
+  color: var(--font-color, inherit);
+}
+
+.nanaly-note__paw {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  border-radius: 50%;
+  background: linear-gradient(140deg, var(--noimpty-accent, #e95978), var(--noimpty-accent-soft, #ff91a8));
+  color: #fff;
+  font-size: 11px;
+}
+
+.nanaly-note__text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* 引用块、列表里的批注收紧一点，别把版面撑散 */
+blockquote .nanaly-note,
+li .nanaly-note {
+  margin: 0.5em 0;
+  font-size: 0.88em;
+}
+
+@media (max-width: 768px) {
+  .nanaly-note {
+    padding: 9px 11px 9px 10px;
+    font-size: 0.86em;
+  }
+}
+
+/* 打印时不带她的批注 */
+@media print {
+  .nanaly-note { display: none; }
+}

@@ -1,0 +1,149 @@
+/* Nanaly's local workspace follows the original blog palette. */
+#nanaly-panel.nanaly-expanded {
+  width: min(960px, calc(100vw - 40px));
+  height: min(800px, calc(100dvh - 176px));
+}
+#nanaly-panel .nanaly-body { min-height: 0; }
+.nanaly-workspace-bar,
+.nanaly-workspace-recovery,
+.nanaly-workspace-undo {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--noimpty-border);
+  color: var(--font-color);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.nanaly-workspace-bar { flex-shrink: 0; }
+.nanaly-workspace-title {
+  flex: 1 1 55px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--card-meta);
+}
+#nanaly-panel :is(.nanaly-workspace-bar, .nanaly-workspace-drawer, .nanaly-workspace-recovery,
+  .nanaly-workspace-undo, .nanaly-message-tools) button {
+  min-height: 30px;
+  padding: 4px 8px;
+  border: 1px solid var(--noimpty-border);
+  border-radius: 9px;
+  background: var(--btn-bg);
+  color: var(--btn-color);
+  font: inherit;
+  line-height: 1.4;
+  cursor: pointer;
+}
+#nanaly-panel :is(.nanaly-workspace-bar, .nanaly-workspace-drawer) button[aria-current='true'],
+#nanaly-panel .nanaly-workspace-bar button[aria-expanded='true'] {
+  border-color: var(--noimpty-accent);
+  box-shadow: inset 0 0 0 1px var(--noimpty-accent);
+}
+.nanaly-workspace-drawer {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: min(350px, 43dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 12px;
+  border-bottom: 1px solid var(--noimpty-border);
+  background: var(--card-bg);
+  color: var(--font-color);
+  font-size: 13px;
+}
+.nanaly-workspace-label { display: block; margin-bottom: 9px; font-size: 12px; }
+#nanaly-panel .nanaly-workspace-drawer :is(input, textarea, select) {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  margin-top: 5px;
+  padding: 8px;
+  border: 1px solid var(--noimpty-border);
+  border-radius: 9px;
+  background: var(--global-bg);
+  color: var(--font-color);
+  font: inherit;
+}
+.nanaly-workspace-drawer textarea { resize: vertical; max-height: 200px; }
+.nanaly-workspace-hint { margin: 0 0 12px; color: var(--card-meta); font-size: 12px; }
+.nanaly-session-list, .nanaly-memory-list { display: grid; gap: 8px; margin-bottom: 12px; }
+#nanaly-panel button.nanaly-session { display: grid; width: 100%; text-align: left; gap: 4px; }
+.nanaly-session span { color: var(--card-meta); overflow-wrap: anywhere; font-size: 12px; white-space: normal; }
+.nanaly-session strong { overflow-wrap: anywhere; }
+.nanaly-session-rename, .nanaly-memory-form { padding-top: 10px; border-top: 1px solid var(--noimpty-border); }
+.nanaly-memory-item { padding: 10px; border: 1px solid var(--noimpty-border); border-radius: 12px; }
+.nanaly-memory-item p { margin: 5px 0 8px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.nanaly-memory-item button + button, .nanaly-memory-form button + button { margin-left: 7px; }
+.nanaly-workspace-recovery, .nanaly-workspace-undo { flex: 0 1 auto; max-height: 105px; overflow: auto; }
+.nanaly-workspace-recovery > span, .nanaly-workspace-undo > span { flex: 1 1 160px; overflow-wrap: anywhere; }
+.nanaly-workspace-status { flex: 0 1 auto; max-height: 70px; overflow: auto; padding: 6px 12px; color: var(--font-color); font-size: 12px; }
+#nanaly-panel :is(.nanaly-workspace-bar, .nanaly-workspace-drawer, .nanaly-workspace-recovery,
+  .nanaly-workspace-undo, .nanaly-workspace-status, .nanaly-image-tray)[hidden] { display: none; }
+.nanaly-message-tools { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px; white-space: normal; }
+#nanaly-panel .nanaly-message-tools button { font-size: 11px; min-height: 27px; padding: 3px 7px; }
+.nanaly-msg--me .nanaly-message-tools button { background: rgba(255, 255, 255, .18); color: #fff; border-color: rgba(255, 255, 255, .4); }
+#nanaly-panel :is(.nanaly-workspace-drawer input, .nanaly-workspace-drawer textarea,
+  .nanaly-workspace-drawer select, .nanaly-attach):focus-visible { outline: 2px solid var(--noimpty-accent); outline-offset: 2px; }
+
+/* Image attachment references and source evidence are rendered by the chat core. */
+#nanaly-panel .nanaly-attach {
+  flex: none;
+  width: 36px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--noimpty-border);
+  border-radius: 10px;
+  background: var(--btn-bg);
+  color: var(--btn-color);
+  cursor: pointer;
+}
+.nanaly-image-tray { display: flex; flex: 0 0 auto; gap: 9px; padding: 8px 12px 0; flex-wrap: wrap; }
+.nanaly-image-tray > span { position: relative; display: inline-flex; width: 64px; height: 64px; }
+.nanaly-image-tray img { display: block; width: 64px; height: 64px; object-fit: cover; border: 1px solid var(--noimpty-border); border-radius: 9px; }
+#nanaly-panel .nanaly-image-tray button {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 25px;
+  height: 25px;
+  padding: 0;
+  border: 1px solid var(--noimpty-border);
+  border-radius: 50%;
+  background: var(--card-bg);
+  color: var(--font-color);
+  cursor: pointer;
+}
+.nanaly-image-history { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+.nanaly-image-history img { display: block; max-width: min(180px, 100%); max-height: 150px; height: auto; object-fit: contain; border-radius: 9px; }
+.nanaly-sources { margin-top: 10px; padding-top: 6px; border-top: 1px solid var(--noimpty-border); font-size: 12px; white-space: normal; }
+.nanaly-sources summary { color: var(--card-meta); cursor: pointer; }
+.nanaly-sources ol { padding-left: 20px; margin: 8px 0 0; }
+.nanaly-sources li { margin-bottom: 8px; overflow-wrap: anywhere; }
+.nanaly-sources a { color: var(--noimpty-accent); text-decoration: underline; text-underline-offset: 2px; }
+.nanaly-sources blockquote { margin: 5px 0 0; padding: 5px 9px; border-left: 2px solid var(--noimpty-accent-soft); color: var(--card-meta); white-space: pre-wrap; overflow-wrap: anywhere; }
+.nanaly-task-card { margin: 8px 0; padding: 10px 12px; border: 1px solid var(--noimpty-border); border-radius: 12px; background: var(--card-bg); color: var(--font-color); overflow-wrap: anywhere; }
+.nanaly-task-card :is(p, ul) { margin-top: 5px; margin-bottom: 5px; }
+@media (max-width: 560px) {
+  /* Keep touch/keyboard scrolling while a wrapped placeholder has no useful scroll thumb. */
+  #nanaly-panel .nanaly-foot textarea { scrollbar-width: none; }
+  #nanaly-panel .nanaly-foot textarea::-webkit-scrollbar { width: 0; height: 0; }
+  #nanaly-panel.nanaly-expanded { left: 12px; width: calc(100vw - 24px); height: calc(100dvh - 154px); }
+  .nanaly-workspace-bar { gap: 4px; padding-inline: 9px; }
+  #nanaly-panel .nanaly-workspace-bar button { padding-inline: 6px; }
+  #nanaly-panel .nanaly-workspace-drawer :is(input, textarea, select) { font-size: 16px; }
+  .nanaly-workspace-drawer { padding: 10px; }
+}
+@media (max-height: 540px) {
+  #nanaly-panel.nanaly-expanded { left: 78px; width: calc(100vw - 90px); height: calc(100dvh - 16px); }
+  .nanaly-workspace-drawer { max-height: 36dvh; }
+  .nanaly-image-tray { max-height: 46px; overflow-y: auto; }
+  .nanaly-image-tray > span, .nanaly-image-tray img { width: 40px; height: 40px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #nanaly-panel .nanaly-workspace-drawer, #nanaly-panel .nanaly-message-tools { scroll-behavior: auto; }
+}

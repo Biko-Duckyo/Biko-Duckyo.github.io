@@ -1,0 +1,13 @@
+.nanaly-studio{box-sizing:border-box;width:min(860px,calc(100vw - 24px));max-height:calc(100dvh - 32px);padding:24px;border:1px solid #d7b5c7;border-radius:22px;background:var(--card-bg,#fff8fc);color:var(--font-color,#463343);overflow:auto;box-shadow:0 22px 90px #29162555;z-index:10020}
+.nanaly-studio::backdrop{background:#24142480;backdrop-filter:blur(3px)}
+.studio-header{display:flex;align-items:center;justify-content:space-between;gap:16px}.studio-header h2{margin:0}.studio-status{padding:10px;background:#ba719519;border-radius:10px;overflow-wrap:anywhere}
+.nanaly-studio details{margin:12px 0;padding:14px;border:1px solid #b77a9c55;border-radius:12px}.nanaly-studio summary{cursor:pointer;font-weight:700}.nanaly-studio label{display:block;margin:12px 0;font-size:14px}.nanaly-studio input:not([type=checkbox]),.nanaly-studio textarea,.nanaly-studio select{display:block;box-sizing:border-box;width:100%;padding:9px 12px;margin-top:5px;border:1px solid #b77a9c77;border-radius:9px;background:var(--card-bg,#fff);color:inherit;font:inherit}.nanaly-studio textarea{min-height:90px;resize:vertical}.nanaly-studio input[type=checkbox]{margin-left:10px}.nanaly-studio button{border:1px solid #bc7e9e66;border-radius:8px;padding:7px 11px;margin:5px 8px 5px 0;background:#b8779820;color:inherit;cursor:pointer}.nanaly-studio button:disabled{opacity:.5;cursor:wait}.nanaly-studio :focus-visible{outline:3px solid #ac5f91;outline-offset:2px}.nanaly-studio article{margin:14px 0;padding:12px;border-top:1px solid #b77a9c44}.nanaly-studio pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:300px;overflow:auto;font-size:13px}.nanaly-studio small{display:block;opacity:.8}.nanaly-studio h3{font-size:17px}.nanaly-studio p{overflow-wrap:anywhere}.nanaly-studio-entry{white-space:nowrap}
+@media(max-width:600px){.nanaly-studio{padding:14px;width:calc(100vw - 12px);max-height:calc(100dvh - 12px)}.studio-header h2{font-size:21px}.nanaly-studio details{padding:10px}}
+
+/* Verified backend connection feedback. */
+.studio-status[data-connection="connected"]{color:#187849;background:#e7f8ee;border:1px solid #91d4ad;border-radius:9px;padding:9px 12px;font-weight:600}
+.studio-status[data-connection="connecting"]{color:#926316}
+.studio-status[data-connection="error"]{color:#bf3e58}
+[data-theme="dark"] .studio-status[data-connection="connected"]{color:#a8ebc4;background:#193d30;border-color:#387956}
+[data-theme="dark"] .studio-status[data-connection="connecting"]{color:#f1d18a}
+[data-theme="dark"] .studio-status[data-connection="error"]{color:#ffb9c8}

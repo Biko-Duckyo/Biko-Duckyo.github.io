@@ -1,0 +1,26 @@
+# robots.txt — https://biko-duckyo.github.io/
+# 生成方式：Hexo 会原样复制 source/ 下的静态文件（skip_render 为空），
+# 因此这里直接手写等价于「编译后存在于站点根目录」。
+
+User-agent: *
+Allow: /
+
+# 这些目录是 Hexo 的生成产物/分页，内容与正文重复，不必重复抓取
+Disallow: /page/
+Disallow: /archives/page/
+Disallow: /tags/*/page/
+Disallow: /categories/*/page/
+Disallow: /history/json/
+
+# 抓取友好：给搜索引擎全站地图与订阅源
+Sitemap: https://biko-duckyo.github.io/sitemap.xml
+
+# 国内主流搜索的显式放行（默认 * 已覆盖，这里保留便于日后做差异化策略）
+User-agent: Baiduspider
+Allow: /
+
+User-agent: Sogou web spider
+Allow: /
+
+User-agent: 360Spider
+Allow: /

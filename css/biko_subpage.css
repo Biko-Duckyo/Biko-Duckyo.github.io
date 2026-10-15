@@ -1,0 +1,130 @@
+/* ============================================================
+ * Biko · 独立页（/music/ · /books/）共享视觉底座
+ * ------------------------------------------------------------
+ * 这两个页面 layout: false，不经过主题渲染，因此拿不到主题的
+ * --card-bg / --font-color / btf.activateDarkMode 等能力。
+ * 本文件把「全站视觉语言」以纯 CSS 复刻一份，供两页共用：
+ *
+ *   1. 背景：与主站 #web_bg 同一张鲸鱼星空图（固定、铺满）
+ *   2. 主题令牌：--bg-* / --fg-* / --card-*，由 [data-theme] 切换
+ *   3. 字体：复用 custom_nav.css 的 --font-ui（西文 Titillium Web）
+ *   4. 圆角/阴影/强调色：对齐 --r-* 刻度与 #7e96b8 强调色
+ *
+ * 明暗切换靠 <html data-theme="light|dark">，与主题完全同构，
+ * 因此 localStorage 里的主题偏好（主题键 theme）可以无缝互通。
+ * ============================================================ */
+
+/* ---------- 1. 设计令牌（浅色为默认） ---------- */
+:root,
+html[data-theme='light'] {
+  --bg-image: url('https://s2.loli.net/2022/04/11/oDZPBRxHn59rbYO.jpg');
+  /* 背景上的遮罩：浅色下用亮蓝灰纱，压住星空图的对比度，保证正文可读 */
+  --bg-scrim:
+    linear-gradient(rgba(232, 238, 246, 0.86), rgba(226, 233, 243, 0.92));
+  --bg-fallback: #e8edf4;
+
+  --fg: #22303f;
+  --fg-strong: #16202c;
+  --fg-dim: #55657a;
+  --fg-mute: #7b8a9c;
+
+  --card: rgba(255, 255, 255, 0.86);
+  --card-solid: #f6f8fb;
+  --card-2: rgba(255, 255, 255, 0.72);
+  --card-3: rgba(126, 150, 184, 0.10);
+  --card-hover: rgba(126, 150, 184, 0.16);
+
+  --line: rgba(126, 150, 184, 0.26);
+  --line-strong: rgba(126, 150, 184, 0.42);
+
+  --accent: #7e96b8;
+  --accent-2: #9db4d3;
+  --accent-fg: #ffffff;
+
+  --shadow: 0 18px 48px rgba(40, 55, 80, 0.16);
+  --shadow-sm: 0 6px 18px rgba(40, 55, 80, 0.10);
+
+  /* 与 custom_nav.css 的 --r-* 刻度保持一致（独立页未引入该文件，故复刻） */
+  --r-control: 10px;
+  --r-card: 8px;
+  --r-panel: 18px;
+  --r-pill: 999px;
+}
+
+/* ---------- 2. 深色令牌 ---------- */
+html[data-theme='dark'] {
+  --bg-scrim:
+    linear-gradient(rgba(9, 12, 20, 0.90), rgba(7, 10, 17, 0.94));
+  --bg-fallback: #0d1018;
+
+  --fg: #e9edf3;
+  --fg-strong: #f5f8fc;
+  --fg-dim: #b9c5d6;
+  --fg-mute: #8497b0;
+
+  --card: rgba(22, 28, 40, 0.82);
+  --card-solid: #161c28;
+  --card-2: rgba(28, 36, 51, 0.72);
+  --card-3: rgba(157, 180, 211, 0.10);
+  --card-hover: rgba(157, 180, 211, 0.16);
+
+  --line: rgba(157, 180, 211, 0.20);
+  --line-strong: rgba(157, 180, 211, 0.36);
+
+  --accent: #9db4d3;
+  --accent-2: #b9cbe4;
+  --accent-fg: #10151f;
+
+  --shadow: 0 18px 48px rgba(4, 8, 16, 0.50);
+  --shadow-sm: 0 6px 18px rgba(4, 8, 16, 0.38);
+}
+
+/* ---------- 3. 背景：与主站同一张鲸鱼星空 ---------- */
+.biko-subpage {
+  background-color: var(--bg-fallback);
+  background-image: var(--bg-scrim), var(--bg-image);
+  background-repeat: no-repeat, no-repeat;
+  background-position: center center, center center;
+  background-size: cover, cover;
+  background-attachment: fixed, fixed;
+  color: var(--fg);
+  font-family: 'Titillium Web', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC',
+    'Source Han Sans SC', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* 移动端 fixed 背景会导致滚动重绘卡顿，退回 scroll */
+@media (max-width: 768px) {
+  .biko-subpage { background-attachment: scroll, scroll; }
+}
+
+/* 尊重系统「减少动态效果」偏好：固定背景在部分设备上会引起眩晕 */
+@media (prefers-reduced-motion: reduce) {
+  .biko-subpage { background-attachment: scroll, scroll; }
+}
+
+/* ---------- 4. 主题色写入浏览器 UI（与主题 meta_theme_color_* 同值） ---------- */
+html[data-theme='light'] { color-scheme: light; }
+html[data-theme='dark'] { color-scheme: dark; }
+
+/* ============================================================
+ * 5. 独立页顶栏（/music/ 的 .topbar-mp）
+ * ------------------------------------------------------------
+ * custom.css 里 .topbar-mp 走的是主题变量 --card-bg / --card-meta，
+ * 而独立页不加载主题，这些变量不存在 → 该文件里的 fallback 会生效，
+ * 导致深色主题下顶栏仍是浅色。这里在独立页作用域下重新映射到
+ * 本文件的 --card / --fg-mute，明暗两套自动跟随。
+ * 放在本文件是为了不污染主站（主站真正的顶栏是 .biko-nav）。
+ * ============================================================ */
+.biko-subpage .topbar-mp {
+  background: var(--card);
+  border-bottom-color: var(--line);
+}
+.biko-subpage .topback-mp { color: var(--fg-mute); }
+.biko-subpage .topback-mp:hover {
+  background: var(--card-hover);
+  color: var(--fg);
+}
+.biko-subpage .brand-mp { color: var(--accent); }

@@ -1,0 +1,119 @@
+/* ============================================================
+ * Biko · 独立页共用的「昼夜切换」按钮
+ * 视觉对齐主站齿轮面板里的明暗按钮：圆形、玻璃质感、
+ * 悬停泛强调色、按下有轻微回弹。
+ * ============================================================ */
+.biko-theme-toggle {
+  position: fixed;
+  top: clamp(12px, 2.2vw, 20px);
+  right: clamp(12px, 2.2vw, 20px);
+  z-index: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--card);
+  color: var(--fg);
+  box-shadow: var(--shadow-sm);
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
+  backdrop-filter: blur(14px) saturate(130%);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  transition: transform .18s ease, background .18s ease,
+              border-color .18s ease, color .18s ease;
+}
+
+.biko-theme-toggle:hover {
+  background: var(--card-hover);
+  border-color: var(--line-strong);
+  color: var(--accent);
+  transform: translateY(-1px);
+}
+
+.biko-theme-toggle:active { transform: translateY(0) scale(.96); }
+
+.biko-theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* 图标随主题切换：浅色显示月亮（点了变暗），深色显示太阳 */
+.biko-theme-toggle .biko-theme-toggle__icon { transition: transform .3s ease; }
+.biko-theme-toggle:hover .biko-theme-toggle__icon { transform: rotate(-18deg); }
+
+html[data-theme='light'] .biko-theme-toggle__icon::before { content: '\f186'; }  /* fa-moon */
+html[data-theme='dark']  .biko-theme-toggle__icon::before { content: '\f185'; }  /* fa-sun  */
+
+/* 窄屏：与顶栏返回按钮同行，不遮挡内容 */
+@media (max-width: 560px) {
+  .biko-theme-toggle { top: auto; bottom: 16px; right: 16px; }
+  .biko-theme-toggle { width: 44px; height: 44px; }
+}
+
+/* ============================================================
+ * 内联变体：放在顶栏里（/books/ 用）
+ * 这时不要 fixed，改回普通流内元素，并吃掉自身的固定定位。
+ * ============================================================ */
+.biko-theme-toggle--inline {
+  position: static;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+}
+
+/* ============================================================
+ * 星球旋转过场（精确复刻主站 custom_nav.css 的 Cuteen 效果）
+ * 值全部照抄主站：渐变三色、2s cubic-bezier(.7,0,0,1)、
+ * 月亮 9.375rem / 0 0 60px 光晕，保证两处观感完全一致。
+ * 主站用 var(--z-sky)，独立页未定义该变量，这里写死等价层级。
+ * ============================================================ */
+.Cuteen_DarkSky,
+.Cuteen_DarkSky::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+}
+.Cuteen_DarkSky {
+  background: linear-gradient(rgb(76, 63, 109), rgb(108, 98, 187), rgb(147, 177, 237));
+  opacity: 1;
+}
+.Cuteen_DarkPlanet {
+  z-index: 9998;
+  position: fixed;
+  left: -50%;
+  top: -50%;
+  width: 200%;
+  height: 200%;
+  transform-origin: center bottom;
+  animation: 2s cubic-bezier(0.7, 0, 0, 1) 0s 1 normal none running CuteenPlanetMove;
+}
+@keyframes CuteenPlanetMove {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.Cuteen_DarkPlanet::after {
+  position: absolute;
+  left: 35%;
+  top: 40%;
+  width: 9.375rem;
+  height: 9.375rem;
+  border-radius: 50%;
+  content: "";
+  background: linear-gradient(rgb(254, 254, 254), rgb(255, 251, 232));
+  box-shadow: 0 0 60px rgba(255, 251, 232, .6);
+}
+
+/* 尊重「减少动态效果」：只保留淡入，不做旋转（避免眩晕） */
+@media (prefers-reduced-motion: reduce) {
+  .Cuteen_DarkPlanet { animation: none; }
+}

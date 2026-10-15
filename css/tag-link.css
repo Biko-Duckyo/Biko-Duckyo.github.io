@@ -1,0 +1,129 @@
+/*!
+ * 网址卡片外挂标签 {% link %} 样式（本站适配版）
+ *
+ * 原样式：https://cdn.jsdelivr.net/gh/zhheo/JS-Heo@main/tag-link/tag-link.css
+ * 原始教程：https://blog.zhheo.com/p/ccaf9148.html （张洪Heo，CC BY-NC-ND 4.0）
+ *
+ * 本站适配改动：
+ *   1. 不引 heoMainColor.css，把用到的 --heo-* 变量就地映射到本站主题变量
+ *   2. 落点本地化：source/css/tag-link.css，不依赖 jsDelivr
+ *   3. 深浅色自动跟随（本站 --card-bg / --font-color 由 data-theme 驱动）
+ *   4. 增加 favicon 加载失败的视觉兜底、参数错误提示样式
+ *
+ * 引入方式：_config.butterfly.yml → inject.head
+ *   - <link rel="stylesheet" href="/css/tag-link.css">
+ */
+
+/* 与本站变量体系的中间层：全部指向主题既有变量，取不到时给兜底值 */
+#article-container .tag-Link {
+  --link-bg: var(--card-bg, #fff);
+  --link-fg: var(--font-color, #363636);
+  --link-gray: var(--meta-color, #999);
+  --link-border: var(--card-border, #e3e8f7);
+  --link-main: var(--main-color, #7E96B8);
+  display: flex;
+  flex-direction: column;
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--link-bg);
+  border: 1px solid var(--link-border);
+  border-radius: 8px;
+  color: var(--link-fg);
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+#article-container .tag-Link:hover {
+  border-color: var(--link-main);
+  box-shadow: 0 8px 16px -4px rgba(44, 45, 48, 0.12);
+}
+
+#article-container .tag-Link .tag-link-tips {
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--link-border);
+  color: var(--link-gray);
+  font-size: 0.6rem;
+  font-weight: normal;
+  transition: color 0.3s;
+}
+
+#article-container .tag-Link:hover .tag-link-tips {
+  color: var(--link-main);
+}
+
+#article-container .tag-Link .tag-link-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  margin-top: 0.5rem;
+}
+
+#article-container .tag-Link .tag-link-bottom .tag-link-left {
+  width: 60px;
+  min-width: 60px;
+  height: 60px;
+  background-color: var(--link-bg);
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: contain; /* contain：图标加载失败时也不会被拉伸变形 */
+}
+
+#article-container .tag-Link .tag-link-bottom .tag-link-right {
+  margin-left: 1rem;
+  overflow: hidden; /* 长标题不撑破卡片 */
+}
+
+#article-container .tag-Link .tag-link-bottom .tag-link-right .tag-link-title {
+  font-size: 1rem;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+#article-container .tag-Link .tag-link-bottom .tag-link-right .tag-link-sitename {
+  margin-top: 4px;
+  color: var(--link-gray);
+  font-size: 0.7rem;
+  font-weight: normal;
+  transition: color 0.3s;
+}
+
+#article-container .tag-Link:hover .tag-link-bottom .tag-link-right .tag-link-sitename {
+  color: var(--link-main);
+}
+
+#article-container .tag-Link .tag-link-bottom i {
+  margin-left: auto;
+  color: var(--link-gray);
+  transition: color 0.3s, transform 0.3s;
+}
+
+#article-container .tag-Link:hover .tag-link-bottom i {
+  color: var(--link-main);
+  transform: translateX(3px);
+}
+
+/* 参数写错时的可见提示（scripts/link.js 生成） */
+#article-container .tag-Link--error {
+  display: inline-block;
+  padding: 2px 8px;
+  background: rgba(216, 33, 60, 0.1);
+  border: 1px dashed #d8213c;
+  border-radius: 6px;
+  color: #d8213c;
+  font-size: 0.85rem;
+}
+
+@media screen and (max-width: 768px) {
+  #article-container .tag-Link .tag-link-bottom .tag-link-left {
+    width: 48px;
+    min-width: 48px;
+    height: 48px;
+  }
+
+  #article-container .tag-Link .tag-link-bottom .tag-link-right {
+    margin-left: 0.75rem;
+  }
+
+  #article-container .tag-Link .tag-link-bottom .tag-link-right .tag-link-title {
+    font-size: 0.9rem;
+  }
+}

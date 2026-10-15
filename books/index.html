@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f2f5fa">
+<title>文献阅读工作台 · Biko</title>
+<meta name="description" content="PDF 文献精读工作台：左文右记、中英对照、划词标注，读完一键导出 Hexo 阅读笔记。">
+<!-- 独立页（layout:false）不经过主题渲染，需自带图标库与主题底座 -->
+<link rel="stylesheet" href="/css/vendor/fontawesome.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/web/pdf_viewer.css">
+<link rel="stylesheet" href="/css/biko_subpage.css">
+<link rel="stylesheet" href="/css/biko_theme_toggle.css">
+<link rel="stylesheet" href="/books/css/reader.css">
+<script>
+/* 主题脚本必须在 <head> 同步执行，避免深色偏好下的闪白。
+   键名 theme 与主站 butterfly 主题一致，偏好双向互通。 */
+(function () {
+  try {
+    var v = localStorage.getItem('theme');
+    if (v !== 'dark' && v !== 'light') {
+      v = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', v);
+    var m = document.querySelector('meta[name="theme-color"]');
+    if (m) m.setAttribute('content', v === 'dark' ? '#0d1018' : '#f2f5fa');
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+</head>
+<body class="bk-page-body">
+
+<!-- ================= 顶栏 ================= -->
+<header class="bk-topbar">
+  <a class="bk-brand" href="/" title="返回首页">
+    <i class="fas fa-book-open"></i>
+    <span>文献阅读工作台</span>
+  </a>
+
+  <div class="bk-open">
+    <label class="bk-file-btn" for="bk-file" tabindex="0">
+      <i class="fas fa-folder-open"></i><span>本地 PDF</span>
+    </label>
+    <input id="bk-file" type="file" accept="application/pdf,.pdf" hidden>
+
+    <div class="bk-input-wrap">
+      <input id="bk-source" type="text" spellcheck="false"
+             placeholder="粘贴 DOI（10.1038/nature12373）或 PDF 直链 / 网页地址"
+             aria-label="文献地址或 DOI">
+      <button id="bk-open" class="bk-btn bk-btn-primary" type="button">
+        <i class="fas fa-arrow-right-to-bracket"></i><span>打开</span>
+      </button>
+    </div>
+
+    <button id="bk-library-toggle" class="bk-btn" type="button" title="我的文献库">
+      <i class="fas fa-layer-group"></i><span>文献库</span>
+      <em id="bk-lib-count" class="bk-badge"></em>
+    </button>
+  </div>
+
+  <div class="bk-topbar-right">
+    <button id="bk-export-md" class="bk-btn bk-btn-primary" type="button">
+      <i class="fas fa-file-lines"></i><span>导出笔记</span>
+    </button>
+    <button id="bk-export-img" class="bk-btn" type="button" title="导出长图">
+      <i class="fas fa-image"></i><span>长图</span>
+    </button>
+    <!-- 昼夜切换：与主站齿轮面板里的明暗按钮同源，共用 subpage_theme.js -->
+    <button class="biko-theme-toggle biko-theme-toggle--inline" type="button"
+            id="biko-theme-toggle" title="浅色 / 深色模式切换" aria-label="明暗切换">
+      <i class="biko-theme-toggle__icon" aria-hidden="true"></i>
+    </button>
+    <button id="bk-help" class="bk-btn bk-btn-ghost" type="button" title="使用说明" aria-label="使用说明">?</button>
+  </div>
+</header>
+
+<!-- ================= 主体：左 PDF 右 笔记 ================= -->
+<main id="bk-workspace" class="bk-workspace">
+
+  <!-- 左侧：PDF -->
+  <section class="bk-left">
+    <div class="bk-toolbar">
+      <button id="bk-prev" class="bk-ic" type="button" title="上一页" aria-label="上一页">
+        <i class="fas fa-chevron-up"></i>
+      </button>
+      <span id="bk-page-label" class="bk-page-label">— / —</span>
+      <button id="bk-next" class="bk-ic" type="button" title="下一页" aria-label="下一页">
+        <i class="fas fa-chevron-down"></i>
+      </button>
+
+      <span class="bk-sep"></span>
+
+      <button id="bk-zoom-out" class="bk-ic" type="button" title="缩小" aria-label="缩小">
+        <i class="fas fa-magnifying-glass-minus"></i>
+      </button>
+      <span id="bk-zoom-label" class="bk-page-label">100%</span>
+      <button id="bk-zoom-in" class="bk-ic" type="button" title="放大" aria-label="放大">
+        <i class="fas fa-magnifying-glass-plus"></i>
+      </button>
+      <button id="bk-fit-width" class="bk-ic" type="button" title="适宽" aria-label="适宽">
+        <i class="fas fa-arrows-left-right"></i>
+      </button>
+      <button id="bk-fit-page" class="bk-ic" type="button" title="整页" aria-label="整页">
+        <i class="fas fa-expand"></i>
+      </button>
+
+      <span class="bk-sep"></span>
+
+      <button id="bk-panel-outline" class="bk-ic" type="button" title="目录（PDF 书签）" aria-label="目录" aria-pressed="false">
+        <i class="fas fa-list-ul"></i>
+      </button>
+      <button id="bk-panel-search" class="bk-ic" type="button" title="全文搜索（Ctrl / ⌘ + F）" aria-label="全文搜索" aria-pressed="false">
+        <i class="fas fa-magnifying-glass"></i>
+      </button>
+      <button id="bk-region-toggle" class="bk-ic" type="button" title="图区放大：框选或点图区，按超清倍率放大（g）" aria-label="图区放大" aria-pressed="false">
+        <i class="fas fa-magnifying-glass-chart"></i>
+      </button>
+
+      <span class="bk-sep"></span>
+
+      <button id="bk-panel-toggle" class="bk-ic" type="button" title="收起/展开右栏">
+        <i class="fas fa-columns"></i>
+      </button>
+      <button id="bk-toolbar-more" class="bk-ic" type="button" title="快捷键与标注导出" aria-label="更多">
+        <i class="fas fa-ellipsis"></i>
+      </button>
+    </div>
+
+    <div id="bk-toolbar-more" class="bk-toolbar-more" aria-hidden="true">
+      <p class="bk-more-title">键盘快捷键</p>
+      <dl class="bk-keys">
+        <dt>j / k</dt><dd>按屏上下滚动</dd>
+        <dt>n / p</dt><dd>下一页 / 上一页</dd>
+        <dt>Home / End</dt><dd>第一页 / 最后一页</dd>
+        <dt>+ / - / 0</dt><dd>放大 / 缩小 / 适宽</dd>
+        <dt>1 / 2</dt><dd>适宽 / 整页</dd>
+        <dt>g</dt><dd>图区放大（框选 / 点图区）</dd>
+        <dt>[ / ]</dt><dd>提高 / 降低渲染质量</dd>
+        <dt>Ctrl / ⌘ + F</dt><dd>全文搜索</dd>
+        <dt>Ctrl / ⌘ + O</dt><dd>打开文献库</dd>
+        <dt>Esc</dt><dd>关闭浮层</dd>
+      </dl>
+      <div class="bk-more-actions">
+        <button id="bk-ann-export" class="bk-btn bk-btn-sm" type="button">
+          <i class="fas fa-image"></i>导出标注长图
+        </button>
+        <button id="bk-bi-image" class="bk-btn bk-btn-sm" type="button">
+          <i class="fas fa-file-image"></i>当前页转图片
+        </button>
+      </div>
+    </div>
+
+    <div id="bk-panel-outline" class="bk-float bk-float-left" aria-hidden="true">
+      <header class="bk-float-head">
+        <h3>目录</h3>
+        <button class="bk-ic bk-float-close" type="button" data-close="bk-panel-outline" aria-label="关闭">×</button>
+      </header>
+      <div id="bk-outline-list" class="bk-outline-list"></div>
+    </div>
+
+    <div id="bk-panel-search" class="bk-float bk-float-right" aria-hidden="true">
+      <header class="bk-float-head">
+        <h3>全文搜索</h3>
+        <button class="bk-ic bk-float-close" type="button" data-close="bk-panel-search" aria-label="关闭">×</button>
+      </header>
+      <div class="bk-search-bar">
+        <input id="bk-search-input" type="search" spellcheck="false"
+               placeholder="输入关键词，回车开始搜索" aria-label="搜索关键词">
+        <button id="bk-search-prev" class="bk-ic" type="button" title="上一处（Shift + Enter）" aria-label="上一处">
+          <i class="fas fa-chevron-up"></i>
+        </button>
+        <button id="bk-search-next" class="bk-ic" type="button" title="下一处（Enter）" aria-label="下一处">
+          <i class="fas fa-chevron-down"></i>
+        </button>
+      </div>
+      <div id="bk-search-results" class="bk-search-results"></div>
+    </div>
+
+    <div id="bk-scroller" class="bk-scroller">
+      <div class="bk-dropzone" id="bk-dropzone">
+        <div class="bk-drop-inner">
+          <i class="fas fa-file-pdf"></i>
+          <h3>把 PDF 拖进来，或从上方打开文献</h3>
+          <p>支持本地文件、DOI 自动解析（Crossref / Unpaywall）与 PDF 直链。<br>
+             全文只在你的浏览器里处理，不会上传到任何服务器。</p>
+          <ul class="bk-drop-tips">
+            <li>划选文字 → 高亮 / 划线 / 批注</li>
+            <li>右栏写笔记，导出即 Hexo 文章</li>
+            <li>可生成中英对照，边读边理解</li>
+            <li>按需渲染长文献，几百页也不卡</li>
+          </ul>
+        </div>
+      </div>
+      <div id="bk-recent" class="bk-recent"></div>
+    </div>
+    <div id="bk-marquee" class="bk-marquee" aria-hidden="true"></div>
+  </section>
+
+  <!-- 右侧：笔记 / 标注 / 对照 / 设置 -->
+  <aside class="bk-right" id="bk-right">
+    <div class="bk-dochead" id="bk-dochead">
+      <h1 class="bk-doc-title">未打开文献</h1>
+      <p class="bk-doc-meta">打开一篇 PDF 后，这里会显示文献信息。</p>
+    </div>
+
+    <nav class="bk-tabs" role="tablist">
+      <button class="bk-tab is-on" data-tab="notes" role="tab" aria-selected="true">
+        <i class="fas fa-pen"></i>笔记<em id="bk-note-count" class="bk-badge"></em>
+      </button>
+      <button class="bk-tab" data-tab="ann" role="tab" aria-selected="false">
+        <i class="fas fa-highlighter"></i>标注<em id="bk-ann-count" class="bk-badge"></em>
+      </button>
+      <button class="bk-tab" data-tab="bilingual" role="tab" aria-selected="false">
+        <i class="fas fa-language"></i>对照
+      </button>
+      <button class="bk-tab" data-tab="settings" role="tab" aria-selected="false">
+        <i class="fas fa-sliders"></i>设置
+      </button>
+    </nav>
+
+    <!-- 笔记面板 -->
+    <section class="bk-pane is-on" data-pane="notes">
+      <div class="bk-pane-actions">
+        <button id="bk-note-add" class="bk-btn bk-btn-sm" type="button">
+          <i class="fas fa-plus"></i>新建笔记
+        </button>
+        <button id="bk-summarize" class="bk-btn bk-btn-sm" type="button">
+          <i class="fas fa-wand-magic-sparkles"></i>AI 摘要
+        </button>
+      </div>
+      <div id="bk-note-list" class="bk-list">
+        <p class="bk-empty">还没有随手笔记。想到什么写什么，导出时会自动整理成章节。</p>
+      </div>
+    </section>
+
+    <!-- 标注面板 -->
+    <section class="bk-pane" data-pane="ann">
+      <div class="bk-pane-actions">
+        <button id="bk-ann-clear" class="bk-btn bk-btn-sm bk-btn-ghost" type="button">
+          <i class="fas fa-trash-can"></i>清空标注
+        </button>
+      </div>
+      <div id="bk-ann-list" class="bk-list">
+        <p class="bk-empty">还没有标注。在左侧正文里划选文字即可高亮、划线或写批注。</p>
+      </div>
+    </section>
+
+    <!-- 对照面板 -->
+    <section class="bk-pane" data-pane="bilingual">
+      <div class="bk-pane-actions">
+        <button id="bk-bi-generate" class="bk-btn bk-btn-sm bk-btn-primary" type="button">
+          生成中英对照
+        </button>
+        <button id="bk-bi-clear" class="bk-btn bk-btn-sm bk-btn-ghost" type="button">清空</button>
+      </div>
+      <div id="bk-bi-list" class="bk-list bk-bi">
+        <p class="bk-empty">点击上方「生成中英对照」整篇按段落左右对照；也可以在正文里划词后点「对照」只翻译那一小段。</p>
+      </div>
+    </section>
+
+    <!-- 设置面板 -->
+    <section class="bk-pane" data-pane="settings">
+      <div class="bk-form">
+        <h4>翻译 / 摘要模型</h4>
+        <p class="bk-hint">
+          复用站点既有的 OpenAI 兼容接口。Key 只存在本机浏览器（IndexedDB），不会上传；
+          但静态站页面上任何输入都请使用演示 Key，切勿填写主账号密钥。
+        </p>
+        <label>接口地址 baseURL
+          <input id="bk-cfg-base" type="text" spellcheck="false" placeholder="https://api.deepseek.com">
+        </label>
+        <label>模型名
+          <input id="bk-cfg-model" type="text" spellcheck="false" placeholder="deepseek-chat">
+        </label>
+        <label>API Key
+          <input id="bk-cfg-key" type="password" autocomplete="off" placeholder="sk-...">
+        </label>
+        <label>Unpaywall 邮箱（选填，用于把 DOI 解析成开放获取 PDF）
+          <input id="bk-cfg-mail" type="email" spellcheck="false" placeholder="you@example.com">
+        </label>
+        <label>标注默认颜色
+          <select id="bk-cfg-color">
+            <option value="#ffd666">琥珀黄</option>
+            <option value="#7ee0c0">薄荷绿</option>
+            <option value="#9db4d3">雾霾蓝</option>
+            <option value="#f7a1b0">樱花粉</option>
+            <option value="#c8a2f0">紫罗兰</option>
+          </select>
+        </label>
+        <label>图区放大的默认倍率
+          <select id="bk-cfg-region">
+            <option value="4">4x（省内存）</option>
+            <option value="8">8x（推荐）</option>
+            <option value="12">12x</option>
+            <option value="16">16x（最清晰，大图会自动收敛）</option>
+          </select>
+        </label>
+        <div class="bk-form-actions">
+          <button id="bk-cfg-save" class="bk-btn bk-btn-primary" type="button">保存设置</button>
+          <button id="bk-cfg-wipe" class="bk-btn bk-btn-ghost" type="button">清空全部本地数据</button>
+        </div>
+      </div>
+    </section>
+  </aside>
+</main>
+
+<!-- ================= 划词菜单 ================= -->
+<div id="bk-menu" class="bk-menu" role="toolbar" aria-label="标注操作">
+  <button type="button" data-act="highlight" title="高亮"><i class="fas fa-highlighter"></i></button>
+  <button type="button" data-act="underline" title="划线"><i class="fas fa-underline"></i></button>
+  <button type="button" data-act="strike" title="删除线"><i class="fas fa-strikethrough"></i></button>
+  <span class="bk-menu-sep"></span>
+  <button type="button" data-act="note" title="写批注"><i class="fas fa-comment-dots"></i></button>
+  <button type="button" data-act="translate" title="对照翻译"><i class="fas fa-language"></i></button>
+  <button type="button" data-act="copy" title="复制原文"><i class="fas fa-copy"></i></button>
+  <span class="bk-menu-colors">
+    <button type="button" class="bk-dot" data-color="#ffd666" style="--c:#ffd666" aria-label="琥珀黄"></button>
+    <button type="button" class="bk-dot" data-color="#7ee0c0" style="--c:#7ee0c0" aria-label="薄荷绿"></button>
+    <button type="button" class="bk-dot" data-color="#9db4d3" style="--c:#9db4d3" aria-label="雾霾蓝"></button>
+    <button type="button" class="bk-dot" data-color="#f7a1b0" style="--c:#f7a1b0" aria-label="樱花粉"></button>
+    <button type="button" class="bk-dot" data-color="#c8a2f0" style="--c:#c8a2f0" aria-label="紫罗兰"></button>
+  </span>
+</div>
+
+<!-- ================= 文献库抽屉 ================= -->
+<div id="bk-library" class="bk-drawer" aria-hidden="true">
+  <div class="bk-drawer-panel">
+    <header class="bk-drawer-head">
+      <h3>我的文献库</h3>
+      <button id="bk-library-close" class="bk-ic" type="button" aria-label="关闭">×</button>
+    </header>
+    <div id="bk-lib-list" class="bk-lib-list"></div>
+    <footer class="bk-drawer-foot">
+      <button id="bk-export-json" class="bk-btn bk-btn-sm" type="button">
+        <i class="fas fa-download"></i>导出当前 JSON
+      </button>
+    </footer>
+  </div>
+</div>
+
+<!-- ================= 说明浮层 ================= -->
+<div id="bk-helpbox" class="bk-helpbox" aria-hidden="true">
+  <div class="bk-helpbox-panel">
+    <header>
+      <h3>怎么用</h3>
+      <button id="bk-help-close" class="bk-ic" type="button" aria-label="关闭">×</button>
+    </header>
+    <ol>
+      <li><b>打开文献</b>：拖入本地 PDF；或粘贴 DOI / PDF 直链，DOI 会自动查 Crossref，
+          若配了 Unpaywall 邮箱还会尝试找开放获取全文。</li>
+      <li><b>长文献也不卡</b>：页面按需渲染，只画你正在看的附近几页，滚动时自动补上、
+          离开就释放内存；几百页的论文也不用等全篇转圈。</li>
+      <li><b>快速定位</b>：左栏「目录」读 PDF 自带书签，「搜索」在整篇文本里找关键词并跳到对应页；
+          顶栏页码可以直接点进去跳页。</li>
+      <li><b>键盘操作</b>：<code>j</code> / <code>k</code> 按屏滚动，<code>n</code> / <code>p</code> 翻页，
+          <code>+</code> / <code>-</code> 缩放，<code>Ctrl/⌘ + F</code> 搜索，<code>Esc</code> 关浮层。</li>
+      <li><b>边读边标</b>：在左侧划选文字，弹出的小工具条上选高亮、划线、删除线或写批注。
+          标注存的是「文本锚点」而不是坐标，所以缩放、换窗口大小、下次打开都不会丢。</li>
+      <li><b>写笔记</b>：右侧「笔记」随手记，自动带当前页码；「标注」页可给每条高亮补批注。</li>
+      <li><b>中英对照</b>：先在「设置」填模型接口，再点「生成中英对照」按段落对照；
+          划词后点「对照」只翻一小段。对照结果会保存在本地，下次打开继续看，重复段落自动跳过。</li>
+      <li><b>接着读</b>：每篇文献都记住页码与滚动位置，文献库里显示进度和累计阅读时长，
+          点「继续（Pxxx）」直接回到上次的位置。</li>
+      <li><b>看图看细节</b>：点左栏的「图区放大」（或按 <code>g</code>），这一页的插图会被自动框出来，
+          点一下就按 4x ~ 16x <b>重新渲染</b>（不是把屏幕上的图拉大，矢量线条照样锐利）；
+          也可以直接在页面上拖一个矩形，只放大那一小块。浮层里滚轮缩放、拖动平移，
+          还能「更清晰」再升一档、保存 PNG 或复制到剪贴板。</li>
+      <li><b>凑近看图</b>：图表里的坐标轴小字、凝胶图的泳道、电路图的走线，
+          用普通缩放怎么看都糊，用「图区放大」重渲染一次就清楚了；用完 Esc 退回阅读。</li>
+      <li><b>导出</b>：读完点顶栏「导出笔记」得到 Markdown，front-matter 已写好
+          <code>categories: 知识进阶之路</code>，直接放进 <code>source/_posts/</code> 就能发布；
+          也可以导长图发动态，或把某一页转成图片。</li>
+    </ol>
+    <p class="bk-helpbox-note">
+      所有数据（PDF 副本、标注、笔记、API Key）都存在你浏览器的 IndexedDB 里，
+      不经过任何服务器。换设备请用「导出当前 JSON」迁移。
+    </p>
+  </div>
+</div>
+
+<!-- ================= 图区超清预览 ================= -->
+<div id="bk-region" class="bk-region" aria-hidden="true" role="dialog" aria-label="图区超清预览">
+  <div class="bk-region-panel">
+    <header class="bk-region-head">
+      <h3><i class="fas fa-magnifying-glass-chart"></i> 图区超清预览</h3>
+      <p id="bk-region-meta" class="bk-region-meta"></p>
+      <div class="bk-region-tools">
+        <span id="bk-region-zoom" class="bk-region-zoom">100%</span>
+        <button id="bk-region-out" class="bk-ic" type="button" title="缩小" aria-label="缩小">
+          <i class="fas fa-magnifying-glass-minus"></i>
+        </button>
+        <button id="bk-region-in" class="bk-ic" type="button" title="放大" aria-label="放大">
+          <i class="fas fa-magnifying-glass-plus"></i>
+        </button>
+        <button id="bk-region-fit" class="bk-ic" type="button" title="适应窗口" aria-label="适应窗口">
+          <i class="fas fa-expand"></i>
+        </button>
+        <button id="bk-region-hd" class="bk-btn bk-btn-sm bk-btn-primary" type="button">
+          <i class="fas fa-wand-magic-sparkles"></i>更清晰
+        </button>
+        <button id="bk-region-save" class="bk-btn bk-btn-sm" type="button">
+          <i class="fas fa-download"></i>保存 PNG
+        </button>
+        <button id="bk-region-copy" class="bk-btn bk-btn-sm" type="button">
+          <i class="fas fa-copy"></i>复制
+        </button>
+        <button id="bk-region-close" class="bk-ic" type="button" title="关闭（Esc）" aria-label="关闭">×</button>
+      </div>
+    </header>
+    <div id="bk-region-stage" class="bk-region-stage"></div>
+    <footer class="bk-region-foot">
+      滚轮缩放 · 拖动平移 · Esc 关闭。这是按目标倍率<strong>重新光栅化</strong>画出来的，
+      不是把屏幕上的图放大，所以细线条与矢量文字都会更清晰。
+    </footer>
+  </div>
+</div>
+
+<!-- ================= 遮罩 / 提示 ================= -->
+<div id="bk-busy" class="bk-busy">
+  <div class="bk-busy-box"><span class="bk-spin"></span><span class="bk-busy-text">处理中…</span></div>
+</div>
+<div id="bk-toast" class="bk-toast" role="status" aria-live="polite" data-kind="info"></div>
+
+<script src="/js/custom/subpage_theme.js"></script>
+<script>
+/* 按钮 → window.switchNightMode（与主站同名同义，含星球旋转动画） */
+(function () {
+  var btn = document.getElementById('biko-theme-toggle');
+  if (!btn) return;
+  btn.addEventListener('click', function () {
+    if (window.switchNightMode) window.switchNightMode();
+  });
+})();
+</script>
+<script defer src="/books/js/store.js"></script>
+<script defer src="/books/js/anchor.js"></script>
+<script defer src="/books/js/pdf-view.js"></script>
+<script defer src="/books/js/bilingual.js"></script>
+<script defer src="/books/js/export.js"></script>
+<script defer src="/books/js/reader.js"></script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+/* ============================================================
+   小黑（nanaly）聊天窗 · Biko 蓝灰主题覆盖
+   仅改配色：把参考站玫瑰色统一替换为本站蓝灰，布局/功能不变。
+   主色 #7E96B8，浅色/悬停 #9DB4D3。此文件在所有 nanaly 样式之后加载。
+   ============================================================ */
+
+/* 1) 参考站自定义变量（本站原本不存在，缺省会回退成粉色）—— 蓝灰化 */
+:root {
+  --noimpty-accent: #7E96B8;
+  --noimpty-accent-soft: #9DB4D3;
+  --noimpty-border: rgba(96, 116, 148, 0.16);
+}
+html[data-theme='dark'] {
+  --noimpty-border: rgba(157, 180, 211, 0.16);
+}
+
+/* 2) 面板底色：去掉暖玫瑰调，改为冷中性蓝灰 */
+#nanaly-panel.nanaly-shell {
+  --nanaly-shell-surface: #fbfcfe;
+  --nanaly-shell-canvas: #f3f6fa;
+}
+html[data-theme='dark'] #nanaly-panel.nanaly-shell {
+  --nanaly-shell-surface: #202734;
+  --nanaly-shell-canvas: #1a202b;
+}
+
+/* 3) 面板与控件阴影：玫瑰色 → 中性蓝灰 */
+#nanaly-panel.nanaly-shell {
+  box-shadow: 0 22px 80px rgba(40, 55, 80, 0.18), 0 3px 15px rgba(40, 55, 80, 0.08);
+}
+#nanaly-panel.nanaly-shell .nanaly-head {
+  background: radial-gradient(ellipse at 0 0, rgba(157, 180, 211, 0.16), transparent 65%), var(--nanaly-shell-wash);
+}
+#nanaly-panel.nanaly-shell .nanaly-head__avatar {
+  box-shadow: 0 4px 12px rgba(126, 150, 184, 0.12);
+}
+#nanaly-panel .nanaly-shell-mode[aria-pressed='true'] {
+  box-shadow: 0 2px 6px rgba(126, 150, 184, 0.22);
+}
+#nanaly-panel.nanaly-shell .nanaly-msg {
+  box-shadow: 0 3px 9px rgba(58, 74, 102, 0.04);
+}
+#nanaly-panel.nanaly-shell .nanaly-foot textarea {
+  box-shadow: inset 0 1px 2px rgba(58, 74, 102, 0.04);
+}
+#nanaly-panel.nanaly-shell .nanaly-workspace-drawer {
+  box-shadow: 8px 12px 32px rgba(40, 55, 80, 0.10);
+}
+#nanaly-panel .nanaly-shell-scrim {
+  background: rgba(32, 40, 58, 0.26);
+}
+#nanaly-panel.nanaly-shell .nanaly-session-menu {
+  box-shadow: 0 5px 14px rgba(40, 55, 80, 0.12);
+}
+#nanaly-panel.nanaly-shell .nanaly-voice-settings {
+  box-shadow: 0 12px 40px rgba(40, 55, 80, 0.18);
+}
+
+/* 4) 用户气泡：粉色渐变 → 蓝灰渐变（保证白字对比） */
+#nanaly-panel.nanaly-shell .nanaly-msg--me {
+  background: linear-gradient(125deg, #6b85ac, #88a1c6);
+}
+
+/* 5) 代码块：暗玫瑰底 → 中性深蓝灰 */
+#nanaly-panel.nanaly-shell .nanaly-msg pre {
+  background: #1f2530;
+  color: #eef2f8;
+  border: 1px solid rgba(126, 150, 184, 0.24);
+}
+
+/* 6) 工作室弹窗（nanaly-agent.css）粉色描边/底色 → 蓝灰 */
+.nanaly-studio {
+  border: 1px solid #b9c6d9;
+  box-shadow: 0 22px 90px rgba(26, 36, 54, 0.34);
+}
+.nanaly-studio::backdrop {
+  background: rgba(22, 32, 47, 0.5);
+}
+.studio-status {
+  background: rgba(126, 150, 184, 0.12);
+}
+.nanaly-studio details {
+  border: 1px solid rgba(157, 180, 211, 0.34);
+}
+.nanaly-studio input:not([type=checkbox]),
+.nanaly-studio textarea,
+.nanaly-studio select {
+  border: 1px solid rgba(157, 180, 211, 0.47);
+}
+.nanaly-studio button {
+  border: 1px solid rgba(143, 169, 201, 0.40);
+  background: rgba(126, 150, 184, 0.13);
+}
+.nanaly-studio :focus-visible {
+  outline: 3px solid #7E96B8;
+}
+.nanaly-studio article {
+  border-top: 1px solid rgba(157, 180, 211, 0.27);
+}
+
+/* 7) 隐藏参考站自带的粉色触发按钮（本站改由看板娘小黑猫触发） */
+#nanaly-launcher {
+  display: none !important;
+}
+
+/* 8) 隐藏「备份」入口：本站无参考站的 /backup/ 页面，避免死链；
+      工作室弹窗内仍提供「导出私有记录备份」。 */
+#nanaly-panel .nanaly-backup-entry {
+  display: none !important;
+}

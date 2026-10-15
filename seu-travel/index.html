@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>东南大学 · 境外参会办理清单</title>
+<style>
+  :root{
+    --accent:#7e96b8; --accent-d:#5f789c; --accent-l:#9db4d3; --accent-soft:#eef2f8;
+    --ink:#22303f; --muted:#6b7888; --line:#e2e7ef; --bg:#f4f6fa; --card:#fff;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;color:var(--ink);background:var(--bg);line-height:1.75;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  a{color:var(--accent-d);}
+  .topback{
+    display:block;padding:14px 22px;font-size:.86rem;color:var(--muted);text-decoration:none;
+  }
+  .topback:hover{color:var(--accent-d);}
+  .hero{
+    max-width:1180px;margin:0 auto;padding:18px 22px 30px;
+  }
+  .eyebrow{letter-spacing:.22em;font-size:.72rem;font-weight:750;color:var(--accent);text-transform:uppercase;margin:0 0 10px;}
+  .hero h1{font-size:clamp(1.7rem,4vw,2.5rem);line-height:1.3;margin:6px 0 12px;}
+  .hero .lead{color:var(--muted);max-width:720px;margin:0;}
+  .flow{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0 0;align-items:center;}
+  .flow b{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 14px;font-size:.84rem;color:var(--accent-d);}
+  .flow span{color:var(--muted);}
+  .meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;}
+  .meta span{font-size:.8rem;color:var(--muted);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:4px 10px;}
+
+  .layout{max-width:1180px;margin:0 auto;padding:0 22px 80px;display:grid;grid-template-columns:230px 1fr;gap:34px;align-items:start;}
+  /* sidebar */
+  .sidebar{position:sticky;top:18px;display:grid;gap:16px;}
+  .sidenav{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px;}
+  .sidenav a{
+    display:block;padding:8px 12px;border-radius:9px;font-size:.88rem;color:var(--muted);
+    text-decoration:none;border-left:3px solid transparent;
+  }
+  .sidenav a:hover{background:var(--accent-soft);color:var(--accent-d);}
+  .sidenav a.active{background:var(--accent-soft);color:var(--accent-d);border-left-color:var(--accent);font-weight:650;}
+  .progress-card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;}
+  .progress-card .p-title{font-size:1.05rem;font-weight:700;margin:0 0 10px;}
+  .progress-card .p-bar{height:8px;border-radius:99px;background:var(--accent-soft);overflow:hidden;}
+  .progress-card .p-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent-l));transition:width .3s;}
+  .progress-card .p-hint{font-size:.76rem;color:var(--muted);margin:10px 0 0;}
+  .btn-print{
+    width:100%;height:46px;border-radius:12px;border:1px solid var(--accent);background:#fff;
+    color:var(--accent-d);font:inherit;font-weight:650;cursor:pointer;
+  }
+  .btn-print:hover{background:var(--accent-soft);}
+
+  /* main */
+  .main{min-width:0;display:grid;gap:26px;}
+  section{scroll-margin-top:18px;}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(18px,3vw,28px);}
+  .panel.tint{background:var(--accent-soft);border-color:#dbe3f0;}
+  .phase-label{letter-spacing:.2em;font-size:.74rem;font-weight:750;color:var(--accent);text-transform:uppercase;margin:0 0 4px;}
+  .phase-title{font-size:clamp(1.3rem,3vw,1.7rem);margin:0 0 6px;}
+  .phase-sub{color:var(--muted);margin:0 0 18px;}
+  .order-seq{font-weight:650;color:var(--accent-d);}
+  .note-line{background:#fff;border:1px dashed var(--accent-l);border-radius:12px;padding:14px 16px;color:var(--muted);font-size:.9rem;margin-top:14px;}
+
+  table{width:100%;border-collapse:collapse;margin-top:12px;font-size:.9rem;}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top;}
+  th{background:var(--accent-soft);color:var(--accent-d);font-weight:650;}
+
+  /* step card */
+  .steps{display:grid;gap:16px;}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;}
+  .step-head{display:flex;gap:14px;align-items:flex-start;}
+  .num{
+    flex:none;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;
+    background:var(--accent-soft);color:var(--accent-d);font-weight:750;
+  }
+  .step-head .when{margin:2px 0 2px;font-size:.78rem;letter-spacing:.04em;color:var(--accent);font-weight:650;}
+  .step-head h3{margin:0;font-size:1.12rem;line-height:1.45;}
+  .points{margin:14px 0 0;padding-left:20px;}
+  .points li{margin:7px 0;}
+  .step details{margin-top:12px;}
+  .step summary{cursor:pointer;color:var(--accent-d);font-weight:650;font-size:.9rem;}
+  .basis{margin:14px 0 0;font-size:.8rem;color:var(--muted);border-top:1px dashed var(--line);padding-top:10px;}
+  .check{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-size:.9rem;cursor:pointer;user-select:none;}
+  .check input{margin-top:5px;width:17px;height:17px;accent-color:var(--accent);flex:none;}
+  .special{border:1px solid var(--accent-l);background:linear-gradient(180deg,#fff,var(--accent-soft));}
+  .special .tag{display:inline-block;background:var(--accent);color:#fff;font-size:.74rem;letter-spacing:.14em;padding:3px 10px;border-radius:999px;text-transform:uppercase;}
+  .contact-grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));}
+  .contact{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px;}
+  .contact h4{margin:0 0 8px;color:var(--accent-d);}
+  .contact p{margin:4px 0;font-size:.9rem;}
+  ul.plain{margin:8px 0;padding-left:20px;} ul.plain li{margin:6px 0;}
+  .foot-note{color:var(--muted);font-size:.84rem;text-align:center;margin-top:10px;}
+
+  @media (max-width:960px){
+    .layout{grid-template-columns:1fr;gap:20px;}
+    .sidebar{position:static;}
+    .sidenav{display:flex;overflow-x:auto;gap:4px;}
+    .sidenav a{white-space:nowrap;border-left:0;border-bottom:3px solid transparent;}
+    .sidenav a.active{border-left:0;border-bottom-color:var(--accent);}
+  }
+  /* print */
+  @media print{
+    .topback,.sidebar,.meta{display:none!important;}
+    body{background:#fff;}
+    .layout{display:block;max-width:none;padding:0;}
+    .panel,.step{border:1px solid #ccc;break-inside:avoid;box-shadow:none;}
+    details{open:open;} details > *{display:block!important;}
+    .hero{padding-bottom:10px;}
+  }
+</style>
+</head>
+<body>
+<a class="topback" href="/">&larr; 返回个人主页 · SEU / STUDENT TRAVEL CHECKLIST</a>
+
+<header class="hero">
+  <p class="eyebrow">SEU / Student Travel Checklist</p>
+  <h1>东南大学研究生出国（境）参加国际会议办理清单</h1>
+  <p class="lead">境外参会，照着顺序办。从收到录用通知，到完成财务报销，把每一步、每份材料放回该做的时间点。</p>
+  <div class="flow"><b>出发前</b><span>&rarr;</span><b>出行期间</b><span>&rarr;</span><b>回国后</b></div>
+  <div class="meta"><span>核对日期 2026.09.16</span><span>含内嵌 PDF 与时间限制图</span></div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+    <nav class="sidenav" id="sidenav">
+      <a href="#before">01 · 出发前</a>
+      <a href="#no-travel">未出境 · 仅报签证费</a>
+      <a href="#during">02 · 出行期间</a>
+      <a href="#after">03 · 回国后</a>
+      <a href="#contacts">找谁办理</a>
+      <a href="#transition">历史出访补报</a>
+      <a href="#sources">原文与版本</a>
+    </nav>
+    <div class="progress-card">
+      <p class="p-title">已完成 <span id="done">0</span> / 12</p>
+      <div class="p-bar"><div class="p-fill" id="fill"></div></div>
+      <p class="p-hint">勾选进度保存在当前浏览器</p>
+    </div>
+    <button class="btn-print" id="btnPrint" type="button">打印 / 保存为 PDF</button>
+  </aside>
+
+  <main class="main">
+
+    <!-- 总览 -->
+    <section class="panel">
+      <h2 class="phase-title">先记住这条顺序</h2>
+      <p class="order-seq">确认资助 → 拿邀请函、定日期 → 研究生院资助审批 → 国际合作处出国境审批 → 签证与行前准备 → 参会 → 领两份原件 → 线上总结 → 研究生院签章 → 财务报销。</p>
+      <div class="note-line">本页为个人整理的办事参考。主线适用于申请研究生院资助的参会研究生。其他经费来源仍须办理因公出国境审批，资助与报销环节按相应项目要求执行。勾选仅用于个人记录。</div>
+      <ul class="plain">
+        <li><b>务必在会前完成审批</b>，提交申请后还要跟进到审批通过。正常出境参会：会前完成研究生院资助资格审批及国际合作处审批，并确保出境前已获学校批准。按补充办理口径，系统限制会后补办；历史出访仅按下方专项通知处理。</li>
+        <li><b>最终因任何原因未出境：</b>仅申请签证费报销时无需办理国际合作处审批，但研究生院资助资格审批仍须在开会日期之前完成，否则无法报销。</li>
+      </ul>
+      <h3 style="margin:18px 0 2px;">三个系统，分别申请</h3>
+      <table>
+        <thead><tr><th>系统</th><th>办理事项</th><th>何时完成</th></tr></thead>
+        <tbody>
+          <tr><td>研究生院</td><td>资助资格审批</td><td>开会日期之前审批通过</td></tr>
+          <tr><td>国际合作处</td><td>因公出国（境）审批</td><td>会前完成，且出境前获批</td></tr>
+          <tr><td>财务处</td><td>报销申请与财务审批</td><td>报销材料备齐后单独申请</td></tr>
+        </tbody>
+      </table>
+      <p class="basis">三套系统独立运行，学生须分别发起申请；一套系统审批通过不会代替另外两套。未出境仅报签证费的情况，按下方专门流程办理。资助与出访节点见学校通知；三套独立系统及未出境规则为整理者补充办理口径。</p>
+    </section>
+
+    <!-- PHASE 01 -->
+    <section id="before">
+      <p class="phase-label">Phase 01 / Before Departure</p>
+      <h2 class="phase-title">出发前 · 会前完成资助与出访审批</h2>
+      <div class="steps">
+
+        <article class="step">
+          <div class="step-head"><span class="num">01</span><div><p class="when">收到录用通知后 · 申请研究生院资助者</p><h3>确认自己能申请什么资助</h3></div></div>
+          <ul class="points">
+            <li>你应是东大全日制研究生，申请时处于中国境内学习阶段；通知要求政治素质好、成绩优秀、科研能力强。</li>
+            <li>论文已经被境外本学科有重要影响的会议录用；你是第一作者，或你是第二作者且第一作者为导师。第一署名单位、通讯作者单位均须为东南大学。</li>
+            <li>在资助系统查会议是否属于本学科顶会。顶会的 workshop 按非顶会处理。经导师、院系审核后，由研究生院择优资助。</li>
+          </ul>
+          <details><summary>展开查看：资助金额与能报的费用</summary>
+            <p style="margin:10px 0 0;font-size:.9rem;">资助额度、可报销费用范围与上限以研究生院当年资助通知为准。签证费可报（含拒签），总报销额不得超过获批资助上限；顶会资助机票限经济舱，住宿按财务出国标准。</p>
+          </details>
+          <p class="basis">依据：研究生院通知</p>
+          <label class="check"><input type="checkbox" class="step-check"><span>已核对作者、单位、会议类别与经费来源</span></label>
+        </article>
+
+        <article class="step">
+          <div class="step-head"><span class="num">02</span><div><p class="when">提交任何申请前</p><h3>拿到正式邀请函，核对出入境日期</h3></div></div>
+          <ul class="points">
+            <li>向会议主办方索取邀请函，必须写明你的姓名、邀请起止日期。另备录用通知；录用邮件不能代替邀请函。</li>
+            <li>通常最多在邀请日期前、后各加 1 天；赴日本按邀请函的滞在日程表填报。</li>
+            <li>境外参加一个国际会议不能超过 7 天（基本要求的配图及细则 PDF 均有标注）。有特殊或组合行程，填报前向国际合作处确认。</li>
+            <li>系统填的是离开中国、进入中国的日期。核对返程跨时区和航班到达时间。</li>
+            <li>例如：批件为 10 月 1—7 日，就应 10 月 1 日出中国境、10 月 7 日入中国境，共 7 天。其他出访类型的时间标注同理。</li>
+          </ul>
+          <p class="basis">依据：基本要求及配图 · 细则 PDF 第 1 页</p>
+          <label class="check"><input type="checkbox" class="step-check"><span>已取得邀请函并核对中国出入境日期</span></label>
+        </article>
+
+        <article class="step">
+          <div class="step-head"><span class="num">03</span><div><p class="when">开会之前完成 · 申请研究生院资助者</p><h3>先完成研究生院的资助资格审批</h3></div></div>
+          <ul class="points">
+            <li>综合服务大厅 ↗ → 研究生国际交流 → 境外参加国际会议（顶会 / 非顶会）。</li>
+            <li>按会议类别选入口，准备邀请函等附件；完整附件清单以系统要求为准。</li>
+            <li>经费来源选“研究生院资助”，提交并跟进导师、院系及研究生院审核。</li>
+            <li>务必在开会日期之前完成申请并审批通过；会后无法补办。即使最终因签证被卡、被拒或其他原因未出境，报销签证费也必须满足这个节点。获得资助资格后继续办理下一步出国境批件。</li>
+          </ul>
+          <p class="basis">依据：研究生院通知。登录系统内的附件清单未在公开页面完整列出。</p>
+          <label class="check"><input type="checkbox" class="step-check"><span>资助审批已通过（其他经费来源可标记不适用）</span></label>
+        </article>
+
+        <article class="step">
+          <div class="step-head"><span class="num">04</span><div><p class="when">出境前 · 所有因公出国境学生</p><h3>再提交国际合作处申请，主动跟进审批</h3></div></div>
+          <ul class="points">
+            <li>信息服务门户 ↗ → 国际合作处 → 学生因公出国（境）；也可从出国境申报系统 ↗ 进入，入口异常时走信息门户。</li>
+            <li>填写出访信息，提交邀请函和系统要求的材料，核对日期及经费项目号。</li>
+            <li>提交后在个人页面“操作 → 审批进度”查看流程，提醒导师、学院领导审核，并继续跟进后续审批。</li>
+            <li>研究生院资助审批、国际合作处审批、财务审批为三套独立系统，须分别申请。正常出境参会时，前两项都要办理。出发前确认流程状态，避免回国后仍未审批结束。</li>
+            <li>务必会前完成审批，并确保出境前学校已批准。按补充办理口径，系统无法在会后补办。2026 年 10 月 1 日以前已完成出访的历史未申报事项，适用专项补报通知；请勿将过渡安排用于新的出访。</li>
+          </ul>
+          <p class="basis">依据：研究生院通知 · 基本要求 · 细则 PDF 第 1—2 页</p>
+          <label class="check"><input type="checkbox" class="step-check"><span>因公出国境申请已提交，且审批流程已办结</span></label>
+        </article>
+
+        <article class="step">
+          <div class="step-head"><span class="num">05</span><div><p class="when">相关审批通过后 · 按目的地要求办理</p><h3>准备因私证照、签证和学校证明材料</h3></div></div>
+          <ul class="points">
+            <li>学生持因私护照 / 证照出行，自行办理签证或签注，提前核对目的地材料要求。</li>
+            <li>保存签证付费凭证及对应网页截图。签证费可以报销，含拒签；总报销金额须在资助上限内。最终未出境时，按下方专门流程只报签证费。</li>
+            <li>需要派遣函时，到派遣函模板页 ↗ 下载：通常用英文基础模板，韩国用专门的中文模板。通常只改第一段个人信息及日期，按签证要求补充内容，保留底部落款。</li>
+            <li>核对派遣函与签证申请的出入境日期一致，用白色 A4 纸打印，带到四牌楼老图书馆 127 室办理签章。校方可提供专用信纸套印。</li>
+            <li>需要法人证书 / 组织机构代码证明及翻译件时，带领馆材料清单一并申请；只领取签证实际需要的材料。</li>
+            <li>领取签证材料的审批节点：基本要求写“审批通过后”；PDF 和模板页明确写“学院审批同意后”。如学院已通过、后续仍在流转，先拨 025-83793215 确认可否领取。</li>
+          </ul>
+          <p class="basis">依据：基本要求 · 细则；操作细节补充自目录中的派遣函模板页</p>
+          <label class="check"><input type="checkbox" class="step-check"><span>证照与签证材料已处理（未出境者转下方签证费流程）</span></label>
+        </article>
+
+        <article class="step">
+          <div class="step-head"><span class="num">06</span><div><p class="when">订票、出发前</p><h3>核对行程与费用要求，完成行前准备</h3></div></div>
+          <ul class="points">
+            <li>核对机票实际出入中国境日期与审批一致；外航购票要求、签证类别或日期变动，提前问国际合作处。顶会资助机票为经济舱，住宿按财务出国标准。</li>
+            <li>阅读行前教育材料 ↗，也可到国际合作处四牌楼或九龙湖办公点领取提醒小册子。</li>
+            <li>赴美者另读目录内的赴美注意事项 ↗，按自身签证与行程核对最新官方要求。</li>
+            <li>整理建议：建一个材料文件夹，收齐邀请函、录用通知、审批记录、行程及票据；提前向财务处核对所需票据，途中持续保存。</li>
+          </ul>
+          <p class="basis">依据：研究生院通知 · 申报目录 · 细则 PDF 第 2 页。文件夹为本页整理建议。</p>
+          <label class="check"><input type="checkbox" class="step-check"><span>行程、费用要求与行前材料已核对</span></label>
+        </article>
+      </div>
+    </section>
+
+    <!-- SPECIAL CASE -->
+    <section id="no-travel">
+      <article class="step special">
+        <span class="tag">Special Case / No Departure</span>
+        <h2 class="phase-title" style="margin-top:12px;">最终未出境 · 只可报销签证费</h2>
+        <p class="phase-sub">判断条件：人是否实际出境。因任何原因最终未出境均适用，包括签证被卡、签证被拒、行程取消及其他原因。</p>
+        <ul class="points">
+          <li>只可报销签证费，除此之外的任何费用均不可报销（包括注册费、机票、住宿等），不能沿用正常参会报销范围。即使签证被拒，签证费仍可按规定申请。</li>
+          <li>先确认会前已完成研究生院资助资格审批，须在开会日期之前审批通过；未完成则无法报销，系统会后不能补办。</li>
+          <li>准备签证付费凭证 + 对应网页截图，核对金额未超过获批资助上限。</li>
+          <li>此情形无需走国际合作处审批，不按正常出境流程申请两份出国境报销原件。</li>
+          <li>向研究生院按未出境情形办理签证费材料审核，并在财务系统单独提交签证费报销申请。具体表单、系统入口及额外附件向研究生院和财务处核对。</li>
+        </ul>
+        <div class="note-line">下方第 07—12 步是正常出境后的流程，未出境者按本框办理，勿直接套用领批件及参会总结的步骤。</div>
+        <p class="basis">来源：整理者于 2026-09-16 补充的办理口径；已核对的公开通知未载明这组签证费与未出境报销细节。</p>
+      </article>
+    </section>
+
+    <!-- PHASE 02 -->
+    <section id="during">
+      <p class="phase-label">Phase 02 / During the Trip</p>
+      <h2 class="phase-title">出行期间 · 按批件往返</h2>
+      <div class="steps">
+        <article class="step">
+          <div class="step-head"><span class="num">07</span><div><p class="when">从出境到入境</p><h3>按批准日期回国，保管证件与材料</h3></div></div>
+          <ul class="points">
+            <li>严格执行批件日期：批准 6 天，就应第 1 天离开中国、第 6 天进入中国。</li>
+            <li>妥善保管证件和贵重物品；护照丢失时及时联系中国驻当地使领馆办理临时证件，可通过“领事直通车”查询联系方式。</li>
+            <li>建议保存参会证明、支付记录与票据，并记下全部境外经转、停留城市，方便回国填表。</li>
+            <li>细则明确写明：超期者不能报销任何费用。遇到航班变动等影响按期入境的情况，及时联系国际合作处确认处理办法，保留相关证明；本页无法保证例外获批。</li>
+          </ul>
+          <p class="basis">依据：细则 PDF 第 2—3 页。材料归集、遇变动联系为办理建议。</p>
+          <label class="check"><input type="checkbox" class="step-check"><span>已按期回国，证件、票据与行程记录已整理</span></label>
+        </article>
+      </div>
+    </section>
+
+    <!-- PHASE 03 -->
+    <section id="after">
+      <p class="phase-label">Phase 03 / After Return</p>
+      <h2 class="phase-title">回国后 · 先备齐，再交纸质材料</h2>
+      <p class="phase-sub">第 08—10 步可交叉准备；第 11 步提交研究生院前，须完成线上总结并备齐纸质材料。</p>
+      <div class="steps">
+        <article class="step">
+          <div class="step-head"><span class="num">08</span><div><p class="when">回国后，因公审批流程已结束</p><h3>去国际合作处领两份报销原件</h3></div></div>
+          <ul class="points">
+            <li>地点：四牌楼校区老图书馆 127 室。出门前核对项目号是否变更、是否有境外经转与停留城市。</li>
+            <li>领取《东南大学出国、赴港澳任务批件》原件。</li>
+            <li>领取《因公临时出国（境）任务和财务核算审批意见表》原件。</li>
+            <li>现场填写财务意见表的“境外经转及停留城市”栏；无经转停留时用斜线划掉，不能空着。</li>
+            <li>如项目号等信息变更，领取时告知工作人员，并在变更处加盖审批印章。</li>
+          </ul>
+          <p class="basis">依据：基本要求 · 细则 PDF 第 3 页</p>
+          <label class="check"><input type="checkbox" class="step-check"><span>两份原件已领取，城市栏和变更信息已处理</span></label>
+        </article>
+
+        <article class="step">
+          <div class="step-head"><span class="num">09</span><div><p class="when">交研究生院纸质材料之前 · 研究生院资助者</p><h3>上传签章后的经费计划表，再提交总结</h3></div></div>
+          <ul class="points">
+            <li>综合服务大厅 → 研究生国际交流 → 原会议申请记录。</li>
+            <li>下载经费使用计划表，办好导师、院系签字盖章，再上传提交。</li>
+            <li>随后按系统要求上传并提交总结材料，检查提交状态，别只留在草稿。</li>
+            <li>研究生院收到纸质报销材料后，会对系统中的总结材料审核。</li>
+          </ul>
+          <p class="basis">依据：研究生院通知</p>
+          <label class="check"><input type="checkbox" class="step-check"><span>签章计划表已上传，总结材料已正式提交</span></label>
+        </article>
+
+        <article class="step">
+          <div class="step-head"><span class="num">10</span><div><p class="when">交研究生院纸质材料之前 · 研究生院资助者</p><h3>在财务系统填写因公出国报销单</h3></div></div>
+          <p style="margin:12px 0 0;">在财务处入口 ↗ 进入相应财务系统，选择“因公出国”板块填写。</p>
+          <table>
+            <tbody>
+              <tr><th>报销项目号</th><td>3360632601E（2026 年度通知列示）</td></tr>
+              <tr><th>项目名称</th><td>研究生国际交流</td></tr>
+              <tr><th>项目负责人</th><td>耿新</td></tr>
+            </tbody>
+          </table>
+          <p style="font-size:.88rem;color:var(--muted);margin:10px 0 0;">项目号可能调整，报销时再核对；通知说明可在报销时修改，不影响此前办理批件。报销单、发票与票据问题向财务处确认。</p>
+          <p class="basis">依据：研究生院通知</p>
+          <label class="check"><input type="checkbox" class="step-check"><span>报销单已填写，项目号已核对</span></label>
+        </article>
+
+        <article class="step">
+          <div class="step-head"><span class="num">11</span><div><p class="when">完成第 08—10 步后 · 研究生院资助者</p><h3>把纸质材料交研究生院审核、签字盖章</h3></div></div>
+          <ul class="points">
+            <li>交给研究生院培养办王悦老师：财务报销单 + 经费使用计划表 + 上述两份出国境原件。</li>
+            <li>收件时间：每周一、二、四上午。四牌楼办公地点为逸夫建筑馆 205；周四在九龙湖集中处理业务，前往前可电话确认具体地点。</li>
+            <li>研究生院审核后统一请负责人签章，通常无法当场办好；签章完成后取回。</li>
+            <li>九龙湖：可以使用材料快递站。</li>
+          </ul>
+          <p class="basis">依据：研究生院通知</p>
+          <label class="check"><input type="checkbox" class="step-check"><span>研究生院审核签章完成，纸质材料已取回</span></label>
+        </article>
+
+        <article class="step">
+          <div class="step-head"><span class="num">12</span><div><p class="when">研究生院签章完成后</p><h3>把完整材料交财务处，完成报销</h3></div></div>
+          <ul class="points">
+            <li>带上签章后的材料、相关票据及财务处要求的其他材料（报销签证费须附付费凭证与对应网页截图），由本人在财务系统单独申请并按要求提交财务处；含签证费的报销总额不得超过资助上限。</li>
+            <li>根据审核反馈补充材料并跟进报销结果。</li>
+            <li>公开页面没有列全财务票据清单、系统附件要求，也没有给出统一“提前多少天”或回国后报销截止日。请以办理系统、财务处当前要求为准，提前留出审批和签证时间。</li>
+          </ul>
+          <p class="basis">依据：研究生院通知 · 细则 PDF 第 3 页</p>
+          <label class="check"><input type="checkbox" class="step-check"><span>财务审核与报销已完成</span></label>
+        </article>
+      </div>
+    </section>
+
+    <!-- 历史补报 -->
+    <section id="transition" class="panel">
+      <h2 class="phase-title">历史出访补报 · 按专项通知处理</h2>
+      <p class="phase-sub">2026 年 10 月 1 日以前已完成出访，且未在新旧系统申报。</p>
+      <p>新通知允许上述历史事项按下列顺序补办。范围限定为已完成因公出国（境）、且未通过新旧系统办理申报的学生；已申报但未审批办结的情况，须向国际合作处确认处理方式。</p>
+      <ul class="plain">
+        <li>本人撰写书面情况说明，如实说明未及时申报原因，并书面承诺今后遵守外事纪律、依规出访。</li>
+        <li>由所在学院党委副书记签字，并加盖学院公章。</li>
+        <li>交项目主管部门或经费支持导师所在部门签字盖章；研究生院资助的项目交研究生院办理。</li>
+        <li>交国际合作处审核签章，办理报销所需文件。</li>
+        <li>携全套说明文件和报销材料，前往财务处办理报销。</li>
+      </ul>
+      <div class="note-line">10 月 1 日的含义须分清：通知按出访事项划分过渡范围，原文未规定“10 月 1 日后不得提交历史补报材料”。整理者补充了“10 月 1 日后无法提交”的执行口径，是否另有受理截止日须向国际合作处确认；如需补报，建议尽快办理。10 月 1 日当日出访也应事前获批，勿依赖过渡安排。</div>
+      <p style="font-size:.9rem;">通知对 2026 年 10 月 1 日以后出访要求在出访前完成线上申报审批，未履行事前申报手续的出访费用不予报销。历史补报安排不豁免研究生院资助资格须在会前获批的要求。</p>
+      <p class="basis">依据：关于进一步加强学生因公出国（境）管理的通知（校国际〔2026〕6 号，2026-09-02 发布）；研究生院会前资助审批限制来自资助通知及整理者补充口径。</p>
+    </section>
+
+    <!-- 联系人 -->
+    <section id="contacts" class="panel tint">
+      <h2 class="phase-title">找谁办理</h2>
+      <div class="contact-grid">
+        <div class="contact">
+          <h4>资助 · 总结 · 研究生院签章</h4>
+          <p><b>研究生院培养办 · 王悦老师</b></p>
+          <p>025-83795359</p>
+          <p>101010799@seu.edu.cn</p>
+          <p>四牌楼逸夫建筑馆 205；周四在九龙湖集中处理业务</p>
+          <p>报销材料收件：周一、二、四上午</p>
+        </div>
+        <div class="contact">
+          <h4>出国境审批 · 签证材料 · 批件</h4>
+          <p><b>国际合作处</b></p>
+          <p>025-83793215</p>
+          <p>材料办理：四牌楼老图书馆 127 室</p>
+          <p>日期不符、外航要求、签证类别、经转城市与项目号变更，咨询此处。</p>
+        </div>
+        <div class="contact">
+          <h4>报销 · 票据</h4>
+          <p>报销单、发票、完整票据清单与财务标准：东南大学财务处。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 版本 -->
+    <section id="sources" class="panel">
+      <h2 class="phase-title">原文与版本</h2>
+      <p>依据以下五个公开页面、细则及新增通知的内嵌 PDF，并结合整理者补充办理口径整理。核对日期：2026 年 9 月 16 日。新增内容包括签证费、未出境限制、三套独立系统及历史出访补报。阅读顺序经过重排，条件和例外保留在对应步骤中。主流程聚焦境外参会；派遣函页作为操作补充，赴美等专项要求保留入口。</p>
+      <ul class="plain">
+        <li>研究生院：关于研究生出国（境）参加国际会议申请资助的通知 · 落款 2026-01-16</li>
+        <li>国际合作处：学生因公申报说明目录</li>
+        <li>因公出国（境）基本要求（含时间限制图）· 页面显示 2026-07-10</li>
+        <li>学生因公出国（境）要求细则 · 页面显示 2026-07-10 · 内嵌 PDF 直达</li>
+        <li>关于进一步加强学生因公出国（境）管理的通知 · 发布 2026-09-02，文件落款 2026-08-28，校国际〔2026〕6 号</li>
+      </ul>
+      <div class="note-line">补充口径来源：整理者提供的签证费（含拒签）报销、付款凭证与网页截图、未出境仅报签证费、未出境无需国际合作处审批、三套系统独立申请及系统会后无法补办等办理要求。公开文件与补充口径不一致的部分已在对应位置列明。</div>
+      <p class="foot-note">网址中的年份与页面显示日期不同，版本按页面内容核对。学校更新要求后，以最新通知和办理部门答复为准。本页为办事整理，勾选状态不代表校方审批结果。</p>
+    </section>
+
+  </main>
+</div>
+
+<script>
+(function(){
+  var KEY='seu-travel-progress-v1';
+  var boxes=Array.prototype.slice.call(document.querySelectorAll('.step-check'));
+  var doneEl=document.getElementById('done'), fillEl=document.getElementById('fill');
+  function save(){var s={};boxes.forEach(function(b,i){s[i]=b.checked;});try{localStorage.setItem(KEY,JSON.stringify(s));}catch(e){}}
+  function refresh(){
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    doneEl.textContent=done;
+    fillEl.style.width=(done/boxes.length*100)+'%';
+    save();
+  }
+  try{var s=JSON.parse(localStorage.getItem(KEY)||'{}');boxes.forEach(function(b,i){b.checked=!!s[i];});}catch(e){}
+  boxes.forEach(function(b){b.addEventListener('change',refresh);});
+  refresh();
+
+  document.getElementById('btnPrint').addEventListener('click',function(){window.print();});
+
+  // scrollspy
+  var links=Array.prototype.slice.call(document.querySelectorAll('#sidenav a'));
+  var map={};links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a;});
+  var obs=new IntersectionObserver(function(entries){
+    entries.forEach(function(en){
+      if(en.isIntersecting){
+        links.forEach(function(a){a.classList.remove('active');});
+        var a=map[en.target.id]; if(a){a.classList.add('active');}
+      }
+    });
+  },{rootMargin:'0px 0px -70% 0px',threshold:0});
+  ['before','no-travel','during','after','contacts','transition','sources'].forEach(function(id){
+    var el=document.getElementById(id); if(el)obs.observe(el);
+  });
+})();
+</script>
+</body>
+</html>

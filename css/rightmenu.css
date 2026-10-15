@@ -1,0 +1,179 @@
+/*!
+ * Acrylic 风格自定义右键菜单 样式（本站适配版）
+ *
+ * 原样式：https://cdn.jsdelivr.net/gh/zhheo/JS-Heo@main/rightmenu/rightmenu.css
+ * 原始教程：https://blog.zhheo.com/p/5e931b65.html （张洪Heo，CC BY-NC-ND 4.0）
+ *
+ * 本站适配改动：
+ *   1. 不引 heoMainColor.css，把用到的 --heo-* 变量就地映射到本站主题变量
+ *   2. 显示/隐藏改用 .right-menu-open 类（原版用 inline style + jQuery .show()/.hide()）
+ *      —— 这样才能配合事件委托，且不被 Pjax 清掉状态
+ *   3. Acrylic 毛玻璃用 backdrop-filter，不支持时自动退化为纯色
+ *   4. z-index 集中在本文件顶部，便于与「小黑」AI 面板 / 顶栏统一管理
+ *
+ * 引入方式：_config.butterfly.yml → inject.head
+ *   - <link rel="stylesheet" href="/css/rightmenu.css">
+ */
+
+/* ======================================================
+ * 层级：与 source/css/custom_nav.css 的 --z-* 刻度对齐
+ *   --z-live2d(70) < 遮罩 < 面板 < 「小黑」AI 面板 < loading-box
+ * 若 custom_nav.css 里已定义 --z-menu / --z-menu-mask，此处取其值。
+ * ====================================================== */
+:root {
+  --z-rightmenu-mask: var(--z-menu-mask, 89);
+  --z-rightmenu: var(--z-menu, 90);
+}
+
+/* 本站中间层变量：指向主题既有变量，深浅色自动跟随 */
+#rightMenu {
+  --rm-bg: var(--card-bg, #fff);
+  --rm-bg-op: rgba(255, 255, 255, 0.72);
+  --rm-fg: var(--font-color, #363636);
+  --rm-gray: var(--meta-color, #999);
+  --rm-line: var(--card-border, #e3e8f7);
+  --rm-main: var(--main-color, #7E96B8);
+  --rm-main-op: rgba(126, 150, 184, 0.2);
+  --rm-mask: rgba(0, 0, 0, 0.15);
+}
+
+[data-theme="dark"] #rightMenu {
+  --rm-bg-op: rgba(29, 30, 34, 0.72);
+  --rm-mask: rgba(0, 0, 0, 0.45);
+}
+
+/* ------------------------------------------------------
+ * 面板
+ * ------------------------------------------------------ */
+#rightMenu {
+  position: fixed;
+  top: 10%;
+  left: 10%;
+  display: none;
+  width: 9rem;
+  height: fit-content;
+  padding: 0 0.25rem;
+  z-index: var(--z-rightmenu);
+  background: var(--rm-bg-op);
+  border: 1px solid var(--rm-line);
+  border-radius: 12px;
+  color: var(--rm-fg);
+  box-shadow: 0 8px 16px -4px rgba(44, 45, 48, 0.12);
+  /* Acrylic 毛玻璃 */
+  backdrop-filter: saturate(180%) blur(14px);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  transition: border-color 0.3s, box-shadow 0.3s, opacity 0.2s;
+  animation: rightMenuFadeIn 0.18s ease-out;
+}
+
+/* 不支持 backdrop-filter 时退化为纯色卡片，避免文字读不清 */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  #rightMenu {
+    background: var(--rm-bg);
+  }
+}
+
+#rightMenu.right-menu-open {
+  display: block;
+}
+
+#rightMenu:hover {
+  border-color: var(--rm-main);
+  box-shadow: 0 8px 16px -4px var(--rm-main-op);
+}
+
+@keyframes rightMenuFadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* ------------------------------------------------------
+ * 分组与项
+ * ------------------------------------------------------ */
+#rightMenu .rightMenu-group {
+  padding: 0.35rem 0.3rem;
+}
+
+#rightMenu .rightMenu-group:not(:nth-last-child(1)) {
+  border-bottom: 1px dashed var(--rm-line);
+}
+
+#rightMenu .rightMenu-group.rightMenu-small {
+  display: flex;
+  justify-content: space-between;
+}
+
+#rightMenu .rightMenu-group .rightMenu-item {
+  border-radius: 8px;
+  transition: background-color 0.3s, color 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#rightMenu .rightMenu-small .rightMenu-item {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+}
+
+#rightMenu .rightMenu-line .rightMenu-item {
+  margin: 0.25rem 0;
+  padding: 0.25rem 0;
+}
+
+#rightMenu .rightMenu-group.rightMenu-line .rightMenu-item {
+  display: flex;
+}
+
+#rightMenu .rightMenu-group .rightMenu-item:hover {
+  background-color: var(--rm-main);
+  color: #fff;
+  box-shadow: 0 8px 12px -3px var(--rm-main-op);
+}
+
+#rightMenu .rightMenu-group .rightMenu-item i {
+  display: inline-block;
+  width: 1.5rem;
+  padding: 0 0.25rem;
+  line-height: 1.5rem;
+  text-align: center;
+}
+
+#rightMenu .rightMenu-line .rightMenu-item i {
+  margin: 0 0.25rem;
+}
+
+#rightMenu .rightMenu-group .rightMenu-item span {
+  line-height: 1.5rem;
+}
+
+/* ------------------------------------------------------
+ * 遮罩：显示/隐藏同样用类，点击由 JS 事件委托处理
+ * ------------------------------------------------------ */
+#rightmenu-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  display: none;
+  width: 100vw;
+  height: 100vh;
+  margin: 0 !important;
+  z-index: var(--z-rightmenu-mask);
+  background: var(--rm-mask);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+#rightmenu-mask.right-menu-open {
+  display: block;
+}
+
+@media screen and (max-width: 768px) {
+  /* 移动端不接管右键（见 rightmenu.js），这里一并隐藏，避免残留遮罩吃点击 */
+  #rightMenu,
+  #rightmenu-mask {
+    display: none !important;
+  }
+}

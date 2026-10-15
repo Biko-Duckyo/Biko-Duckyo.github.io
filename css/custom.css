@@ -1,0 +1,1191 @@
+/* ======================================================
+ * superBrain custom.css
+ * 对照 https://superq314.github.io/tags/Butterfly/ 四篇教程整合：
+ *   - Butterfly主题-初始配置 / 美化 / 优化 / 标签外挂
+ * 并借鉴 haiyong.site 的社交图标大圆按钮 UI
+ * ====================================================== */
+
+/* ---------- 0. 首页社交图标：圆形按钮 + 白色图标（参考截图样式） ---------- */
+/* 精修：首屏只保留大标题，社交图标统一放在侧边栏作者卡，避免首屏拥挤 */
+#page-header #site_social_icons {
+  display: none !important;
+}
+#page-header #site_social_icons .social-icon {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 50% !important;
+  margin: 0 !important;
+  color: #fff !important;
+  font-size: 22px !important;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.4);
+  transition: transform 0.25s ease, background 0.25s ease;
+  text-decoration: none;
+}
+#page-header #site_social_icons .social-icon:hover {
+  transform: translateY(-4px);
+}
+#page-header #site_social_icons .social-icon i,
+#page-header #site_social_icons .social-icon::before {
+  color: #fff !important;
+  font-size: 22px !important;
+}
+/* GitHub 黑底白猫 */
+#page-header #site_social_icons .social-icon:nth-child(1) {
+  background: rgba(0,0,0,0.55) !important;
+  backdrop-filter: blur(4px);
+}
+/* Email / QQ / 知乎：透明背景，白色图标 */
+#page-header #site_social_icons .social-icon:nth-child(2),
+#page-header #site_social_icons .social-icon:nth-child(3),
+#page-header #site_social_icons .social-icon:nth-child(4) {
+  background: transparent !important;
+}
+
+/* 微信号胶囊按钮（精修：首屏隐藏，微信信息保留在侧边栏公告卡） */
+#wechat-capsule {
+  display: none !important;
+}
+#wechat-capsule:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+#wechat-capsule i {
+  font-size: 18px;
+}
+
+/* ---------- 1. 滚动条（优化篇 §1.2） ---------- */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background-color: rgba(126, 150, 184, 0.18);
+  border-radius: 2em;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #7e96b8;
+  background-image: -webkit-linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.35) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.35) 50%,
+    rgba(255, 255, 255, 0.35) 75%,
+    transparent 75%,
+    transparent
+  );
+  border-radius: 2em;
+}
+::-webkit-scrollbar-corner {
+  background-color: transparent;
+}
+::-moz-selection {
+  color: #fff;
+  background-color: #7e96b8;
+}
+::selection {
+  color: #fff;
+  background-color: #7e96b8;
+}
+
+/* ---------- 2. 全局背景（鲸鱼星空全屏固定背景） ---------- */
+#web_bg {
+  background: url(https://s2.loli.net/2022/04/11/oDZPBRxHn59rbYO.jpg) no-repeat center center fixed !important;
+  background-size: cover !important;
+}
+[data-theme="dark"] #web_bg {
+  background: url(https://s2.loli.net/2022/04/11/oDZPBRxHn59rbYO.jpg) no-repeat center center fixed !important;
+  background-size: cover !important;
+}
+
+/* ---------- 3. 卡片 / 文章页背景（精修：蓝灰、接近不透明，保证在星空背景上清晰可读） ---------- */
+.layout_post > #post,
+#aside-content .card-widget,
+#recent-posts > .recent-post-item,
+.layout_page > div:first-child:not(.recent-posts),
+.layout_post > #page,
+.read-mode .layout_post > #post {
+  background: rgba(236, 240, 246, 0.86);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+[data-theme="dark"] .layout_post > #post,
+[data-theme="dark"] #aside-content .card-widget,
+[data-theme="dark"] #recent-posts > .recent-post-item,
+[data-theme="dark"] .layout_page > div:first-child:not(.recent-posts),
+[data-theme="dark"] .layout_post > #page {
+  background: rgba(18, 24, 36, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ---------- 4. 头像圆形 / 公告居中 ---------- */
+#aside-content .card-info .avatar-img img,
+#sidebar #sidebar-menus .avatar-img img {
+  border-radius: 50%;
+}
+.card-widget.card-announcement {
+  margin: 0;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+/* ---------- 5. 站点标题字体 ---------- */
+#site-title {
+  /* 原写法 'Titillium Web', sans-serif 没有中文回退，
+   * 中文标题会落到浏览器默认衬线体，与全站字体断裂。 */
+  font-family: var(--font-ui);
+  letter-spacing: 2px;
+}
+
+/* ---------- 6. 首页文章卡片 hover 上浮 ---------- */
+#recent-posts > .recent-post-item {
+  transition: all 0.3s ease;
+}
+#recent-posts > .recent-post-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+/* ---------- 7. 页脚装饰 ------------- */
+/* 注意：主题 Butterfly 5.x 页脚【不存在】#footer-wrap，也不存在 #heartbeat，
+ * 原 `#footer #footer-wrap #heartbeat` 选择器与配套的 @keyframes heartbeat
+ * 永远匹配不到 / 永不生效，属于死代码，已一并移除。
+ * 页脚的实际装饰统一由 .footer-butterfly（见下方小节）承担。 */
+
+/* ---------- 8. 文章内联颜色块（美化篇 §12.1） ---------- */
+span#inline-yellow,
+span#inline-green,
+span#inline-blue,
+span#inline-purple {
+  display: inline;
+  padding: .2em .6em .3em;
+  font-size: 80%;
+  font-weight: bold;
+  line-height: 1;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: .3em;
+}
+span#inline-yellow { background-color: #f0ad4e; }
+span#inline-green  { background-color: #5cb85c; }
+span#inline-blue   { background-color: #2780e3; }
+span#inline-purple { background-color: #9954bb; }
+
+/* ---------- 9. 下载按钮样式（美化篇 §12.2） ---------- */
+a#download {
+  display: inline-block;
+  padding: 0 10px;
+  color: var(--font-color);
+  background: transparent;
+  border: 2px solid var(--font-color);
+  border-radius: 2px;
+  transition: all .5s ease;
+  font-weight: bold;
+  text-decoration: none;
+}
+a#download:hover {
+  background: var(--font-color);
+  color: #fff;
+}
+
+/* ---------- 10. 启动加载动画（精修：蓝灰） ---------- */
+#loading-box .loading-img,
+#loading-box .loader {
+  border-top-color: #7e96b8;
+}
+
+/* ---------- 11. 导航栏标题栏在深色模式下的过渡 ---------- */
+#nav {
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* ---------- 12. 右下角工具栏按钮 hover 动效 ---------- */
+#rightside button,
+#rightside a {
+  transition: all 0.3s ease;
+}
+#rightside button:hover,
+#rightside a:hover {
+  transform: scale(1.1);
+}
+
+/* ---------- 13. 强制右下角工具栏始终可见 ---------- */
+#rightside {
+  opacity: 1 !important;
+  transform: translateZ(0) !important;
+}
+#rightside #rightside-config-hide,
+#rightside #rightside-config-show {
+  display: flex !important;
+}
+
+/* ---------- 14. live2d 小猫与音乐播放器层级 ---------- */
+/* 层级刻度定义见 custom_nav.css :root（--z-*）；此处带兜底值 */
+#live2dcanvas,
+#L2Dwidget {
+  z-index: var(--z-live2d, 70) !important;
+}
+.aplayer.aplayer-fixed.aplayer-narrow .aplayer-body {
+  z-index: var(--z-dropdown, 50) !important;
+}
+
+/* ======================================================
+ * fixed card widget（参考 akilar.top/posts/451ac5f8/）
+ * 手机端左侧边缘悬浮按钮，点击居中弹出侧栏卡片
+ * ====================================================== */
+
+/* 弹出卡片：垂直居中固定定位 */
+.fixed-card-widget:not(#card-toc) {
+  visibility: visible !important;
+  display: block !important;
+  position: fixed !important;
+  bottom: 0;
+  left: 0;
+  top: 0;
+  right: 0;
+  margin: auto;
+  max-width: 300px;
+  max-height: 500px;
+  width: auto;
+  height: auto;
+  overflow-y: scroll;
+  z-index: var(--z-card-float, 40);
+  animation: rotateX 0.5s ease;
+  animation-fill-mode: forwards;
+}
+.fixed-card-widget:not(#card-toc)::-webkit-scrollbar {
+  width: 0;
+}
+
+/* 标签云卡片适配 */
+.card-tags.fixed-card-widget .card-tag-cloud {
+  max-height: 460px;
+  overflow: scroll;
+}
+.card-tags.fixed-card-widget .card-tag-cloud::-webkit-scrollbar {
+  display: none;
+}
+
+/* 手机端才显示悬浮按钮组 */
+div#fixedcard-dashboard {
+  display: none;
+}
+@media screen and (max-width: 768px) {
+  div#fixedcard-dashboard {
+    display: flex !important;
+    position: fixed;
+    top: 150px;
+    left: 0;
+    width: fit-content;
+    height: 40px;
+    opacity: 0.3;
+    transition: all 0.5s;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 5px 10px;
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+    z-index: var(--z-card-float, 40);
+    flex-direction: column;
+    height: auto;
+    width: 40px;
+    align-items: center;
+  }
+  div#fixedcard-dashboard:hover {
+    opacity: 1;
+  }
+  div#fixedcard-dashboard button {
+    width: 30px !important;
+    height: 30px !important;
+    margin: 4px 0;
+    display: flex !important;
+    opacity: 1 !important;
+    pointer-events: all !important;
+    color: #757273;
+    background: transparent;
+    border: none;
+    align-items: center;
+    justify-content: center;
+  }
+  [data-theme="dark"] div#fixedcard-dashboard {
+    background: rgba(55, 55, 55, 0.9);
+  }
+  [data-theme="dark"] div#fixedcard-dashboard button {
+    color: #bcbdbd;
+  }
+}
+
+/* 卡片开启动画 */
+@keyframes rotateX {
+  from { transform: rotateX(90deg); }
+  to { transform: rotateX(0deg); }
+}
+
+/* 遮罩层（fixed-card-widget 弹出时的全屏蒙层） */
+div#quit-box {
+  position: fixed;
+  display: block;
+  left: 0;
+  top: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: var(--z-overlay, 100);
+  background: rgba(25, 25, 25, 0.3);
+}
+[data-theme="dark"] div#quit-box {
+  background: rgba(147, 146, 128, 0.3);
+}
+
+/* ======================================================
+ * 相关推荐版块卡片化（参考 akilar.top/posts/194e1534/）
+ * 把 .relatedPosts 从突兀的全宽块改成圆角卡片
+ * ====================================================== */
+.relatedPosts {
+  margin: 2rem 0 !important;
+  padding: 1.5rem 1.2rem !important;
+  background: var(--card-bg) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--card-box-shadow) !important;
+  transition: box-shadow 0.3s ease;
+}
+.relatedPosts:hover {
+  box-shadow: var(--card-hover-box-shadow) !important;
+}
+.relatedPosts > .headline {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--light-grey);
+  font-size: 1.1em;
+  font-weight: bold;
+}
+.relatedPosts > .headline i {
+  margin-right: 8px;
+  color: var(--btn-color);
+}
+.relatedPosts .relatedPosts-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+.relatedPosts .relatedPosts-list > div {
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  background: var(--content-bg);
+}
+.relatedPosts .relatedPosts-list > div:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+}
+.relatedPosts .relatedPosts-list .cover {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  display: block;
+}
+.relatedPosts .relatedPosts-list .title {
+  display: block;
+  padding: 8px 10px;
+  font-size: 0.9em;
+  line-height: 1.4;
+  color: var(--font-color);
+}
+.relatedPosts .relatedPosts-list .date {
+  display: block;
+  padding: 0 10px 8px;
+  font-size: 0.75em;
+  color: var(--second-font-color);
+}
+
+/* ---------- 13. 右侧功能按钮默认展开（不再藏进齿轮） ---------- */
+#rightside #rightside-config-hide {
+  display: flex !important;
+  flex-direction: column;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translateX(0) !important;
+  pointer-events: auto !important;
+}
+
+/* ---------- 14. 首页 banner 大图上方导航栏透明覆盖 ---------- */
+#page-header.full_page {
+  background-size: cover;
+  background-position: center;
+}
+[data-theme="dark"] #page-header #site-info,
+[data-theme="dark"] #page-header #site-title,
+[data-theme="dark"] #page-header #site-subtitle {
+  color: #fff;
+}
+
+/* ======================================================
+ * 侧栏卡片标题栏：改用参考站风格（圆角卡片 + 标题下分界线）
+ * 详见 custom_nav.css 的门卡样式区；此处不再使用 SAO 梯形标题
+ * ====================================================== */
+
+/* ======================================================
+ * 左上角标题悬停显示描述（参考 akilar.top/posts/23fdf850/）
+ * ====================================================== */
+a#site-name:hover:before {
+  position: fixed;
+  width: fit-content;
+  margin: auto;
+  left: 0;
+  right: 0;
+  top: 12%;
+  border-radius: 10px;
+  text-align: center;
+  z-index: var(--z-dropdown, 50);
+  content: attr(data-title);
+  font-size: 18px;
+  color: #fff;
+  padding: 12px 20px;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  max-width: 600px;
+}
+@media screen and (max-width: 768px) {
+  a#site-name {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: middle;
+  }
+}
+
+/* ======================================================
+ * Ironheart 钢铁之心加载动画（参考 akilar.top/posts/3d221bf2/）
+ * ====================================================== */
+#ironheart-loader {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-loader, 100);
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+#ironheart-loader.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+.ironheart-box {
+  position: relative;
+  width: 120px;
+  height: 120px;
+}
+.ironheart-ring {
+  position: absolute;
+  inset: 0;
+  border: 3px solid transparent;
+  border-radius: 50%;
+}
+.ironheart-ring.r1 {
+  border-top-color: #49b1f5;
+  border-right-color: #49b1f5;
+  animation: ironheart-spin 1.2s linear infinite;
+}
+.ironheart-ring.r2 {
+  inset: 15px;
+  border-bottom-color: #ff7242;
+  border-left-color: #ff7242;
+  animation: ironheart-spin-rev 1.8s linear infinite;
+}
+.ironheart-core {
+  position: absolute;
+  inset: 40px;
+  background: linear-gradient(135deg, #49b1f5, #ff7242);
+  border-radius: 50%;
+  animation: ironheart-pulse 1.5s ease-in-out infinite;
+}
+.ironheart-text {
+  position: absolute;
+  bottom: -40px;
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  color: #999;
+  letter-spacing: 2px;
+}
+[data-theme="dark"] #ironheart-loader {
+  background: #1a1a2e;
+}
+@keyframes ironheart-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes ironheart-spin-rev {
+  from { transform: rotate(360deg); }
+  to { transform: rotate(0deg); }
+}
+@keyframes ironheart-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.8); opacity: 0.7; }
+}
+
+/* ======================================================
+ * Banner 鼠标视差效果（参考 akilar.top/posts/780a2cea/）
+ * ====================================================== */
+#page-header {
+  transition: background-position 0.3s ease-out;
+}
+@media (max-width: 768px) {
+  #page-header { transition: none !important; }
+}
+
+/* ======================================================
+ * 顶栏导航按钮样式已迁移至 custom_nav.css（圆角半透明胶囊）
+ * 此处移除旧的菱形切角规则，避免与原 #nav 遗留规则冲突
+ * ====================================================== */
+
+/* ======================================================
+ * 页脚振翅蝴蝶动画
+ * 完整规则已统一到下方「页脚蝴蝶」小节（使用 4 片翅膀的真实结构）。
+ * 此处不再重复定义，避免与新版 ::before/::after 分工冲突。
+ * ====================================================== */
+
+/* ======================================================
+ * 原 Butterfly #nav 已由自定义顶栏 (#menu-container) 完全替代
+ * 隐藏式顶栏（#nav-toggle-bar / #nav-bridge / hidden_nav.js）已整体移除：
+ *   - 这两处 DOM 从未被主题或自定义脚本注入，规则是死代码；
+ *   - 对应交互脚本 source/js/custom/hidden_nav.js 已删除。
+ * 顶栏结构与层级统一见 custom_nav.css。
+ * ====================================================== */
+
+/* ======================================================
+ * 首页文章轮播右侧圆点分页（复刻 superq314.github.io）
+ * 普通点：11×11 半透明灰圆；激活点：11×30 竖条
+ * ====================================================== */
+.blog-slider__pagination {
+  position: absolute !important;
+  right: 20px !important;
+  top: 100px !important;
+  width: 11px !important;
+}
+.blog-slider__pagination .swiper-pagination-bullet {
+  width: 11px !important;
+  height: 11px !important;
+  border-radius: 10px !important;
+  margin: 8px 0 !important;
+  background: rgba(133, 133, 133, 0.35) !important;
+  opacity: 1 !important;
+  transition: height 0.3s ease, background 0.3s ease !important;
+}
+.blog-slider__pagination .swiper-pagination-bullet-active {
+  height: 30px !important;
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+[data-theme="dark"] .blog-slider__pagination .swiper-pagination-bullet-active {
+  background: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* ======================================================
+ * 全局固定背景：鲸鱼星空图始终铺满整个页面（参考 superq314.github.io）
+ * ====================================================== */
+body {
+  background: url('https://s2.loli.net/2022/04/11/oDZPBRxHn59rbYO.jpg') no-repeat center center fixed !important;
+  background-size: cover !important;
+}
+#body-wrap,
+#footer,
+#page-header.full_page,
+.layout_page,
+#article-container,
+#aside-content .card-widget {
+  background: transparent !important;
+}
+#aside-content .card-widget {
+  background: rgba(18, 24, 36, 0.82) !important;
+  backdrop-filter: blur(12px);
+}
+[data-theme]:not([data-theme="dark"]) #aside-content .card-widget {
+  background: rgba(236, 240, 246, 0.88) !important;
+}
+
+/* 公告栏样式 */
+#aside-content .card-announcement {
+  /* 原为 16px，与其它侧栏卡（--r-card=8px）不一致；统一到刻度 */
+  border-radius: var(--r-card) !important;
+}
+#aside-content .card-announcement::before,
+#aside-content .card-announcement .card-background::before {
+  display: none !important;
+}
+#aside-content .card-announcement .item-headline {
+  font-size: 18px;
+  font-weight: bold;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+#aside-content .card-announcement .item-headline i {
+  color: #ff4757;
+}
+#aside-content .card-announcement .announcement_content {
+  line-height: 2;
+  text-align: center;
+  /* 配置里用 YAML 的 |- （strip 模式）书写，末尾不会带换行符，
+     因此这里可以放心用 pre-line：只有行间换行折行，末尾不留空行。 */
+  white-space: pre-line;
+}
+
+/* ------------------------------------------------------
+ * 公告卡长句横向滚动（无缝循环 marquee）
+ * 卡片宽度不变，仅在 .biko-marquee 这一行内部横向滚动。
+ * 轨道内容由配置复制两份，位移 -50% 即一个完整周期，首尾无缝衔接。
+ * ------------------------------------------------------ */
+#aside-content .card-announcement .announcement_content .biko-marquee {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  /* 两侧渐隐遮罩，滚出/滚入更自然（不支持 mask 的浏览器自动降级为硬边） */
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
+}
+#aside-content .card-announcement .announcement_content .biko-marquee__track {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  width: max-content;
+  animation: biko-marquee-scroll 14s linear infinite;
+}
+#aside-content .card-announcement .announcement_content .biko-marquee__item {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  /* 复制份与正文之间留出可见的循环间隔 */
+  padding-right: 56px;
+  /* 流动彩色文字：原先写在 HTML 内联样式里，两处重复且难维护，现统一到此处 */
+  background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3, #ff6b6b);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent; /* 旧浏览器 background-clip:text 不支持时退化为透明，配合下方兜底 */
+  font-weight: bold;
+  animation: shine 3s linear infinite;
+}
+/* 不支持 background-clip:text 的浏览器：去掉透明填充，避免文字不可见 */
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  #aside-content .card-announcement .announcement_content .biko-marquee__item {
+    background: none;
+    -webkit-text-fill-color: currentColor;
+    color: #ff6b6b;
+    animation: none;
+  }
+}
+/* 鼠标悬停/键盘聚焦时暂停，便于阅读；触屏端不受影响 */
+#aside-content .card-announcement .announcement_content .biko-marquee:hover .biko-marquee__track,
+#aside-content .card-announcement .announcement_content .biko-marquee:focus-within .biko-marquee__track {
+  animation-play-state: paused;
+}
+@keyframes biko-marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+/* 尊重系统「减少动态效果」偏好：关闭滚动，改为可手动横向滑动 */
+@media (prefers-reduced-motion: reduce) {
+  #aside-content .card-announcement .announcement_content .biko-marquee {
+    overflow-x: auto;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+  #aside-content .card-announcement .announcement_content .biko-marquee__track {
+    animation: none;
+  }
+}
+/* ------------------------------------------------------
+ * 页脚蝴蝶：主题 Butterfly 5.x 页脚结构为
+ *   #footer > .footer-other > .footer-copyright > .copyright
+ * 主题本身【没有】#footer-wrap，也没有任何内置蝴蝶图标。
+ * 旧规则 `#footer-wrap .footer-butterfly { display:none }` 是死代码：
+ * 选择器永远匹配不到，因此既没隐藏掉下面这段自绘蝴蝶，也没修复它。
+ * 这里改为按真实 DOM 选择器，并把两只「半圆扇叶」重绘为真正的蝴蝶：
+ *   - 左右各两对翅膀（前后翅），大小/角度不同 → 有翅形层次
+ *   - 身体用中间竖线 + 触角，避免只看到两片蓝色半圆
+ * ------------------------------------------------------ */
+.footer-butterfly {
+  display: inline-block;
+  position: relative;
+  width: 22px;
+  height: 18px;
+  margin: 0 4px;
+  vertical-align: -3px;
+  /* 蝴蝶本体之外不拦截点击 */
+  pointer-events: none;
+}
+
+/* 身体（中间竖线） */
+.footer-butterfly::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 3px;
+  width: 2px;
+  height: 12px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: linear-gradient(180deg, #4c6b96, #2f4566);
+}
+
+/* 触角 */
+.footer-butterfly::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 10px;
+  height: 6px;
+  margin-left: -5px;
+  border-top: 1.5px solid #4c6b96;
+  border-radius: 50%;
+  border-left: 1.5px solid transparent;
+  border-right: 1.5px solid transparent;
+  box-sizing: border-box;
+}
+
+/* 四片翅膀：用两个子元素 + 各自伪元素拼出前后翅 */
+.footer-butterfly > i {
+  position: absolute;
+  top: 2px;
+  width: 10px;
+  height: 14px;
+  background: linear-gradient(135deg, #6fa9d8, #4c6b96);
+  transform-origin: right center;
+  animation: butterfly-flap-l 0.5s ease-in-out infinite alternate;
+}
+.footer-butterfly > i:nth-child(1) {
+  left: 0;
+  border-radius: 60% 40% 45% 55% / 55% 60% 40% 45%;
+}
+/* 后翅：更小、更淡、相位略错开 */
+.footer-butterfly > i:nth-child(2) {
+  left: 1px;
+  top: 8px;
+  width: 7px;
+  height: 8px;
+  opacity: 0.85;
+  border-radius: 55% 45% 50% 50% / 50% 55% 45% 50%;
+  animation-duration: 0.5s;
+  animation-delay: -0.12s;
+}
+.footer-butterfly > i:nth-child(3) {
+  right: 0;
+  left: auto;
+  transform-origin: left center;
+  background: linear-gradient(225deg, #6fa9d8, #4c6b96);
+  border-radius: 40% 60% 55% 45% / 60% 55% 45% 40%;
+  animation-name: butterfly-flap-r;
+}
+.footer-butterfly > i:nth-child(4) {
+  right: 1px;
+  left: auto;
+  top: 8px;
+  width: 7px;
+  height: 8px;
+  opacity: 0.85;
+  transform-origin: left center;
+  background: linear-gradient(225deg, #6fa9d8, #4c6b96);
+  border-radius: 45% 55% 50% 50% / 55% 50% 50% 45%;
+  animation-name: butterfly-flap-r;
+  animation-delay: -0.12s;
+}
+
+@keyframes butterfly-flap-l {
+  from { transform: rotateY(0deg) scaleX(1) rotate(-6deg); }
+  to   { transform: rotateY(58deg) scaleX(0.62) rotate(-6deg); }
+}
+@keyframes butterfly-flap-r {
+  from { transform: rotateY(0deg) scaleX(1) rotate(6deg); }
+  to   { transform: rotateY(-58deg) scaleX(0.62) rotate(6deg); }
+}
+
+/* 尊重「减少动态效果」偏好：停止振翅，保留静态蝴蝶 */
+@media (prefers-reduced-motion: reduce) {
+  .footer-butterfly > i {
+    animation: none;
+  }
+}
+
+[data-theme="dark"] .footer-butterfly > i {
+  background: linear-gradient(135deg, #7fb0e0, #5a6fa0);
+}
+[data-theme="dark"] .footer-butterfly::before {
+  background: linear-gradient(180deg, #7fb0e0, #4a5f8a);
+}
+
+/* 右下角齿轮面板：模式切换按钮图标由 nav.js 统一用 SVG（#modeicon）控制，
+   此处只做尺寸规整，不再用 ::before 注入字体图标（避免与顶栏图标不一致） */
+#rightside-config-show button[title*="dark"],
+#rightside-config-show button[title*="night"] {
+  font-size: 18px !important;
+}
+#rightside-config-show button[title*="dark"]::before,
+#rightside-config-show button[title*="night"]::before {
+  content: none !important;
+  display: none !important;
+}
+#rightside-config-show button[title*="dark"] i,
+#rightside-config-show button[title*="night"] i {
+  font-size: 16px !important;
+}
+
+@keyframes shine {
+  to { background-position: 200% center; }
+}
+
+/* ======================================================
+ * 侧栏卡片：统一为参考站（superq314.github.io）圆角卡片 + 标题下分界线
+ * 范围：公告 / 分类 / 标签 / 归档 / 网站信息（只改视觉，不动内容）
+ * 主题色交由主题变量(--card-bg)控制，深浅色自适配
+ * ====================================================== */
+#aside-content .card-announcement,
+#aside-content .card-categories,
+#aside-content .card-tags,
+#aside-content .card-archives,
+#aside-content .card-webinfo {
+  position: relative !important;
+  margin-top: 16px !important;
+  padding: 20px 24px !important;
+  border: 0 !important;
+  border-radius: var(--r-card) !important;
+  font-family: var(--font-ui) !important;
+  background: var(--card-bg) !important;
+  box-shadow: rgba(7, 17, 27, .05) 0 3px 8px 6px !important;
+  overflow: hidden;
+}
+/* 清除卡片伪元素背景 */
+#aside-content .card-announcement::before,
+#aside-content .card-categories::before,
+#aside-content .card-tags::before,
+#aside-content .card-archives::before,
+#aside-content .card-webinfo::before,
+#aside-content .card-announcement::after,
+#aside-content .card-categories::after,
+#aside-content .card-tags::after,
+#aside-content .card-archives::after,
+#aside-content .card-webinfo::after { content: none !important; display: none !important; }
+
+/* 标题：内流式 + 标题与内容之间一条分界线（清除 SAO 梯形悬浮标题） */
+#aside-content .card-announcement .item-headline,
+#aside-content .card-categories .item-headline,
+#aside-content .card-tags .item-headline,
+#aside-content .card-archives .item-headline,
+#aside-content .card-webinfo .item-headline {
+  position: static !important;
+  top: auto !important; left: auto !important;
+  width: auto !important; height: auto !important;
+  display: flex !important; align-items: center; gap: 8px;
+  margin: 0 0 12px !important;
+  padding: 0 0 8px !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-bottom: 1px solid var(--light-grey, #e3e8f7) !important;
+  font-family: inherit !important;
+  font-size: 16px !important;
+  font-weight: 700 !important;
+  color: var(--font-color) !important;
+}
+#aside-content .card-announcement .item-headline i,
+#aside-content .card-categories .item-headline i,
+#aside-content .card-tags .item-headline i,
+#aside-content .card-archives .item-headline i,
+#aside-content .card-webinfo .item-headline i { color: #7e96b8 !important; }
+[data-theme="dark"] #aside-content .card-announcement .item-headline,
+[data-theme="dark"] #aside-content .card-categories .item-headline,
+[data-theme="dark"] #aside-content .card-tags .item-headline,
+[data-theme="dark"] #aside-content .card-archives .item-headline,
+[data-theme="dark"] #aside-content .card-webinfo .item-headline {
+  color: rgba(255, 255, 255, .85) !important;
+  border-bottom-color: rgba(255, 255, 255, .12) !important;
+}
+#aside-content .card-announcement .item-headline::before,
+#aside-content .card-categories .item-headline::before,
+#aside-content .card-tags .item-headline::before,
+#aside-content .card-archives .item-headline::before,
+#aside-content .card-webinfo .item-headline::before,
+#aside-content .card-announcement .item-headline::after,
+#aside-content .card-categories .item-headline::after,
+#aside-content .card-tags .item-headline::after,
+#aside-content .card-archives .item-headline::after,
+#aside-content .card-webinfo .item-headline::after { content: none !important; display: none !important; }
+
+/* ======================================================
+ * 历史上的今天卡片（history.js 注入）
+ * 原先是行内硬编码 height:200px / 50px / -50px，现在样式在此集中定义，
+ * 单条高度与视口高度由 history.js 实测写入 --bh-item-h / --bh-view-h。
+ * ====================================================== */
+#history-card-widget #history-news {
+  height: var(--bh-view-h, 200px);
+  overflow: hidden;
+}
+#history-card-widget #history-card {
+  list-style: none;
+  margin: 0;
+  padding-inline-start: 0;
+}
+#history-card-widget #history-card > li {
+  list-style: none;
+  height: var(--bh-item-h, 50px);
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+#history-card-widget .bh-year {
+  color: #858;
+  font-style: italic;
+  font-weight: lighter;
+  font-size: 12px;
+  margin: 0;
+  padding: 0;
+}
+#history-card-widget .bh-title {
+  font-size: 13px;
+  line-height: 1.35;
+  margin: 0;
+  padding: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+[data-theme="dark"] #history-card-widget .bh-year { color: #b9a7c4; }
+[data-theme="dark"] #history-card-widget .bh-title { color: rgba(255, 255, 255, .82); }
+
+/* ======================================================
+ * 侧栏电子钟卡片（_config.butterfly.yml: electric_clock → /clock/*）
+ *
+ * 结构（由主题插件注入，勿改）：
+ *   .card-widget.card-clock
+ *     └ .card-glass > .card-background      ← 上游自带的内层凹槽面板
+ *         └ .card-content > #hexo_electric_clock
+ *             └ .clock-row × 3（日期/天气/湿度、时间、IP/地点/AM-PM）
+ *
+ * 原实现（上游 clock.css / clock.min.css）的三个硬伤：
+ *   1) 双层内边距叠加：.card-background 自带 margin:15px、#hexo_electric_clock
+ *      又自带 padding:20px，外层卡片还有 padding:20px 24px。
+ *      实测内层面板宽仅 211px，而 clock-row 内容实测 241px → 右侧文字被裁掉。
+ *   2) .card-background 写死 height:153px，与外层卡片高度无关，
+ *      实测卡片 223px、面板 153px，底部空出 35px 死区，观感上下不匀。
+ *   3) .clock-row 指定 font-family:UnidreamLED，该字体来自
+ *      unpkg.zhimg.com（已失效）→ 回退到系统字体，全站字体断裂；
+ *      且 line-height:28px 载不住 38px 的时间数字。
+ *
+ * 因此这里做两件事：
+ *   - 拆掉上游的凹槽面板与双层内边距，统一到全站卡片刻度
+ *     （--r-card / --card-bg / --font-ui / --box-shadow），深浅色自适配；
+ *   - 把「日期+天气+湿度」「时间」「IP+地点+AM/PM」排成三段式，
+ *     用 grid 等分列宽，从根上消除内容溢出。
+ * 只覆盖视觉，不动 clock.js 的取数与每秒刷新逻辑。
+ * ====================================================== */
+
+/* 让卡片本体与外层 #aside-content .card-widget 的统一皮肤保持一致 */
+#aside-content .card-clock {
+  padding: 18px 20px !important;
+  border-radius: var(--r-card) !important;
+  background: var(--card-bg) !important;
+  overflow: hidden;
+}
+
+/* 上游内层凹槽面板：去掉描边/阴影/固定高度，仅留一点点内衬留白 */
+#aside-content .card-clock .card-glass,
+#aside-content .card-clock .card-background {
+  height: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+#aside-content .card-clock .card-content {
+  padding: 0 !important;
+  background: transparent !important;
+}
+
+/* 容器：清掉上游 20px 内边距（已由卡片本体统一控制），并限定字体 */
+#aside-content .card-clock #hexo_electric_clock {
+  padding: 0 !important;
+  font-family: var(--font-ui) !important;
+}
+
+/* 加载动画：居中、限宽，避免 100% 宽把卡片撑变形 */
+#aside-content .card-clock #card-clock-loading {
+  display: block;
+  width: auto !important;
+  max-width: 100%;
+  height: 96px !important;
+  margin: 12px auto;
+  border-radius: var(--r-card);
+}
+
+/* 三行布局：日期行 / 时间行 / 地点行，行间留白，不再用 nowrap 挤压 */
+#aside-content .card-clock .clock-row {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-family: var(--font-ui) !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  color: var(--font-color) !important;
+}
+#aside-content .card-clock .clock-row + .clock-row {
+  margin-top: 6px !important;
+}
+
+/* 上/下信息行的小字：次级色，避免和大号时间抢视线 */
+#aside-content .card-clock .clock-row:first-child,
+#aside-content .card-clock .clock-row:last-child {
+  font-size: 12px !important;
+  color: var(--second-font-color, #67748c) !important;
+  letter-spacing: .2px;
+}
+
+/* 三段式列宽：左右两列各占一份，中间一列略宽以便容纳天气文案 */
+#aside-content .card-clock .card-clock-clockdate,
+#aside-content .card-clock .card-clock-ip {
+  flex: 1 1 0 !important;
+  min-width: 0;
+  text-align: left !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#aside-content .card-clock .card-clock-weather,
+#aside-content .card-clock .card-clock-location {
+  flex: 1 1 0 !important;
+  min-width: 0;
+  text-align: center !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#aside-content .card-clock .card-clock-humidity,
+#aside-content .card-clock .card-clock-dackorlight {
+  flex: 0 0 auto !important;
+  min-width: 0;
+  text-align: right !important;
+  white-space: nowrap;
+}
+
+/* 时间行：全站最高优先级，独占一行居中；等宽数字避免每秒跳动 */
+#aside-content .card-clock .card-clock-time {
+  flex: 1 1 auto !important;
+  text-align: center !important;
+  font-family: var(--font-ui) !important;
+  font-size: 34px !important;
+  font-weight: 300 !important;
+  line-height: 1.15 !important;
+  letter-spacing: 2px;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  color: var(--font-color) !important;
+  margin: 4px 0 !important;
+  /* 上游 UnidreamLED 已失效，此处禁用其字体回退链，防止字形来回跳 */
+  font-synthesis: none;
+}
+
+/* 天气图标与文字：图标固定宽度，保证文案基线对齐不抖 */
+#aside-content .card-clock .card-clock-weather i {
+  margin-right: 3px;
+  color: #7e96b8;
+}
+
+/* 湿度：上游是 emoji 💧，彩色字形与低饱和界面冲突，降饱和处理 */
+#aside-content .card-clock .card-clock-humidity {
+  filter: grayscale(.15);
+  opacity: .9;
+}
+
+/* 地点行左侧的 IP：属于诊断信息，弱化到最低一档 */
+#aside-content .card-clock .card-clock-ip {
+  font-size: 11px !important;
+  opacity: .55;
+  letter-spacing: 0;
+}
+
+/* 窄屏（手机端悬浮卡）进一步收紧字号，防止数字顶破卡片 */
+@media (max-width: 768px) {
+  #aside-content .card-clock .card-clock-time {
+    font-size: 30px !important;
+    letter-spacing: 1px;
+  }
+}
+
+/* 深色模式：上游写死的 #212121 已去除，这里只把次级文字提亮一档 */
+[data-theme="dark"] #aside-content .card-clock .clock-row:first-child,
+[data-theme="dark"] #aside-content .card-clock .clock-row:last-child {
+  color: rgba(255, 255, 255, .55) !important;
+}
+
+/* ======================================================
+ * 自定义独立页（/music/ 等）的吸顶导航基线
+ * 这些页面不走 Butterfly 布局，需自行避开刘海圆角与底部横条
+ * ====================================================== */
+.topbar-mp {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 54px;
+  padding: 0 max(14px, env(safe-area-inset-left, 0px)) 0 max(14px, env(safe-area-inset-right, 0px));
+  background: color-mix(in srgb, var(--card-bg, #ffffff) 82%, transparent);
+  -webkit-backdrop-filter: saturate(180%) blur(14px);
+  backdrop-filter: saturate(180%) blur(14px);
+  border-bottom: 1px solid rgba(126, 150, 184, .2);
+}
+.topback-mp {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: var(--card-meta, #6b7888);
+  text-decoration: none;
+  font-size: .86rem;
+}
+.topback-mp:hover {
+  background: rgba(126, 150, 184, .14);
+  color: var(--card-meta, #6b7888);
+}
+.brand-mp {
+  margin-left: auto;
+  color: #7e96b8;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+/* 视觉隐藏但保留给读屏 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+@media (max-width: 640px) {
+  .topbar-mp { height: 50px; }
+}
