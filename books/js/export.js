@@ -1,8 +1,9 @@
 /* ============================================================
- *  /books/ 文献阅读工作台 —— 导出层
+ *  /books/ 文献阅读工作台 —— 导出 / 导入层
  *   1) 导出 Markdown（Hexo 可直接用的 front-matter，分类固定"知识进阶之路"）
  *   2) 导出长图（原生 Canvas 绘制，不依赖 html2canvas）
  *   3) 导出 JSON 备份（便于换设备迁移）
+ *   4) 解析 JSON 备份（把导出的文件在另一台设备恢复，见 parseBackup）
  * ============================================================ */
 (() => {
   'use strict'
@@ -401,6 +402,69 @@
     notes
   }, null, 2)
 
+  /* ---------------- 备份解析（导入用） ----------------
+   * 与上面两个导出函数互为逆运算，保持「同一处定义格式」。
+   * 兼容两种历史格式：
+   *   v1 = toBackup(...)          → { doc,  annotations, notes }  单篇
+   *   v2 = toLibraryBackup(...)   → { docs, annotations, notes }  整库
+   * 只做结构与类型校验，不碰 IndexedDB —— 落库交给 store。
+   */
+
+  /** 导入时接受的最高版本；遇到更高版本宁可报错，也不要猜字段含义 */
+  const BACKUP_MAX_VERSION = 2
+
+  /** 统一成 { docs, annotations, notes }，并剔除没有 id 的脏记录 */
+  const parseBackup = text => {
+    let raw
+    try {
+      raw = JSON.parse(String(text == null ? '' : text))
+    } catch (e) {
+      throw new Error('不是有效的 JSON 文件')
+    }
+    if (!raw || typeof raw !== 'object') throw new Error('备份内容为空或格式不对')
+    if (raw.app && raw.app !== 'biko-books') {
+      throw new Error('这不是书斋的备份文件（app 字段不匹配）')
+    }
+
+    const version = Number(raw.version) || 1
+    if (version > BACKUP_MAX_VERSION) {
+      throw new Error('备份版本 ' + version + ' 高于当前支持的最高版本 ' + BACKUP_MAX_VERSION +
+        '，请先更新页面再导入')
+    }
+
+    // v1 是单篇（doc），v2 是整库（docs）；doc 与 docs 同时存在时以 docs 为准
+    const docsIn = Array.isArray(raw.docs)
+      ? raw.docs
+      : (raw.doc && typeof raw.doc === 'object' ? [raw.doc] : [])
+    const annsIn = Array.isArray(raw.annotations) ? raw.annotations : []
+    const notesIn = Array.isArray(raw.notes) ? raw.notes : []
+
+    const keep = row => row && typeof row === 'object' && row.id
+
+    const docs = docsIn.filter(keep).map(d => {
+      // 备份里本来就没有 PDF 本体（导出时 blob 置空），这里显式剔除避免脏字段
+      const { blob, ...rest } = d
+      return rest
+    })
+    const docIds = new Set(docs.map(d => d.id))
+    // 只有备份里确实带了文献时，才按 docId 过滤孤儿记录。
+    // 否则「只导笔记/标注」的备份会被直接清空。
+    const hasDocs = docIds.size > 0
+    const linkOk = row => !hasDocs || !row.docId || docIds.has(row.docId)
+    const annotations = annsIn.filter(a => keep(a) && linkOk(a))
+    const notes = notesIn.filter(n => keep(n) && linkOk(n))
+
+    const skipped = (docsIn.length - docs.length) +
+      (annsIn.length - annotations.length) +
+      (notesIn.length - notes.length)
+
+    if (!docs.length && !annotations.length && !notes.length) {
+      throw new Error('备份里没有可导入的记录')
+    }
+
+    return { version, exportedAt: raw.exportedAt || '', docs, annotations, notes, skipped }
+  }
+
   window.BOOKS_EXPORT = Object.freeze({
     CATEGORY,
     safeName,
@@ -412,6 +476,8 @@
     toBibtexBundle,
     toRisBundle,
     toLibraryBackup,
+    parseBackup,
+    BACKUP_MAX_VERSION,
     download,
     stamp
   })

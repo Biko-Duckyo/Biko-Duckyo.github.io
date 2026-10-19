@@ -444,6 +444,11 @@
       <button id="bk-export-json" class="bk-btn bk-btn-sm" type="button">
         <i class="fas fa-download"></i>导出当前 JSON
       </button>
+      <button id="bk-import-json" class="bk-btn bk-btn-sm" type="button"
+              title="从备份 JSON 恢复标注与笔记（不含 PDF 本体）">
+        <i class="fas fa-upload"></i>导入备份
+      </button>
+      <input id="bk-import-file" type="file" accept="application/json,.json" hidden>
     </footer>
   </div>
 </div>
@@ -483,7 +488,9 @@
     </ol>
     <p class="bk-helpbox-note">
       所有数据（PDF 副本、标注、笔记、API Key）都存在你浏览器的 IndexedDB 里，
-      不经过任何服务器。换设备请用「导出当前 JSON」迁移。
+      不经过任何服务器。换设备时用「导出当前 JSON」带走文献条目 / 标注 / 笔记，
+      在新设备上点「导入备份」恢复；备份<b>不包含 PDF 本体与 API Key</b>，
+      原文需在新设备重新导入一次。
     </p>
   </div>
 </div>

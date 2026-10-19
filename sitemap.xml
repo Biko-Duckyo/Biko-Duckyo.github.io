@@ -4,7 +4,7 @@
   <url>
     <loc>https://biko-duckyo.github.io/books/index.html</loc>
     
-    <lastmod>2026-10-18</lastmod>
+    <lastmod>2026-10-19</lastmod>
     
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
@@ -182,7 +182,7 @@
   </url>
   
   <url>
-    <loc>https://biko-duckyo.github.io/2026/10/09/%E6%95%99%E7%A8%8B-%E7%94%B5%E5%AD%90%E6%97%B6%E9%92%9F%E6%8F%92%E4%BB%B6/</loc>
+    <loc>https://biko-duckyo.github.io/2026/10/09/%E6%95%99%E7%A8%8B-%E9%9F%B3%E4%B9%90%E5%8F%AF%E8%A7%86%E5%8C%96APlayer/</loc>
     
     <lastmod>2026-10-11</lastmod>
     
@@ -191,7 +191,7 @@
   </url>
   
   <url>
-    <loc>https://biko-duckyo.github.io/2026/10/09/%E6%95%99%E7%A8%8B-%E9%9F%B3%E4%B9%90%E5%8F%AF%E8%A7%86%E5%8C%96APlayer/</loc>
+    <loc>https://biko-duckyo.github.io/2026/10/09/%E6%95%99%E7%A8%8B-%E7%94%B5%E5%AD%90%E6%97%B6%E9%92%9F%E6%8F%92%E4%BB%B6/</loc>
     
     <lastmod>2026-10-11</lastmod>
     
@@ -308,24 +308,6 @@
   </url>
   
   <url>
-    <loc>https://biko-duckyo.github.io/footer-beautify/html.html</loc>
-    
-    <lastmod>2026-10-03</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://biko-duckyo.github.io/footer-beautify/runtime.css</loc>
-    
-    <lastmod>2026-10-03</lastmod>
-    
-    <changefreq>monthly</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://biko-duckyo.github.io/about/index.html</loc>
     
     <lastmod>2026-10-03</lastmod>
@@ -434,6 +416,34 @@
   </url>
   
   <url>
+    <loc>https://biko-duckyo.github.io/tags/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E/</loc>
+    <lastmod>2026-10-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://biko-duckyo.github.io/tags/%E5%91%BD%E4%BB%A4%E9%80%9F%E6%9F%A5/</loc>
+    <lastmod>2026-10-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://biko-duckyo.github.io/tags/%E5%B7%A5%E7%A8%8B%E5%8C%96/</loc>
+    <lastmod>2026-10-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
+    <loc>https://biko-duckyo.github.io/tags/Cloudflare/</loc>
+    <lastmod>2026-10-19</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  
+  <url>
     <loc>https://biko-duckyo.github.io/tags/VPN/</loc>
     <lastmod>2026-10-19</lastmod>
     <changefreq>weekly</changefreq>
@@ -469,13 +479,6 @@
   </url>
   
   <url>
-    <loc>https://biko-duckyo.github.io/tags/%E5%B7%A5%E7%A8%8B%E5%8C%96/</loc>
-    <lastmod>2026-10-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
     <loc>https://biko-duckyo.github.io/tags/%E8%87%AA%E5%8A%A8%E5%8C%96/</loc>
     <lastmod>2026-10-19</lastmod>
     <changefreq>weekly</changefreq>
@@ -491,27 +494,6 @@
   
   <url>
     <loc>https://biko-duckyo.github.io/tags/SEO/</loc>
-    <lastmod>2026-10-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://biko-duckyo.github.io/tags/%E4%BD%BF%E7%94%A8%E8%AF%B4%E6%98%8E/</loc>
-    <lastmod>2026-10-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://biko-duckyo.github.io/tags/%E5%91%BD%E4%BB%A4%E9%80%9F%E6%9F%A5/</loc>
-    <lastmod>2026-10-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.2</priority>
-  </url>
-  
-  <url>
-    <loc>https://biko-duckyo.github.io/tags/Cloudflare/</loc>
     <lastmod>2026-10-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.2</priority>

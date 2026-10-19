@@ -216,7 +216,7 @@
    *
    * 说明：
    *  - 原版硬编码 href='/random.html'，本站没有该页面
-   *  - 本站 search.xml 是全站加密的（scripts/noimpty-lockdown.js），不能直接读
+   *  - 本站 search.xml 曾是全站加密的（旧 scripts/noimpty-lockdown.js，已移除），不能直接读
    *  - 因此这里优先读一个不加密的轻量清单 /json/random-posts.json：
    *      { "posts": ["/2026/10/14/xxx/", "/2026/10/13/yyy/"] }
    *    该文件可用一个很小的 Hexo 生成器在构建期产出

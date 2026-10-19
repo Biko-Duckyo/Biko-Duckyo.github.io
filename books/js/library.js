@@ -633,7 +633,95 @@
     if (yearSel) yearSel.addEventListener('change', e => { state.year = e.target.value; renderList() })
     const sortSel = $('bk-lib-sort')
     if (sortSel) sortSel.addEventListener('change', e => { state.sort = e.target.value; renderList() })
+
+    const importBtn = $('bk-import-json')
+    const importFile = $('bk-import-file')
+    if (importBtn && importFile) {
+      importBtn.addEventListener('click', () => importFile.click())
+      importFile.addEventListener('change', async e => {
+        const file = e.target.files && e.target.files[0]
+        // 先清空选择：否则同一个文件连续导入第二次不会触发 change
+        e.target.value = ''
+        if (!file) return
+        await importBackup(file)
+      })
+    }
   }
+
+  /* ---------------- 操作：导入备份 ----------------
+   * 与「导出当前 JSON」互为逆操作，解决换设备只能带走、带不回来的问题。
+   * 幂等：沿用备份里的 id，重复导入同一份不会再长出一套记录。
+   * 不含 PDF 本体 —— 文献条目会恢复（进度/标注/笔记都在），但原文需重新打开一次。
+   */
+  /** 读取文件文本：优先用较新的 Blob.text()，旧浏览器退回 FileReader */
+  const readFileText = file => {
+    if (file && typeof file.text === 'function') return file.text()
+    return new Promise((resolve, reject) => {
+      const reader = new window.FileReader()
+      reader.onload = () => resolve(String(reader.result || ''))
+      reader.onerror = () => reject(new Error('读取文件失败'))
+      reader.readAsText(file)
+    })
+  }
+
+  const importBackup = async file => {
+    const MAX_BYTES = 32 * 1024 * 1024
+    if (file.size > MAX_BYTES) {
+      toast('备份文件超过 32 MB，暂不支持', 'error')
+      return
+    }
+
+    let picked
+    try {
+      const text = await readFileText(file)
+      picked = exporter.parseBackup(text)
+    } catch (err) {
+      toast(err && err.message ? err.message : '备份解析失败', 'error')
+      return
+    }
+
+    const parts = []
+    if (picked.docs.length) parts.push(picked.docs.length + ' 篇文献')
+    if (picked.annotations.length) parts.push(picked.annotations.length + ' 条标注')
+    if (picked.notes.length) parts.push(picked.notes.length + ' 条笔记')
+    const ask = '将导入 ' + parts.join('、') +
+      '。\n相同 id 的记录会被覆盖，不会产生重复。\n（备份不含 PDF 本体，原文需重新打开）\n\n继续？'
+    if (!window.confirm(ask)) return
+
+    let okDocs = 0
+    let okAnns = 0
+    let okNotes = 0
+    try {
+      for (const doc of picked.docs) {
+        await store.saveDoc(doc)
+        okDocs++
+      }
+      for (const ann of picked.annotations) {
+        await store.saveAnnotation(ann)
+        okAnns++
+      }
+      for (const note of picked.notes) {
+        await store.saveNote(note)
+        okNotes++
+      }
+    } catch (err) {
+      // 逐条写入，中途失败时已写进去的保留，并如实告诉用户写到哪一步
+      toast('导入中断：已写入 ' + okDocs + ' 篇 / ' + okAnns + ' 条标注 / ' +
+        okNotes + ' 条笔记' + (err && err.message ? '（' + err.message + '）' : ''), 'error')
+      await afterBulk()
+      return
+    }
+
+    // 当前正在读的那篇可能刚被覆盖，让阅读器重新拉一次数据
+    if (window.BOOKS_READER && typeof window.BOOKS_READER.notifyLibraryChange === 'function') {
+      window.BOOKS_READER.notifyLibraryChange()
+    }
+    await afterBulk()
+    let msg = '已导入 ' + parts.join('、')
+    if (picked.skipped) msg += ' · 跳过 ' + picked.skipped + ' 条无效记录'
+    toast(msg, 'ok')
+  }
+
 
   /* ---------------- 对外接口 ---------------- */
 

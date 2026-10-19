@@ -891,8 +891,10 @@
 
   /* 跨文章检索。
    *
-   * search.xml 现在是加密的（全站上锁，见 scripts/noimpty-lockdown.js），
-   * 解密那一步统一放在 noimpty-search.js 里，这边只管拿结果。
+   * 注意：SEARCH_LOCKED 指的是「知识库未解锁」（canRead() 判定的业务锁），
+   * 与 search.xml 的加密无关——历史上的 scripts/noimpty-lockdown.js 已移除，
+   * search.xml 现在是明文。解密/取索引那一步曾放在 noimpty-search.js（同样已移除），
+   * 现在由 opts.loadCorpus 传入，这边只管拿结果。
    * 未解锁时它会抛 SEARCH_LOCKED —— 调用方负责把原因说给主人听，
    * 别再像以前那样静默 catch 掉，然后她一脸茫然地说「没搜到」。 */
   const loadCorpus = async () => {
