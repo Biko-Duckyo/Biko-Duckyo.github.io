@@ -31,7 +31,17 @@
     return s.slice(0, 60) || fallback
   }
 
-  const TYPE_LABEL = { highlight: '高亮', underline: '划线', strike: '删除线' }
+  // 图区标注（PDF 插图）没有原文可选，用坐标代替引用块，
+  // 这样导出结果里仍能看出「标的是哪一块」而不是一行空的 `> `
+  const TYPE_LABEL = { highlight: '高亮', underline: '划线', strike: '删除线', region: '图片' }
+
+  const isRegion = a => a && a.type === 'region'
+
+  const regionText = a => {
+    const r = a.region || {}
+    return `[图片] P${a.page} · ${Math.round(r.width || 0)}×${Math.round(r.height || 0)}pt` +
+      ` @ (${Math.round(r.x || 0)}, ${Math.round(r.y || 0)})`
+  }
 
   /** 触发浏览器下载 */
   const download = (content, filename, mime = 'text/markdown;charset=utf-8') => {
@@ -118,7 +128,9 @@
         lines.push(`### 第 ${page} 页`)
         lines.push('')
         byPage.get(page).forEach(a => {
-          lines.push(`> ${String(a.quote || '').replace(/\n+/g, ' ').trim()}`)
+          lines.push(`> ${isRegion(a)
+            ? regionText(a)
+            : String(a.quote || '').replace(/\n+/g, ' ').trim()}`)
           lines.push('')
           const noteText = String(a.note || '').trim()
           lines.push(`- **${TYPE_LABEL[a.type] || '标注'}**${noteText ? '：' + noteText : ''}`)
@@ -228,7 +240,7 @@
       blocks.push({ text: '标注与批注', size: 21, weight: '700', color: '#e6ecf5', gap: 14 })
       annotations.forEach(a => {
         blocks.push({ text: `P${a.page} · ${TYPE_LABEL[a.type] || '标注'}`, size: 13, color: '#8fa4c0', gap: 4 })
-        blocks.push({ text: String(a.quote || '').trim(), size: 16, color: '#ffe9a8', gap: 4, bar: a.color })
+        blocks.push({ text: isRegion(a) ? regionText(a) : String(a.quote || '').trim(), size: 16, color: '#ffe9a8', gap: 4, bar: a.color })
         const noteText = String(a.note || '').trim()
         if (noteText) blocks.push({ text: noteText, size: 15, color: '#cdd8e8', gap: 12 })
         else blocks.push({ text: '', size: 6, gap: 8 })
@@ -322,12 +334,84 @@
     notes
   }, null, 2)
 
+  /* ---------------- 引用格式（BibTeX / RIS） ---------------- */
+
+  const bibKey = doc => {
+    const first = String(doc.authors || '').split(/[,;，；]/)[0].replace(/[^\w\u4e00-\u9fa5]/g, '')
+    const year = String(doc.year || '').replace(/\D/g, '').slice(0, 4) || 'nd'
+    const word = String(doc.title || '').toLowerCase().replace(/[^a-z\u4e00-\u9fa5]/g, ' ').trim().split(/\s+/)[0] || 'ref'
+    return `${first || 'anon'}${year}${word}`
+  }
+
+  const bibEscape = s => String(s == null ? '' : s).replace(/[{}]/g, '')
+    .replace(/\\/g, '\\textbackslash{}').replace(/&/g, '\\&').replace(/%/g, '\\%')
+
+  const VENUE_TYPE = {
+    journal: 'article', conference: 'inproceedings', preprint: 'misc',
+    thesis: 'phdthesis', report: 'techreport', book: 'book', other: 'misc'
+  }
+
+  /** 单篇 → BibTeX */
+  const toBibtex = (doc, { withAbstract = false } = {}) => {
+    const type = VENUE_TYPE[doc.venueType] || 'article'
+    const rows = [
+      ['author', String(doc.authors || '').split(/[,;，；]\s*/).filter(Boolean).join(' and ')],
+      ['title', bibEscape(doc.title || '')],
+      [type === 'article' ? 'journal' : 'booktitle', bibEscape(doc.venue || doc.source || '')],
+      ['year', doc.year || ''],
+      ['doi', doc.doi || ''],
+      ['url', doc.url || ''],
+      ['keywords', Array.isArray(doc.tags) && doc.tags.length ? doc.tags.join(', ') : ''],
+      ['abstract', withAbstract ? bibEscape(doc.abstract || '') : '']
+    ].filter(([, v]) => String(v || '').trim())
+    return `@${type}{${bibKey(doc)},\n` +
+      rows.map(([k, v]) => `  ${k} = {${v}}`).join(',\n') + '\n}'
+  }
+
+  /** 单篇 → RIS（Zotero / EndNote / Mendeley 都能直接拖入） */
+  const toRis = doc => {
+    const map = { journal: 'JOUR', conference: 'CONF', thesis: 'THES', report: 'RPRT', book: 'BOOK', preprint: 'GEN', other: 'GEN' }
+    const lines = [`TY  - ${map[doc.venueType] || 'JOUR'}`]
+    String(doc.authors || '').split(/[,;，；]\s*/).filter(Boolean)
+      .forEach(a => lines.push(`AU  - ${a}`))
+    if (doc.title) lines.push(`TI  - ${doc.title}`)
+    if (doc.venue || doc.source) lines.push(`T2  - ${doc.venue || doc.source}`)
+    if (doc.year) lines.push(`PY  - ${doc.year}`)
+    if (doc.pageCount) lines.push(`SP  - 1`)
+    if (doc.doi) lines.push(`DO  - ${doc.doi}`)
+    if (doc.url) lines.push(`UR  - ${doc.url}`)
+    if (doc.abstract) lines.push(`AB  - ${String(doc.abstract).replace(/\s+/g, ' ')}`)
+    ;(doc.tags || []).forEach(t => lines.push(`KW  - ${t}`))
+    lines.push(`DB  - Biko 书斋`)
+    lines.push('ER  - ')
+    return lines.join('\n') + '\n'
+  }
+
+  /** 多篇引用（书架导出 / 复制） */
+  const toBibtexBundle = (docs = [], opts) => docs.map(d => toBibtex(d, opts)).join('\n\n') + '\n'
+  const toRisBundle = (docs = []) => docs.map(toRis).join('\n')
+
+  /** 整库备份 JSON（含全部元数据，不含 PDF 本体） */
+  const toLibraryBackup = (docs = [], annotations = [], notes = []) => JSON.stringify({
+    app: 'biko-books',
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    docs: docs.map(({ blob, ...rest }) => rest),
+    annotations,
+    notes
+  }, null, 2)
+
   window.BOOKS_EXPORT = Object.freeze({
     CATEGORY,
     safeName,
     toMarkdown,
     toLongImage,
     toBackup,
+    toBibtex,
+    toRis,
+    toBibtexBundle,
+    toRisBundle,
+    toLibraryBackup,
     download,
     stamp
   })

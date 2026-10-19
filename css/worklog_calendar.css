@@ -10,14 +10,61 @@
  * ============================================================ */
 
 /* ---------- 版心 ---------- */
+/* 顶部留白：Worklog 距顶栏固定 20px。
+   目标：上方留白尽量少，页面第一行（.wl-eyebrow 的 Worklog）压在顶栏下方 20px。
+
+   这一份留白是【唯一】的一份，上游两道留白已在本文件别处清零：
+     · .page.type-calendar #content-inner  padding-top: 0   ← 抵掉 custom_nav.css:382 的 74px
+     · .page.type-calendar #page-header     margin-bottom: 0
+   两条规则都在本文件末尾「顶栏下方零残留」段（同段还把 400px 的 banner 压到 61px）。
+   所以 Worklog 到顶栏的距离 = 61px（顶栏）+ 这 20px = 81px。
+   --- 下方 72px 与左右 clamp 均未改动。 */
 .wl {
-  max-width: 900px;
+  /* 不再写固定像素上限：那是按「格子墙固定 876px」反算的死值，
+     一旦格子自适应（见 .wl-board 的 --wl-cell），这个死值就成了新的留白来源。
+     现在改成满宽，实际宽度由外层 #content-inner 和内部的 .wl-board 各自决定。 */
+  max-width: none;
   margin: 0 auto;
-  padding: 88px clamp(14px, 3vw, 28px) 72px;
+  padding: 20px clamp(14px, 3vw, 28px) 72px;
+  /* 整页文字放大 1.4 倍（原 14px 正文 → 约 19.6px 观感）。
+     ⚠️ 用 font-size 而不是 zoom：
+       zoom 会同时放大布局宽高，getComputedStyle 的 padding / grid-template-columns
+       也返回放大后的值，和 getBoundingClientRect 混算就会得到负数；
+       更关键的是 zoom 会把 .wl 的可用宽度压成父级的 1/1.4，
+       fitCells() 量到的「外部真值」和实际排版宽度从此不是同一个数 ——
+       实测在 1920px 视口下 .wl 卡在 970px、格子只有 8.46px。
+     改用 font-size 后：宽度就是父级宽度，量测与布局口径一致，
+     文字照样是 1.4 倍，且 em 单位的尺寸（圆角/间距）会跟着按比例放大。 */
+  font-size: 140%;
+}
+
+/* ------------------------------------------------------------
+ * 空档格子的两个专用色。
+ * 为什么不复用 --card-3？因为格子是【小色块】而不是【容器】：
+ *   卡片可用 10% 透明度做「淡淡的底」，小方块这么淡就彻底看不见了
+ *   （实测 8% 时对底色对比度仅 1.074:1，低于人眼 1.1~1.2 阈值）。
+ * 这里给足对比度，同时仍保证「未记录」明显浅于「有记录」。
+ * 明暗两套各自定义在 .wl 上，跟随主题切换，不影响全站其它页面。
+ * ---------------------------------------------------------- */
+.wl {
+  --wl-empty: #e6ebf2;        /* 空档底色（浅色主题） */
+  --wl-empty-line: rgba(126, 150, 184, 0.22);
+}
+
+html[data-theme='dark'] .wl {
+  --wl-empty: #232b3a;
+  --wl-empty-line: rgba(157, 180, 211, 0.18);
 }
 
 /* ---------- 页头 ---------- */
-.wl-head { margin-bottom: 22px; }
+/* 文字层：随 .wl 拉满，但留一个阅读舒适上限。
+   900px 是 zoom（font-size:140%）之后的实测值 ≈ 900px 视觉宽，
+   再宽的话长句在 2560px 屏上会超出「一行 75 字符」的舒适区。
+   margin:auto 让它和外层 .wl 的 padding 一起居中，不与 .wl-board 的居中冲突。 */
+.wl-head {
+  max-width: 900px;
+  margin: 0 auto 22px;
+}
 
 .wl-eyebrow {
   margin: 0 0 6px;
@@ -35,6 +82,8 @@
   color: var(--fg-strong);
 }
 
+/* 副标题：说明文字，窄屏允许折行（内容本身是两句话，强制单行会截断语义）。
+   真正的「单行」要求针对的是下面的短标签行（.wl-hint 的键位说明、图例、页脚）。 */
 .wl-sub {
   margin: 0;
   font-size: 14px;
@@ -42,12 +91,64 @@
   color: var(--fg-dim);
 }
 
+/* 键盘操作提示：看得出能这么用，但不喧宾夺主。
+   要求：始终单行。窄屏下放不下就用省略号收尾，而不是折成两三行
+   —— 折行会让页头高度随视口跳变，格子墙也跟着上下抖。 */
+.wl-hint {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 5px;
+  margin: 10px 0 0;
+  font-size: 12.5px;
+  line-height: 1.7;
+  color: var(--fg-mute);
+  /* 单行的三件套：不换行 + 裁剪 + 省略号 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /* 图标不可压缩，第一段文字才承担省略 */
+  min-width: 0;
+}
+
+/* 图标和 kbd 不许被压扁：flex 子项默认可收缩，压扁后键帽会变形 */
+.wl-hint > i,
+.wl-hint > kbd { flex: 0 0 auto; }
+
+/* 文字部分：这些文字都包在 span 里，省略号才能真正生效
+   （text-overflow 只对块级容器的文本内容有效，对 flex 容器本身无效） */
+.wl-hint > span {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wl-hint i { color: var(--accent); }
+
+.wl-hint kbd {
+  display: inline-block;
+  min-width: 18px;
+  padding: 1px 5px;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--card-2);
+  font-family: inherit;
+  font-size: 11.5px;
+  text-align: center;
+  color: var(--fg-dim);
+}
+
 /* ---------- 统计条 ---------- */
+/* 三个胶囊始终单行：窄屏下宁可整行横向收紧，也不折成两排
+   （折行会让页头高度跳变，格子墙随之上下移动）。 */
 .wl-stats {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 10px;
   margin-top: 16px;
+  min-width: 0;
 }
 
 .wl-stat {
@@ -58,6 +159,9 @@
   border: 1px solid var(--line);
   border-radius: var(--r-pill);
   background: var(--card-2);
+  /* 不换行也不被压缩：文字保持一行，容器按内容宽排布 */
+  flex: 0 0 auto;
+  white-space: nowrap;
 }
 
 .wl-stat b {
@@ -73,7 +177,9 @@
   display: none;
   align-items: center;
   gap: 9px;
-  margin: 0 0 16px;
+  /* 与 .wl-head 同宽同定位，保持左边缘对齐（.wl-foot 亦然） */
+  max-width: 900px;
+  margin: 0 auto 16px;
   padding: 11px 15px;
   border: 1px solid var(--line);
   border-radius: var(--r-card);
@@ -84,11 +190,37 @@
 }
 
 .wl-note.is-on { display: flex; }
+.wl-note > span {
+  /* flex 子项默认 min-width:auto，长文本会撑破一行；
+     显式 min-width:0 + 省略号，保证三行文字始终收在框内 */
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .wl-note i { color: var(--accent); }
 
 
 /* ---------- 格子墙外壳 ---------- */
 .wl-board {
+  /* ------------------------------------------------------------
+   * 格子尺寸令牌。
+   * --wl-cell 由 JS 的 fitCells() 量测容器后写入（7~14px 可调），
+   *   JS 会以内联样式覆盖，因此这里的初始值只是首帧兜底。
+   * --wl-cols 是实际列数（52/53/54 随年份变化），由 JS 按年份写入。
+   * JS 的月份轴定位读 --wl-cell 与 --wl-gap 来算步长，改动请同步改两处。
+   * ---------------------------------------------------------- */
+  --wl-cell: 12px;
+  --wl-cols: 53;
+  --wl-gap: 3px;
+
+  /* 宽度不再写 max-content：那会让 board 去贴合 .wl-grid 的内容宽，
+     而 .wl-grid 又按 --wl-cell 撑开 —— 形成「cell → board → cell」的回环，
+     实测会把 board 压到 290px，再反向把列宽算成负数。
+     现在 board 吃满父级，格子尺寸只由 JS 依据实测可用宽度反算。 */
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto;
   padding: clamp(14px, 2.4vw, 22px);
   border: 1px solid var(--line);
   border-radius: var(--r-panel);
@@ -96,6 +228,13 @@
   box-shadow: var(--shadow-sm);
   -webkit-backdrop-filter: blur(12px) saturate(130%);
   backdrop-filter: blur(12px) saturate(130%);
+}
+
+/* 窄屏：格子缩小，尽量多留一点可见周数。
+   640px 以下 gap 收到 2px，把省下的宽度还给格子（--wl-cell 由 JS 算到 7~14px）。
+   这里只留 gap，格子尺寸交给 JS 的 fitCells 统一决定，避免两处各算一套。 */
+@media (max-width: 640px) {
+  .wl { --wl-gap: 2px; }
 }
 
 /* 窄屏横向滚动，不挤压格子 */
@@ -107,9 +246,17 @@
 
 .wl-canvas {
   display: grid;
-  grid-template-columns: 30px max-content;
+  /* 第 1 列是星期轴：宽度用 --wl-axis（由 JS 量出标签实际宽度后写入）。
+     ❌ 写死 30px：与标签实际 10~14px 对不上，.wl-scroll 永远留十几 px 残留；
+     ❌ 用 max-content 推断：.wl-days 是 grid 容器，其 max-content 在列里会被
+        压到「最窄可容纳」的宽度（实测只剩 10px），同样是错的。
+     ✅ 让 JS 量一次、写一个值，量测与布局共用同一个数（见 fitCells）。
+     第 2 列走 max-content，宽度 = 列数 × 格子宽 + 间距，由 --wl-cell 决定。 */
+  grid-template-columns: var(--wl-axis, 20px) max-content;
   grid-template-rows: 18px auto;
   gap: 6px 8px;
+  /* 宽度贴合内容：不要 min-width:100% —— 那会把画布撑得比 board 内容区更宽，
+     即使格子已经算准也照样溢出，横向滚动条永远消不掉。 */
   width: max-content;
 }
 
@@ -122,6 +269,13 @@
   grid-row: 1;
   position: relative;
   height: 18px;
+  /* 月份标签是绝对定位、按格子步长摆放，最后一个月的文字必然越过网格右缘
+     （640px 档实测溢出 20px）。绝对定位内容会把 .wl-scroll 的 scrollWidth 撑大，
+     凭空多出一条横向滚动条 —— 即使格子本身完全放得下。
+     overflow: clip 直接裁掉越界的文字像素，且不像 hidden 那样建立滚动容器，
+     不会影响 .wl-scroll 的滚动行为。 */
+  overflow: clip;
+  overflow-clip-margin: 0;
 }
 
 .wl-months span {
@@ -137,29 +291,48 @@
   grid-column: 1;
   grid-row: 2;
   display: grid;
+  /* 宽度由 .wl-canvas 第 1 列的 --wl-axis 决定，这里只负责纵向排布。
+     列轨道给 max-content，让 7 个标签靠右对齐、不折行。 */
+  grid-template-columns: max-content;
   grid-template-rows: repeat(7, var(--wl-cell));
   gap: var(--wl-gap);
+  justify-content: end;
+  /* 轴列宽被缩到比标签更窄时，标签会折行/挤压，导致 JS 量出一个越来越小的自锁值。
+     min-width:max-content 让 .wl-days 至少和标签一样宽。 */
+  min-width: max-content;
 }
 
 .wl-days span {
   font-size: 10px;
   line-height: var(--wl-cell);
   text-align: right;
+  /* 标签必须单行：折行会让轴宽在量测和布局两处算法不同，格子尺寸随之漂移 */
+  white-space: nowrap;
+  /* 一个汉字的最小可读宽：防止 webfont 未就位时被压到 10px 以下 */
+  min-width: 1em;
   color: var(--fg-mute);
 }
 
 /* ---------- 格子网格 ---------- */
+/* 列宽 = 格子尺寸，列数走 --wl-cols（52/53/54 随年份变）。
+   ⚠️ 不要 justify-content:center：网格宽度由 --wl-cell 决定，一旦它比容器略窄，
+      居中会把整块网格推向一侧，左右留白就出现固定差值（实测相差正好 8px = 画布列间距）。
+      让网格左对齐，多余的宽度留在右侧，由 fitCells() 下一帧把格子放大吃掉。
+   ⚠️ 必须显式声明列模板：只写 auto-flow 时浏览器按内容平分，
+      格子会被拉成 7.61×9.8 这样的非正方形。 */
 .wl-grid {
   grid-column: 2;
   grid-row: 2;
   display: grid;
-  grid-auto-flow: column;
+  grid-auto-flow: row;
+  grid-template-columns: repeat(var(--wl-cols, 53), max-content);
   grid-template-rows: repeat(7, var(--wl-cell));
   gap: var(--wl-gap);
 }
 
 .wl-cell {
   --wl-lv: 0;
+  --wl-dep: 0;              /* 1 = 不属于当前年份（跨年补位的格子） */
   display: block;
   width: var(--wl-cell);
   height: var(--wl-cell);
@@ -180,11 +353,14 @@
   .wl-cell { background: var(--accent); opacity: calc(var(--wl-lv) * .23 + .08); }
 }
 
-.wl-cell:hover { transform: scale(1.28); }
+.wl-cell:hover { transform: scale(1.22); }
 
 .wl-cell:focus-visible {
   outline-color: var(--accent);
-  transform: scale(1.28);
+  outline-width: 2px;
+  transform: scale(1.22);
+  /* 键盘漫游时被放大的格子必须盖住邻居，否则边框会被压掉 */
+  z-index: 1;
 }
 
 /* 未来日期：不可点 */
@@ -222,6 +398,9 @@
   margin-top: 14px;
   font-size: 11px;
   color: var(--fg-mute);
+  /* 图例始终单行：少 / 色阶 / 多 三段是一句话，折行就没有可读性了 */
+  flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 .wl-legend i {
@@ -229,6 +408,8 @@
   height: 11px;
   border-radius: 3px;
   background: var(--accent);
+  /* 色块是固定尺寸的图形，不许被 flex 压扁 */
+  flex: 0 0 auto;
 }
 
 .wl-legend i[data-lv='0'] { background: color-mix(in srgb, var(--accent) 8%, transparent); }
@@ -268,6 +449,21 @@
   transform: translateY(0);
 }
 
+/* 有操作按钮时必须能点：默认 pointer-events:none 会把「删除」吃掉 */
+.wl-tip.has-actions { pointer-events: auto; }
+
+/* 卡片与格子之间留出「安全区」，鼠标移过去点删除时不会经过空隙而误关 */
+.wl-tip::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 12px;
+}
+
+.wl-tip.below::after { top: -12px; }
+.wl-tip:not(.below)::after { bottom: -12px; }
+
 .wl-tip .wl-tip-date {
   display: block;
   margin-bottom: 7px;
@@ -286,6 +482,7 @@
 
 .wl-tip li {
   display: flex;
+  align-items: flex-start;
   gap: 8px;
   margin-bottom: 4px;
 }
@@ -299,6 +496,37 @@
 }
 
 .wl-tip li p { margin: 0; word-break: break-word; }
+
+/* 卡片里的「删除这一条」小按钮：平时低调，指上去才变红 */
+.wl-tip-del {
+  flex: 0 0 auto;
+  margin-left: auto;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--fg-mute);
+  font-size: 10.5px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: .55;
+  transition: opacity .14s ease, background .14s ease, color .14s ease;
+}
+
+.wl-tip li:hover .wl-tip-del { opacity: 1; }
+
+.wl-tip-del:hover {
+  background: rgba(217, 83, 79, .16);
+  color: #d9534f;
+}
+
+.wl-tip-del:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
 
 .wl-tip .wl-tip-empty { color: var(--fg-mute); }
 
@@ -483,6 +711,100 @@
 
 .wl-btn:disabled { opacity: .5; cursor: not-allowed; }
 
+/* 「换口令」等次要动作：不抢主按钮的注意力 */
+.wl-btn-ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--fg-mute);
+  font-size: 12.5px;
+}
+
+.wl-btn-ghost:hover {
+  background: var(--card-hover);
+  border-color: transparent;
+  color: var(--fg);
+}
+
+/* 删除：红色是被点醒的第二道防线，不用主题强调色以免与普通按钮混淆 */
+.wl-btn-danger {
+  border-color: transparent;
+  background: #d9534f;
+  color: #fff;
+  font-weight: 600;
+}
+
+.wl-btn-danger:hover { background: #c9302c; border-color: transparent; }
+
+/* 删除二次确认行 */
+.wl-confirm {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.wl-confirm:empty { display: none; }
+
+.wl-del-hint {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: #d9534f;
+  word-break: break-word;
+}
+
+.wl-del-hint[hidden] { display: none; }
+
+/* 已有记录整行的「改 / 删」小按钮 */
+.wl-existing li { position: relative; }
+
+.wl-existing-ops {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  opacity: 0;
+  transition: opacity .14s ease;
+}
+
+.wl-existing li:hover .wl-existing-ops,
+.wl-existing li:focus-within .wl-existing-ops { opacity: 1; }
+
+/* 触屏没有 hover：操作按钮必须常驻可见，否则永远点不到 */
+@media (hover: none) {
+  .wl-existing-ops { opacity: 1; }
+}
+
+.wl-existing li.is-editing {
+  background: var(--card-3);
+  border-radius: var(--r-control);
+  box-shadow: -6px 0 0 var(--accent) inset;
+}
+
+.wl-existing li.is-editing p { color: var(--fg-strong); }
+
+.wl-op {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--fg-mute);
+  font-size: 10.5px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background .14s ease, color .14s ease;
+}
+
+.wl-op:hover { background: var(--card-hover); color: var(--fg); }
+
+.wl-op-del:hover { background: rgba(217, 83, 79, .16); color: #d9534f; }
+
+.wl-op:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
 .wl-err {
   margin: 10px 0 0;
   font-size: 12.5px;
@@ -515,16 +837,98 @@
 .wl-token-row input:focus { outline: none; border-color: var(--accent); }
 
 /* ---------- 窄屏 ---------- */
+/* 不再覆盖 .wl-canvas 的列宽：列宽由 --wl-axis + max-content 决定（见 .wl-canvas / fitCells）。 */
 @media (max-width: 640px) {
-  .wl { padding-top: 76px; }
-  .wl-canvas { grid-template-columns: 24px max-content; }
+  .wl { padding-top: 20px; }
   .wl-days span { font-size: 9px; }
 }
 
 
 .wl-foot {
-  margin: 18px 0 0;
+  /* 与 .wl-head / .wl-note 同宽同定位，左边缘对齐 */
+  max-width: 900px;
+  margin: 18px auto 0;
   font-size: 12.5px;
   line-height: 1.8;
   color: var(--fg-mute);
+  /* 页脚始终单行：JS 会整段重写 textContent，内容可能带服务器错误信息，
+     放不下就省略，不折行 */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ============================================================
+ * 顶栏下方「零残留」—— 与 /music/ 的 music_page.css 同款处理
+ * ------------------------------------------------------------
+ * 现象（实测，1440×900）：顶栏下面先出现一条暗色长横条，
+ * 再往下 400px 才是 Worklog。
+ *
+ * 成因：front-matter 的 `top_img: ''` 并不会关掉 banner ——
+ * 空字符串只是让 inline style 不写背景图，主题于是 fallback 到
+ * _config.butterfly.yml 的 default_top_img: /img/banner.jpg，
+ * 于是 .not-home-page 的 400px 高的 #page-header 照样带图渲染。
+ *
+ * 实测的层级与数值（修复前）：
+ *   .menu-container   top 0    h 60    fixed，透明
+ *   #page-header      top 0    h 400   rgb(126,150,184) + url(banner.jpg)  ← 那道暗条
+ *   #page-header #page-site-info  top 200  absolute → 「工作计划历」浮在 banner 上
+ *   #content-inner    top 400  padding-top 74px      ← banner 之后又一段空档
+ *   .wl-eyebrow       top 494  ← 才是 Worklog
+ *
+ * 本段把三者一起归零，目标是：
+ *   #page-header 高度 = 61px（= 顶栏 60 + 1 下边框），内容起点紧贴顶栏下沿。
+ *
+ * ⚠️ 选择器必须带 .page.type-calendar：
+ *    layout.pug 把 pageType（'page type-calendar'）放在 #body-wrap 上，
+ *    不带前缀会把首页、文章页的 banner 一起压平。
+ * ⚠️ 两边都是 !important 时胜负由特异度决定：
+ *    .page.type-calendar #content-inner (2,1,0) > #content-inner.layout (1,1,0)。
+ * ⚠️ 改这条规则时，本文件顶部「版心」段里描述 74px 预留的注释要一并复核。
+ * ============================================================ */
+
+/* 1) banner 本体：压到 61px 并清掉底色 / 图片 / 投影，不留可露出的东西 */
+.page.type-calendar #page-header {
+  height: 61px;
+  min-height: 61px;
+  padding: 0 !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  transition: none !important;
+  /* 主题给 .not-top-img 留了 10px margin-bottom，本站顶栏是 fixed，
+     这 10px 不承担占位作用，只会再露出一条底色 */
+  margin-bottom: 0 !important;
+}
+
+/* 2) 不要 banner 里那个 absolute 居中的大标题。
+   index.css: #page-header #page-site-info { position:absolute; top:200px; width:100% }
+   本站顶栏由 custom_nav.css 完全接管（#nav 已 display:none），
+   这个标题既没人看，又会和下面 .wl-head 的 h1 重复。 */
+.page.type-calendar #page-header #page-site-info { display: none !important; }
+
+/* 3) 抵掉 custom_nav.css:382 给 fixed 顶栏预留的 74px。
+   本页顶栏已压到 61px，正文自己撑开，再留 74px 就是纯空档。 */
+.page.type-calendar #content-inner { padding-top: 0 !important; }
+
+/* ------------------------------------------------------------
+   给页头文字一块自己的底。banner 清掉后，顶栏正下方就是全站 body
+   背景图（深色主题：主题默认鲸鱼星空图；浅色主题：biko_subpage.css
+   的 --bg-image，一张很亮的星空图）。.wl-head 是透明底 + 随主题变色的
+   文字，直接铺在这种明暗不可控的图片上会糊。
+   这里复用本页已有的 --card / --line / --shadow-sm 令牌（与 .wl-board
+   同一套明暗），不新增颜色。
+   ------------------------------------------------------------ */
+.page.type-calendar .wl-head {
+  padding: 22px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+
+/* 窄屏：左右收窄，避免 140% 字号下正文被挤成窄条 */
+@media (max-width: 640px) {
+  .page.type-calendar .wl-head { padding: 18px 16px; }
 }

@@ -12,67 +12,110 @@
  *      与 index_post_content.method=2（显示 description 概述）的意图冲突。
  *      这里改为显示 3 行省略，双栏下依然有导读。
  *   3) 封面固定 height:200px 且无 object-fit，宽高比不匹配时图片会被拉变形。
+ *
+ * ★ 2026-10 修复：> 子代组合器方向错误（本文件曾经的最大缺陷）
+ *   主题真实 DOM 层级（hexo-theme-butterfly/layout/includes/mixins/indexPostUI.pug:4-7）：
+ *     #recent-posts > .recent-post-items > .recent-post-item …
+ *   也就是说，文章卡片【并不是】 #recent-posts 的直接子元素，中间还隔了一层
+ *   .recent-post-items 容器。而本文件原先通篇使用 `#recent-posts > .recent-post-item`，
+ *   `>` 要求直接子代 → 全部 16 条规则一条都不匹配，双栏布局从未真正生效。
+ *
+ *   实测（Chrome 1440×900，修复前）：
+ *     WRAP(865.8) → ITEMS(865.8, display:block) → CARD 608.7×114.9, flex-direction:row
+ *     COVER 174.8×114.9   IMG 174.8×109.2   natural 400×250
+ *   即首页实际退化为「单列、扁条、封面被压到 174px」的未受控状态。
+ *
+ *   修复方式：把栅格 flex 容器从 #recent-posts 下移到 .recent-post-items
+ *   （它才是卡片的真正父元素），并统一改写字选择器。
+ *
+ * ★ 2026-10 补修：特异度（specificity）不足
+ *   上一步曾用 `#recent-posts > .recent-post-items > .recent-post-item`
+ *   兜底，但 :where() 的特异度恒为 (0,0,0)，整个选择器实际只有 (0,1,0)，
+ *   而主题 homepage.styl:4-26 是 `#recent-posts .recent-post-item` = (1,1,0)，
+ *   于是主题的 display:flex / flex-direction:row / height:16.8em 全部胜出：
+ *     实测 CARDS=10 但 CARD flexDirection=row、INFO 被压成 112px 宽。
+ *   现改为直接写足 ID 层级（不再用 :where），特异度 (1,2,0) 稳定压过主题。
+ *   注：`>` 必须精确写成 #recent-posts > .recent-post-items > .recent-post-item，
+ *   因为 DOM 里卡片并非 #recent-posts 的直接子元素。
  * ====================================================== */
 
-/* 栅格：两列自适应，悬停时轻微上浮，与单栏卡片观感一致 */
+/* 栅格：两列自适应，悬停时轻微上浮，与单栏卡片观感一致。
+ * 注意：flex 容器必须是 .recent-post-items（卡片的真正父元素），
+ * 放在 #recent-posts 上只会把它自己变成 flex，卡片仍是普通 block。 */
 #recent-posts {
   margin-top: -1rem;
+}
+#recent-posts > .recent-post-items,
+#recent-posts:has(> .recent-post-item) {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   align-content: flex-start;
 }
-#recent-posts > .recent-post-item {
+/* 卡片：两列，纵向排布（封面在上、信息在下） */
+#recent-posts > .recent-post-items > .recent-post-item {
   display: flex;
   flex-direction: column;
   width: 49%;
-  height: auto;
-  margin-top: 1rem;
-  /* 原插件未固定高度，这里显式 auto 覆盖主题 .recent-post-item 的定高 */
+  /* 覆盖主题 homepage.styl 的定高（index_layout:3 → height:16.8em）
+   * 与 flex-direction:row；不覆盖的话卡片会是扁条状。 */
   height: auto !important;
+  margin-top: 1rem;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-#recent-posts > .recent-post-item:hover {
+#recent-posts > .recent-post-items > .recent-post-item:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
 }
 
 /* 封面：TOP 大图，圆角与卡片一致，图片按 cover 裁切不变形 */
-#recent-posts > .recent-post-item .post_cover {
+#recent-posts > .recent-post-items > .recent-post-item .post_cover {
   width: 100%;
-  /* 用 aspect-ratio 保持稳定比例，避免不同图片高度参差 */
+  /* 用 aspect-ratio 保持稳定比例，避免不同图片高度参差。
+   * 必须同时解掉主题的 height:100%（index_layout:3），否则 aspect-ratio 不生效。 */
   height: auto;
   aspect-ratio: 16 / 9;
+  flex: 0 0 auto;
   overflow: hidden;
   border-radius: var(--r-card, 8px) var(--r-card, 8px) 0 0;
 }
 /* 修正原始错误选择器 post_bg → post-bg（同时兼容两种写法） */
-#recent-posts > .recent-post-item .post_cover img.post-bg,
-#recent-posts > .recent-post-item .post_cover img.post_bg {
+#recent-posts > .recent-post-items > .recent-post-item .post_cover img.post-bg,
+#recent-posts > .recent-post-items > .recent-post-item .post_cover img.post_bg {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
   transition: transform 0.4s ease;
 }
-#recent-posts > .recent-post-item:hover .post_cover img.post-bg {
+/* 封面内层 <a> 默认是 inline，行盒高度由 <img> 撑开，但显式块级化更稳 */
+#recent-posts > .recent-post-items > .recent-post-item .post_cover > a {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+#recent-posts > .recent-post-items > .recent-post-item:hover .post_cover img.post-bg {
   transform: scale(1.04);
 }
-/* 主题的 post_cover 左右浮动的偏移在双栏下会破坏布局，统一清掉 */
-#recent-posts > .recent-post-item .post_cover.left,
-#recent-posts > .recent-post-item .post_cover.right {
+/* 主题的 post_cover 左右浮动/定宽（42%）在双栏下会破坏布局，统一清掉 */
+#recent-posts > .recent-post-items > .recent-post-item .post_cover.left,
+#recent-posts > .recent-post-items > .recent-post-item .post_cover.right {
   margin: 0 !important;
   padding: 0 !important;
   float: none !important;
+  width: 100% !important;
+  height: auto !important;
+  order: 0 !important;
 }
 
 /* 信息区：占满卡片宽度，内边距收敛到与卡片网格一致 */
-#recent-posts > .recent-post-item > .recent-post-info {
+#recent-posts > .recent-post-items > .recent-post-item > .recent-post-info {
   width: 100% !important;
   margin-top: 0;
   padding: 12px 16px 16px;
+  flex: 1 1 auto;
 }
-#recent-posts > .recent-post-item > .recent-post-info > .article-title {
+#recent-posts > .recent-post-items > .recent-post-item > .recent-post-info > .article-title {
   font-size: 1.15em;
   line-height: 1.45;
   margin: 0.2rem 0 0.5rem;
@@ -82,12 +125,12 @@
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
-#recent-posts > .recent-post-item > .recent-post-info > .article-meta-wrap {
+#recent-posts > .recent-post-items > .recent-post-item > .recent-post-info > .article-meta-wrap {
   margin-bottom: 0.5rem;
 }
 
 /* 内容概述：不再整体隐藏；显示 3 行，超出省略 */
-#recent-posts > .recent-post-item > .recent-post-info > .content {
+#recent-posts > .recent-post-items > .recent-post-item > .recent-post-info > .content {
   display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
@@ -101,16 +144,16 @@
 }
 
 /* 双栏下卡片之间的纵向间距更紧凑一些 */
-#recent-posts > .recent-post-item + .recent-post-item {
+#recent-posts > .recent-post-items > .recent-post-item + .recent-post-item {
   margin-top: 1rem;
 }
 
 /* 移动端 / 中等宽度：回退单列，避免两列过窄导致排版拥挤 */
 @media screen and (max-width: 900px) {
-  #recent-posts > .recent-post-item {
+  #recent-posts > .recent-post-items > .recent-post-item {
     width: 100%;
   }
-  #recent-posts > .recent-post-item .post_cover {
+  #recent-posts > .recent-post-items > .recent-post-item .post_cover {
     aspect-ratio: 16 / 9;
   }
 }
@@ -118,7 +161,9 @@
 /* 首页轮播（swiper）与分类磁贴插件同样挂在 #recent-posts 前，
    它们自身是整宽块，确保不被 flex 双栏挤压 */
 #recent-posts > .blog-slider,
-#recent-posts > .category-bar {
+#recent-posts > .category-bar,
+#recent-posts > .recent-post-items > .blog-slider,
+#recent-posts > .recent-post-items > .category-bar {
   width: 100%;
   flex: 0 0 100%;
 }

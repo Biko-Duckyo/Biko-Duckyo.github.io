@@ -137,9 +137,11 @@
   border-right: .15em solid transparent;
   border-bottom: .25em solid #7e96b8;
 }
-/* 兜底定位（JS 未执行时）；JS 会写入更精确的 --bh-ear-l / --bh-ear-r */
-.biko-ear-l { left: var(--bh-ear-l, calc(50% - 34px)); }
-.biko-ear-r { left: var(--bh-ear-r, calc(50% + 8px)); }
+/* 兜底定位（JS 未执行时）；JS 会写入更精确的 --bh-ear-l / --bh-ear-r
+ * 注意：这里的 -44px / -2px 与 JS 的 EAR_SHIFT(10) 是同一套坐标系，
+ * 两边要同步改，否则 JS 一执行耳朵会跳 10px。 */
+.biko-ear-l { left: var(--bh-ear-l, calc(50% - 44px)); }
+.biko-ear-r { left: var(--bh-ear-r, calc(50% - 2px)); }
 .biko-time-box {
   background: rgba(255, 255, 255, .94);
   color: #4a5b75;

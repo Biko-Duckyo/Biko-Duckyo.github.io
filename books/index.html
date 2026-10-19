@@ -7,8 +7,14 @@
 <title>文献阅读工作台 · Biko</title>
 <meta name="description" content="PDF 文献精读工作台：左文右记、中英对照、划词标注，读完一键导出 Hexo 阅读笔记。">
 <!-- 独立页（layout:false）不经过主题渲染，需自带图标库与主题底座 -->
+<!-- ⚠️ 图标样式表必须在 pdf_viewer.css 之前：
+     字体报错时 pdf.js 的文本层会顶上，容易误判成「PDF 渲染坏了」。
+     本页是 layout:false 独立页，不经过主题渲染，所以要自带图标库。
+     守卫脚本（js/custom/fontawesome-guard.js）只挂在主题页面上；本页不挂，
+     它天然满足「页面没有任何图标样式表」的前提，挂上反而会多下载一份。 -->
 <link rel="stylesheet" href="/css/vendor/fontawesome.min.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/web/pdf_viewer.css">
+
 <link rel="stylesheet" href="/css/biko_subpage.css">
 <link rel="stylesheet" href="/css/biko_theme_toggle.css">
 <link rel="stylesheet" href="/books/css/reader.css">
@@ -32,6 +38,15 @@
 </head>
 <body class="bk-page-body">
 
+<!-- ============ 明暗切换图标（sprite） ============
+     与主站顶栏 / 齿轮面板同款：直接照搬 butterfly 内联 sprite 的
+     icon-sun / icon-moon（含原配色），阅读器按钮用 <use> 引用，
+     这样右上角的图案与主界面完全一致，而不是另画一套单色字形。 -->
+<svg class="bk-sprite" width="0" height="0" aria-hidden="true" focusable="false">
+  <symbol id="bk-icon-sun" viewBox="0 0 1024 1024"><path d="M960 512l-128 128v192h-192l-128 128-128-128H192v-192l-128-128 128-128V192h192l128-128 128 128h192v192z" fill="#FFD878"></path><path d="M736 512a224 224 0 1 0-448 0 224 224 0 1 0 448 0z" fill="#FFE4A9"></path><path d="M512 320c105.888 0 192 86.112 192 192s-86.112 192-192 192-192-86.112-192-192 86.112-192 192-192m0-32a224 224 0 1 0 0 448 224 224 0 0 0 0-448z" fill="#4D5152"></path></symbol>
+  <symbol id="bk-icon-moon" viewBox="0 0 1024 1024"><path d="M611.37 167.08a445.01 445.01 0 0 1-38.4 161.83 477.82 477.82 0 0 1-244.74 244.4 445.14 445.14 0 0 1-161.1 38.06 85.08 85.08 0 0 0-65.07 135.72A462.08 462.08 0 1 0 747.09 102.06 85.08 85.08 0 0 0 611.37 167.08z" fill="#FFB531"></path></symbol>
+</svg>
+
 <!-- ================= 顶栏 ================= -->
 <header class="bk-topbar">
   <a class="bk-brand" href="/" title="返回首页">
@@ -54,11 +69,22 @@
       </button>
     </div>
 
-    <button id="bk-library-toggle" class="bk-btn" type="button" title="我的文献库">
+    <button id="bk-library-toggle" class="bk-btn" type="button" title="我的文献库（L）">
       <i class="fas fa-layer-group"></i><span>文献库</span>
       <em id="bk-lib-count" class="bk-badge"></em>
     </button>
   </div>
+
+  <nav class="bk-viewswitch" role="tablist" aria-label="视图切换">
+    <button id="bk-view-shelf" class="bk-viewswitch-btn" type="button" role="tab"
+            data-view="shelf" aria-selected="false" title="书架（Esc）">
+      <i class="fas fa-table-cells-large"></i><span>书架</span>
+    </button>
+    <button id="bk-view-reader" class="bk-viewswitch-btn is-on" type="button" role="tab"
+            data-view="reader" aria-selected="true" title="阅读">
+      <i class="fas fa-book-open-reader"></i><span>阅读</span>
+    </button>
+  </nav>
 
   <div class="bk-topbar-right">
     <button id="bk-export-md" class="bk-btn bk-btn-primary" type="button">
@@ -67,14 +93,84 @@
     <button id="bk-export-img" class="bk-btn" type="button" title="导出长图">
       <i class="fas fa-image"></i><span>长图</span>
     </button>
-    <!-- 昼夜切换：与主站齿轮面板里的明暗按钮同源，共用 subpage_theme.js -->
+    <!-- 昼夜切换：图标直接用主站同款 SVG（#bk-icon-sun / #bk-icon-moon），
+         由下方内联脚本按 data-theme 切换 xlink:href，观感与主界面一致 -->
     <button class="biko-theme-toggle biko-theme-toggle--inline" type="button"
             id="biko-theme-toggle" title="浅色 / 深色模式切换" aria-label="明暗切换">
-      <i class="biko-theme-toggle__icon" aria-hidden="true"></i>
+      <svg class="biko-theme-toggle__icon" viewBox="0 0 1024 1024" aria-hidden="true" focusable="false">
+        <use id="biko-theme-icon" href="#bk-icon-moon" xlink:href="#bk-icon-moon"></use>
+      </svg>
     </button>
     <button id="bk-help" class="bk-btn bk-btn-ghost" type="button" title="使用说明" aria-label="使用说明">?</button>
   </div>
 </header>
+
+<!-- ================= 书架：文献库总览 ================= -->
+<section id="bk-shelf" class="bk-shelf" hidden aria-label="书架">
+  <div class="bk-shelf-inner">
+
+    <div id="bk-lib-stats" class="bk-shelf-stats"></div>
+
+    <div class="bk-shelf-bar">
+      <label class="bk-shelf-search">
+        <i class="fas fa-magnifying-glass"></i>
+        <input id="bk-lib-search" type="search" spellcheck="false" autocomplete="off"
+               placeholder="搜索标题 / 作者 / DOI / 摘要 / 标签（/）" aria-label="搜索文献">
+      </label>
+
+      <div class="bk-shelf-controls">
+        <select id="bk-lib-year" aria-label="年份"></select>
+        <select id="bk-lib-sort" aria-label="排序">
+          <option value="recent">最近阅读</option>
+          <option value="added">最近添加</option>
+          <option value="title">标题 A→Z</option>
+          <option value="progress">阅读进度</option>
+        </select>
+        <div class="bk-viewbtns" role="group" aria-label="显示方式">
+          <button class="bk-ic" type="button" data-shelf-view="grid" title="卡片" aria-label="卡片">
+            <i class="fas fa-table-cells-large"></i>
+          </button>
+          <button class="bk-ic" type="button" data-shelf-view="list" title="表格" aria-label="表格">
+            <i class="fas fa-list"></i>
+          </button>
+        </div>
+        <button id="bk-lib-select" class="bk-btn bk-btn-sm" type="button" title="多选">
+          <i class="fas fa-square-check"></i><span>多选</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="bk-shelf-scroll">
+      <div id="bk-lib-filters" class="bk-shelf-filters"></div>
+      <div id="bk-lib-tags" class="bk-shelf-tags"></div>
+      <p id="bk-lib-count-text" class="bk-shelf-count"></p>
+      <div id="bk-lib-grid" class="bk-grid"></div>
+    </div>
+
+    <div id="bk-lib-bulk" class="bk-bulkbar" aria-hidden="true">
+      <strong id="bk-bulk-count">未选文献</strong>
+      <button class="bk-btn bk-btn-sm" type="button" data-bulk="all">全选</button>
+      <button class="bk-btn bk-btn-sm" type="button" data-bulk="star">
+        <i class="fas fa-star"></i>星标
+      </button>
+      <button class="bk-btn bk-btn-sm" type="button" data-bulk="read">
+        <i class="fas fa-circle-check"></i>标记已读
+      </button>
+      <button class="bk-btn bk-btn-sm" type="button" data-bulk="tag">
+        <i class="fas fa-tag"></i>标签
+      </button>
+      <span class="bk-bulk-sep"></span>
+      <button class="bk-btn bk-btn-sm" type="button" data-bulk="bib">BibTeX</button>
+      <button class="bk-btn bk-btn-sm" type="button" data-bulk="ris">RIS</button>
+      <button class="bk-btn bk-btn-sm" type="button" data-bulk="json">备份</button>
+      <button class="bk-btn bk-btn-sm bk-btn-ghost" type="button" data-bulk="delete">
+        <i class="fas fa-trash-can"></i>删除
+      </button>
+      <button class="bk-btn bk-btn-sm bk-btn-ghost" type="button" data-bulk="cancel">取消</button>
+    </div>
+
+  </div>
+</section>
 
 <!-- ================= 主体：左 PDF 右 笔记 ================= -->
 <main id="bk-workspace" class="bk-workspace">
@@ -117,6 +213,9 @@
       <button id="bk-region-toggle" class="bk-ic" type="button" title="图区放大：框选或点图区，按超清倍率放大（g）" aria-label="图区放大" aria-pressed="false">
         <i class="fas fa-magnifying-glass-chart"></i>
       </button>
+      <button id="bk-annot-region" class="bk-ic" type="button" title="框选图片区域写批注（图片没有文字，用框选来标）" aria-label="图区批注" aria-pressed="false">
+        <i class="fas fa-object-group"></i>
+      </button>
 
       <span class="bk-sep"></span>
 
@@ -128,7 +227,7 @@
       </button>
     </div>
 
-    <div id="bk-toolbar-more" class="bk-toolbar-more" aria-hidden="true">
+    <div id="bk-more-panel" class="bk-toolbar-more" aria-hidden="true">
       <p class="bk-more-title">键盘快捷键</p>
       <dl class="bk-keys">
         <dt>j / k</dt><dd>按屏上下滚动</dd>
@@ -139,8 +238,10 @@
         <dt>g</dt><dd>图区放大（框选 / 点图区）</dd>
         <dt>[ / ]</dt><dd>提高 / 降低渲染质量</dd>
         <dt>Ctrl / ⌘ + F</dt><dd>全文搜索</dd>
+        <dt>/</dt><dd>全文搜索（直接开始输入）</dd>
+        <dt>L</dt><dd>书架 ⇄ 阅读</dd>
         <dt>Ctrl / ⌘ + O</dt><dd>打开文献库</dd>
-        <dt>Esc</dt><dd>关闭浮层</dd>
+        <dt>Esc</dt><dd>关闭浮层 / 从书架回到阅读</dd>
       </dl>
       <div class="bk-more-actions">
         <button id="bk-ann-export" class="bk-btn bk-btn-sm" type="button">
@@ -152,18 +253,18 @@
       </div>
     </div>
 
-    <div id="bk-panel-outline" class="bk-float bk-float-left" aria-hidden="true">
+    <div id="bk-outline-panel" class="bk-float bk-float-left" aria-hidden="true">
       <header class="bk-float-head">
         <h3>目录</h3>
-        <button class="bk-ic bk-float-close" type="button" data-close="bk-panel-outline" aria-label="关闭">×</button>
+        <button class="bk-ic bk-float-close" type="button" data-close="bk-outline-panel" aria-label="关闭">×</button>
       </header>
       <div id="bk-outline-list" class="bk-outline-list"></div>
     </div>
 
-    <div id="bk-panel-search" class="bk-float bk-float-right" aria-hidden="true">
+    <div id="bk-search-panel" class="bk-float bk-float-right" aria-hidden="true">
       <header class="bk-float-head">
         <h3>全文搜索</h3>
-        <button class="bk-ic bk-float-close" type="button" data-close="bk-panel-search" aria-label="关闭">×</button>
+        <button class="bk-ic bk-float-close" type="button" data-close="bk-search-panel" aria-label="关闭">×</button>
       </header>
       <div class="bk-search-bar">
         <input id="bk-search-input" type="search" spellcheck="false"
@@ -223,27 +324,34 @@
     <!-- 笔记面板 -->
     <section class="bk-pane is-on" data-pane="notes">
       <div class="bk-pane-actions">
-        <button id="bk-note-add" class="bk-btn bk-btn-sm" type="button">
+        <button id="bk-note-add" class="bk-btn bk-btn-sm bk-btn-primary" type="button">
           <i class="fas fa-plus"></i>新建笔记
         </button>
         <button id="bk-summarize" class="bk-btn bk-btn-sm" type="button">
           <i class="fas fa-wand-magic-sparkles"></i>AI 摘要
         </button>
+        <button id="bk-note-preview-toggle" class="bk-ic" type="button" data-note-preview
+                title="Markdown 预览" aria-label="Markdown 预览" aria-pressed="true">
+          <i class="fas fa-eye"></i>
+        </button>
       </div>
-      <div id="bk-note-list" class="bk-list">
-        <p class="bk-empty">还没有随手笔记。想到什么写什么，导出时会自动整理成章节。</p>
-      </div>
+      <div id="bk-note-filters" class="bk-note-filters"></div>
+      <div id="bk-note-list" class="bk-list bk-note-list"></div>
     </section>
 
     <!-- 标注面板 -->
     <section class="bk-pane" data-pane="ann">
       <div class="bk-pane-actions">
+        <button id="bk-ann-region" class="bk-btn bk-btn-sm" type="button"
+                title="PDF 里的插图没有文字可选，用框选来标它">
+          <i class="fas fa-object-group"></i>框选图片批注
+        </button>
         <button id="bk-ann-clear" class="bk-btn bk-btn-sm bk-btn-ghost" type="button">
           <i class="fas fa-trash-can"></i>清空标注
         </button>
       </div>
       <div id="bk-ann-list" class="bk-list">
-        <p class="bk-empty">还没有标注。在左侧正文里划选文字即可高亮、划线或写批注。</p>
+        <p class="bk-empty">还没有标注。在左侧正文里划选文字即可高亮、划线或写批注；图片请用上方「框选图片批注」。</p>
       </div>
     </section>
 
@@ -417,6 +525,51 @@
   </div>
 </div>
 
+<!-- ================= 笔记编辑器（浮层） ================= -->
+<div id="bk-note-editor" class="bk-md-editor" aria-hidden="true" role="dialog" aria-label="编辑笔记">
+  <div class="bk-md-editor-card">
+    <header class="bk-md-editor-head">
+      <span class="bk-md-editor-page" id="bk-note-edit-page">—</span>
+      <input id="bk-note-edit-title" class="bk-md-editor-title" type="text"
+             placeholder="给这条笔记起个标题（可留空）" aria-label="笔记标题">
+      <span id="bk-note-words" class="bk-md-editor-words">0 字</span>
+      <button id="bk-note-edit-preview" class="bk-ic" type="button" data-note-preview
+              title="Markdown 预览" aria-label="Markdown 预览" aria-pressed="true">
+        <i class="fas fa-eye"></i>
+      </button>
+      <button class="bk-ic" type="button" data-close-editor title="关闭（Esc）" aria-label="关闭">×</button>
+    </header>
+
+    <div class="bk-md-editor-body">
+      <textarea id="bk-note-edit-text" class="bk-md-editor-text" spellcheck="false"
+                placeholder="写点什么……支持 Markdown。输入 [[P12]] 引用第 12 页。"></textarea>
+      <div id="bk-note-preview" class="bk-md-editor-preview bk-md-body"></div>
+    </div>
+
+    <footer class="bk-md-editor-foot">
+      <div id="bk-note-types" class="bk-md-editor-types"></div>
+      <div class="bk-md-editor-tools">
+        <button id="bk-note-wrap" class="bk-ic" type="button" title="加粗（Ctrl/⌘ + B）" aria-label="加粗">
+          <i class="fas fa-bold"></i>
+        </button>
+        <button id="bk-note-list-bullet" class="bk-ic" type="button" title="列表项" aria-label="列表项">
+          <i class="fas fa-list-ul"></i>
+        </button>
+        <button id="bk-note-cite" class="bk-ic" type="button" title="引用当前页" aria-label="引用当前页">
+          <i class="fas fa-bookmark"></i>
+        </button>
+      </div>
+      <div class="bk-md-editor-actions">
+        <button id="bk-note-cancel" class="bk-btn bk-btn-sm bk-btn-ghost" type="button">取消</button>
+        <button id="bk-note-save" class="bk-btn bk-btn-sm bk-btn-primary" type="button">
+          <i class="fas fa-check"></i>保存
+        </button>
+      </div>
+    </footer>
+  </div>
+  <input id="bk-note-edit-type" type="hidden" value="">
+</div>
+
 <!-- ================= 遮罩 / 提示 ================= -->
 <div id="bk-busy" class="bk-busy">
   <div class="bk-busy-box"><span class="bk-spin"></span><span class="bk-busy-text">处理中…</span></div>
@@ -425,13 +578,35 @@
 
 <script src="/js/custom/subpage_theme.js"></script>
 <script>
-/* 按钮 → window.switchNightMode（与主站同名同义，含星球旋转动画） */
+/* 按钮 → window.switchNightMode（与主站同名同义，含星球旋转动画）
+   图标：与主站 nav.js 的 updateAllIcons() 同一思路——
+   跟随 <html data-theme> 在 icon-moon / icon-sun 之间切换。
+   这里用 MutationObserver 而非点完手动换图标，好处是任何途径
+   （按钮、星球动画回写、系统主题变化）改了 data-theme 都会同步。 */
 (function () {
   var btn = document.getElementById('biko-theme-toggle');
   if (!btn) return;
   btn.addEventListener('click', function () {
     if (window.switchNightMode) window.switchNightMode();
   });
+
+  var use = document.getElementById('biko-theme-icon');
+  if (!use) return;
+
+  function sync() {
+    var dark = document.documentElement.getAttribute('data-theme') === 'dark';
+    var id = dark ? '#bk-icon-sun' : '#bk-icon-moon';
+    use.setAttribute('href', id);
+    use.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', id);
+    btn.setAttribute('title', dark ? '切换到浅色模式' : '切换到深色模式');
+  }
+
+  sync();
+  if (window.MutationObserver) {
+    new MutationObserver(sync).observe(document.documentElement, {
+      attributes: true, attributeFilter: ['data-theme']
+    });
+  }
 })();
 </script>
 <script defer src="/books/js/store.js"></script>
@@ -439,6 +614,8 @@
 <script defer src="/books/js/pdf-view.js"></script>
 <script defer src="/books/js/bilingual.js"></script>
 <script defer src="/books/js/export.js"></script>
+<script defer src="/books/js/library.js"></script>
+<script defer src="/books/js/notes.js"></script>
 <script defer src="/books/js/reader.js"></script>
 </body>
 </html>

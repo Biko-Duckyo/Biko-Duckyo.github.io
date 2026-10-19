@@ -53,7 +53,10 @@
   function renderPlayBtn() {
     var a = ap()
     if (!a || !ui.play) return
-    var playing = !a.audio.paused
+    var playing = !!(a.audio && !a.audio.paused)
+    /* 幂等：下面有 250ms 心跳反复调用，无变化时不碰 DOM */
+    if (playing === ui.playingState) return
+    ui.playingState = playing
     ui.play.innerHTML = '<i class="fas ' + (playing ? 'fa-pause' : 'fa-play') + '"></i>'
   }
   function renderStatus() {
@@ -63,6 +66,16 @@
     ui.status.textContent = label + ' · ' + (a.list.index + 1) + '/' + a.list.audios.length
   }
   function renderAll() { renderMeta(); renderProgress(); renderPlayBtn(); renderStatus() }
+
+  /* ---------- 播放状态心跳 ----------
+   * 与 /music/ 页同一个坑：APlayer 的 play/pause 事件是后置的（要等
+   * audio.play() 的 Promise 落定才派发），所以「点了按钮图标不翻」会出现。
+   * 这里以 audio.paused 为唯一真相，趁 timeupdate 顺带校准一次 ——
+   * 播放中 APlayer 每 ~250ms 就会派发一次 timeupdate，等于白送的心跳，
+   * 不需要另开定时器；只有在 timeupdate 断供的极端情况下才补一个兜底表。 */
+  var beat = null
+  function startBeat() { if (!beat) beat = setInterval(renderPlayBtn, 500) }
+  function stopBeat() { if (beat) { clearInterval(beat); beat = null } }
 
   /* ---------- 绑定 APlayer 事件 ---------- */
   function bindAp() {
@@ -74,19 +87,22 @@
       panel.classList.add('playing')
       launcher.classList.add('is-playing')
       renderPlayBtn()
+      startBeat()
     })
     a.on('pause', function () {
       panel.classList.remove('playing')
       launcher.classList.remove('is-playing')
       renderPlayBtn()
+      stopBeat()
     })
-    a.on('timeupdate', renderProgress)
+    a.on('timeupdate', function () { renderProgress(); renderPlayBtn() })
     a.on('loadeddata', function () { renderMeta(); renderProgress() })
     a.on('canplay', function () { renderMeta(); renderProgress() })
     a.on('listswitch', function () { setTimeout(renderAll, 40) })
     a.on('volumechange', function () {
       if (ui.volRange) ui.volRange.value = a.audio.muted ? 0 : a.audio.volume
     })
+    /* 首次渲染：ui.playingState 是 undefined，任何布尔值都会触发真写 */
     renderAll()
   }
 
@@ -136,6 +152,7 @@
     panel.id = 'biko-music-panel'
     panel.innerHTML = PANEL_HTML
     document.body.appendChild(panel)
+    ui.playingState = null      // 未知态：首次 renderPlayBtn 必须真写一次 DOM
     ui.disc = panel.querySelector('#bmp-disc')
     ui.title = panel.querySelector('#bmp-title')
     ui.artist = panel.querySelector('#bmp-artist')
@@ -150,7 +167,19 @@
     ui.play.addEventListener('click', function () {
       var a = ap()
       if (!a) return
-      if (a.audio.paused) { var p = a.play(); if (p && p.catch) p.catch(function () {}) } else a.pause()
+      if (a.audio.paused) {
+        var p = a.play()
+        if (p && p.catch) p.catch(function () {})
+        /* 乐观翻转 + 起表，让图标立刻跟手（理由见 startBeat 处注释） */
+        ui.playingState = true
+        renderPlayBtn()
+        startBeat()
+      } else {
+        a.pause()
+        ui.playingState = false
+        renderPlayBtn()
+        stopBeat()
+      }
     })
     panel.querySelector('#bmp-back').addEventListener('click', function () { var a = ap(); if (a) a.skipBack() })
     panel.querySelector('#bmp-forward').addEventListener('click', function () { var a = ap(); if (a) a.skipForward() })
@@ -224,6 +253,14 @@
     buildPanel()
     mountLauncher()
     bindAp()
+    /* 面板可能比 APlayer 实例晚/早一步就位：每次 boot 都同步一次状态。
+       已在播（比如从 /music/ 点过来的）就补上图标与心跳，
+       暂停中则保证表是停的。 */
+    var a = ap()
+    if (a && a.audio) {
+      if (a.audio.paused) { renderPlayBtn(); stopBeat() }
+      else { renderPlayBtn(); startBeat() }
+    }
   }
   // 轮询等待 #rightside 与 APlayer 就绪
   var tries = 0

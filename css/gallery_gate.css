@@ -1,0 +1,216 @@
+/* ==========================================================================
+ * Biko · 相册解密门（/galleryGroup/ 的「门」这一幕）
+ * --------------------------------------------------------------------------
+ * 只服务「门」。墙的样式在 gallery_page.css，两边互不引用，
+ * 改门绝不会牵动墙 —— 这条边界是刻意划的。
+ *
+ * 视觉基线 = 旧版独立页：整屏渐变 + 居中一块 480px 毛玻璃面板，
+ * 只把「相纸扣」换成锁形徽记（独立页里没有内容可暗示，锁更贴题）。
+ *
+ * 三处细节都是踩过坑留下的，不要顺手简化：
+ *   · input 用 text + -webkit-text-security 遮蔽，而不是 type=password：
+ *     否则浏览器密码管理器会接管并自动填充。
+ *   · .is-shaking 前用 offsetWidth 强制回流重放动画，否则第二次输错不抖。
+ *   · 门是 position:fixed 的整屏遮罩：解锁后必须先淡出、再 hidden，
+ *     否则它会盖住墙、吃掉所有点击。
+ *
+ * ⚠️ 本页已从 layout:false 独立页改成主题页面（type: gallery）：
+ *    背景、顶栏 .biko-nav、左下角 #rightside 都由主题常驻在页面上，
+ *    所以这里【不许】再往 body / html 上写样式（旧版那几条 body.gg-page*
+ *    正是这么做的）。理由有两条：
+ *      1) 主题的 #web_bg 在 body 上；给 body 铺底色 = 把主站背景盖掉，
+ *         而「保留主站背景」恰恰是本页的要求；
+ *      2) 解锁时 gallery_page.js 要撤掉门，写 body 上的锁滚动/底色
+ *         会连带把主题骨架一起改掉，来回切容易残留。
+ *    「整屏 + 深色底 + 光斑」现在全部由 .gg-page 自己承担 ——
+ *    它就是 .gg-gate 遮罩本身，天然覆盖全屏。
+ * ========================================================================== */
+
+.gg-page.gg-gate {
+  /*
+   * 一个元素，两个 class：.gg-page 是「那一幕的整屏底」，.gg-gate 是「门」。
+   * 合并成一条规则，是因为它们本来就是同一个盒子 —— 拆成两条会互相覆盖
+   * （曾经拆过：`.gg-gate { position:fixed; inset:0 }` 把这里让出的 61px 又拉回 0，
+   *  顶栏于是被门整个盖住）。
+   *
+   * 从顶栏下沿开始，而不是 0：
+   *   本页现在是主题页面，全站顶栏 .biko-nav 常驻在页面上（fixed，h 60 + 1px 边框）。
+   *   让出这 61px，顶栏照常可见可点 —— 旧独立页也有一条自己的顶栏，
+   *   没必要在主题化之后反而把导航藏起来。剩下部分仍是不透明整屏遮罩。
+   */
+  position: fixed;
+  top: 61px;
+  right: 0;
+  bottom: 0;
+  left: 0;
+
+  /* 必须压过主题骨架里所有常驻悬浮件（含音乐面板）：custom_nav.css 的层级刻度是
+       --z-nav 10 / --z-rightside 80 / --z-music-panel 90 / --z-overlay 100。
+     门是「唯一可见」的那一幕，取 --z-overlay 这一档，没有令牌时兜底 100。
+     ⚠️ 但【低于】顶栏所在这条层级线以上的一切都不该出现；顶栏是 10，
+        门 100 会盖住它 —— 靠上面的 top:61px 让位解决，不靠 z-index。 */
+  z-index: var(--z-overlay, 100);
+
+  display: grid;
+  place-items: center;
+  padding: 24px;
+
+  color: var(--fg, #e9edf3);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  -webkit-text-size-adjust: 100%;
+
+  /* 底色 + 渐变 + 两层光斑，全部压在同一条 background 里。
+     ⚠️ 光斑不要写成 ::before：伪元素会叠在 .gg-panel 之上（同为定位层），
+        实测会糊住面板下半截，看着像「面板裂成两半」。
+     层序：最上 = 最左；底色垫在最下，渐变与光斑都按 alpha 叠加。 */
+  background-color: #0d1018;
+  background-image:
+    radial-gradient(760px 420px at 18% 8%, rgba(157, 180, 211, 0.16), transparent 62%),
+    radial-gradient(680px 420px at 86% 92%, rgba(126, 150, 184, 0.14), transparent 60%),
+    linear-gradient(135deg, #1a2230 0%, #26324a 55%, #32405e 100%);
+
+  /* 面板在小屏上放不下时，滚的是门自己 —— 背后的整页不能跟着滚
+     （旧版靠 body 锁滚动实现；现在锁在遮罩自己身上，滚动条归属门而非文档）。 */
+  overflow: auto;
+  overscroll-behavior: contain;
+  transition: opacity 0.36s ease, visibility 0.36s ease;
+}
+
+.gg-page.gg-gate.is-leaving {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.gg-panel {
+  width: min(92vw, 480px);
+  padding: clamp(30px, 6vw, 46px);
+  text-align: center;
+  border: 1px solid rgba(157, 180, 211, 0.28);
+  border-radius: 26px;
+  background: rgba(20, 27, 40, 0.72);
+  box-shadow: 0 30px 90px rgba(6, 10, 18, 0.55);
+  -webkit-backdrop-filter: blur(20px) saturate(120%);
+  backdrop-filter: blur(20px) saturate(120%);
+}
+
+/* 锁形徽记：比旧版的「相纸」低调，且不暗示已有内容 */
+.gg-emblem {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 18px;
+  border: 1px solid rgba(157, 180, 211, 0.32);
+  border-radius: 18px;
+  background: rgba(157, 180, 211, 0.12);
+  color: #c9d8ec;
+  font-size: 1.24rem;
+}
+
+.gg-eyebrow {
+  margin: 0 0 12px;
+  color: #9db4d3;
+  font-size: 0.74rem;
+  font-weight: 750;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.gg-title {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(1.55rem, 5vw, 2.2rem);
+  line-height: 1.35;
+}
+
+.gg-hint {
+  margin: 14px auto 24px;
+  color: rgba(233, 237, 243, 0.72);
+  font-size: 0.92rem;
+  line-height: 1.75;
+}
+
+.gg-form {
+  display: grid;
+  gap: 12px;
+}
+
+.gg-input {
+  width: 100%;
+  height: 50px;
+  border: 1px solid rgba(157, 180, 211, 0.3);
+  border-radius: 14px;
+  outline: none;
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+  font: inherit;
+  text-align: center;
+  caret-color: #9db4d3;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gg-input::placeholder { color: rgba(233, 237, 243, 0.42); }
+
+.gg-input:focus {
+  border-color: rgba(157, 180, 211, 0.85);
+  box-shadow: 0 0 0 4px rgba(126, 150, 184, 0.18);
+}
+
+.gg-input:disabled { opacity: 0.6; }
+
+/* 用 text + 文本遮蔽替代 type=password，避开浏览器密码管理器的自动填充劫持 */
+.gg-input.is-masked {
+  -webkit-text-security: disc;
+  text-security: disc;
+}
+
+.gg-submit {
+  height: 50px;
+  border: 0;
+  border-radius: 14px;
+  color: #fff;
+  font: inherit;
+  font-weight: 750;
+  cursor: pointer;
+  background: linear-gradient(120deg, #7e96b8, #9db4d3);
+  box-shadow: 0 12px 30px rgba(126, 150, 184, 0.32);
+}
+
+.gg-submit:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.gg-err {
+  min-height: 1.4em;
+  margin: 2px 0 0;
+  color: #b9c8e0;
+  font-size: 0.88rem;
+}
+
+.gg-back {
+  display: inline-block;
+  margin-top: 16px;
+  color: rgba(233, 237, 243, 0.66);
+  font-size: 0.86rem;
+  text-decoration: none;
+}
+
+.gg-back:hover,
+.gg-back:focus-visible { color: #fff; }
+
+.gg-panel.is-shaking { animation: gg-shake 0.36s ease; }
+
+@keyframes gg-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-7px); }
+  75% { transform: translateX(7px); }
+}
+
+/* 抖动是触屏上唯一能说明「输错了」的动作提示，
+   只在实际请求了「减少动态效果」时才关掉 */
+@media (prefers-reduced-motion: reduce) {
+  .gg-gate { transition: none; }
+  .gg-panel.is-shaking { animation: none; }
+}

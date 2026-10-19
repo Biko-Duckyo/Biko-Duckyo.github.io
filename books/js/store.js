@@ -165,7 +165,9 @@
    * 保存（或更新）一篇文献。
    * 文件本体只走 blobs store；docs 里只记 hasFile，列表查询因此永远是轻量的。
    * @param {{id?:string, title?:string, doi?:string, url?:string, authors?:string,
-   *          year?:string, source?:string, blob?:Blob, pageCount?:number,
+   *          year?:string, source?:string, venue?:string, venueType?:'journal'|'conference'|'preprint'|'thesis'|'report'|'book'|'other',
+   *          abstract?:string, keywords?:string[], tags?:string[], star?:boolean,
+   *          status?:'unread'|'reading'|'read', batch?:string, blob?:Blob, pageCount?:number,
    *          lastPage?:number, scrollRatio?:number}} doc
    */
   const saveDoc = async doc => {
@@ -177,6 +179,10 @@
       const existingReq = fields.id ? docs.get(fields.id) : null
       const build = existing => {
         const record = {
+          tags: [],
+          keywords: [],
+          star: false,
+          status: 'unread',
           ...(existing || {}),
           ...fields,
           id: fields.id || uid('doc'),
@@ -192,6 +198,45 @@
       return new Promise(resolve => {
         existingReq.onsuccess = () => resolve(build(existingReq.result))
         existingReq.onerror = () => resolve(build(null))
+      })
+    })
+  }
+
+  /**
+   * 轻量更新元信息（星标 / 标签 / 阅读状态 / 分类），不碰文件本体。
+   * 用于书架上的快捷操作——比 saveDoc 少一次 blob 事务。
+   */
+  const updateDoc = async (id, patch = {}) => {
+    if (!id) return null
+    return run([STORES.docs], 'readwrite', transaction => {
+      const docs = transaction.objectStore(STORES.docs)
+      const req = docs.get(id)
+      return new Promise(resolve => {
+        req.onsuccess = () => {
+          const existing = req.result
+          if (!existing) { resolve(null); return }
+          const record = { ...existing, ...patch, id, updatedAt: Date.now() }
+          docs.put(record)
+          resolve(record)
+        }
+        req.onerror = () => resolve(null)
+      })
+    })
+  }
+
+  /** 批量更新（书架多选）：一次事务写完，避免 N 次往返 */
+  const updateDocs = async (ids = [], patch = {}) => {
+    const list = Array.from(new Set(ids.filter(Boolean)))
+    if (!list.length) return []
+    return run([STORES.docs], 'readwrite', transaction => {
+      const docs = transaction.objectStore(STORES.docs)
+      const now = Date.now()
+      return list.map(id => {
+        const req = docs.get(id)
+        req.onsuccess = () => {
+          if (req.result) docs.put({ ...req.result, ...patch, id, updatedAt: now })
+        }
+        return id
       })
     })
   }
@@ -335,6 +380,7 @@
     const now = Date.now()
     const record = {
       kind: 'note',
+      type: '',          // summary | method | question | idea | quote | todo | ''
       text: '',
       ...note,
       id: note.id || uid('note'),
@@ -350,6 +396,117 @@
   }
 
   const removeNote = id => del(STORES.notes, id)
+
+  /* ---------------- 文献库汇总（书架用） ---------------- */
+
+  /**
+   * 一次读完 docs / annotations / notes / history，算出书架需要的：
+   *   - 每篇的标注数、笔记数、是否读完
+   *   - 全库统计：篇数 / 总时长 / 标注 / 笔记 / 连读天数
+   * 只读元数据，绝不碰 blobs，所以几百篇也是毫秒级。
+   */
+  const librarySnapshot = async () => {
+    const [docs, anns, notes] = await Promise.all([
+      all(STORES.docs).catch(() => []),
+      all(STORES.annotations).catch(() => []),
+      all(STORES.notes).catch(() => [])
+    ])
+    await loadHistory()
+
+    const annCount = new Map()
+    ;(anns || []).forEach(a => annCount.set(a.docId, (annCount.get(a.docId) || 0) + 1))
+    const noteCount = new Map()
+    ;(notes || []).forEach(n => {
+      if (n.kind === 'translation') return
+      noteCount.set(n.docId, (noteCount.get(n.docId) || 0) + 1)
+    })
+
+    const list = (docs || [])
+      .filter(d => d.hasFile || d.url)
+      .map(d => {
+        const h = historyCache.get(d.id)
+        const pageCount = Number(d.pageCount) || 0
+        const lastPage = (h && h.lastPage) || d.lastPage || 0
+        const ratio = h ? Number(h.scrollRatio) || 0 : Number(d.scrollRatio) || 0
+        const progress = pageCount
+          ? Math.min(1, Math.max((Number(lastPage) || 0) / pageCount, ratio))
+          : 0
+        return {
+          ...d,
+          tags: Array.isArray(d.tags) ? d.tags : [],
+          keywords: Array.isArray(d.keywords) ? d.keywords : [],
+          annCount: annCount.get(d.id) || 0,
+          noteCount: noteCount.get(d.id) || 0,
+          progress,
+          lastReadAt: h ? h.lastReadAt : (d.lastReadAt || 0),
+          msRead: h ? h.msRead : (d.msRead || 0),
+          lastPage
+        }
+      })
+      .sort((a, b) => (b.lastReadAt || 0) - (a.lastReadAt || 0) || (b.createdAt || 0) - (a.createdAt || 0))
+
+    let msRead = 0
+    historyCache.forEach(h => { msRead += h.msRead || 0 })
+    const days = new Set()
+    historyCache.forEach(h => {
+      if (!h.lastReadAt) return
+      const d = new Date(h.lastReadAt)
+      days.add(`${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`)
+    })
+
+    const tagMap = new Map()
+    list.forEach(d => d.tags.forEach(t => tagMap.set(t, (tagMap.get(t) || 0) + 1)))
+    const tags = Array.from(tagMap.entries())
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, 'zh-CN'))
+
+    return {
+      list,
+      tags,
+      stats: {
+        docs: list.length,
+        msRead,
+        annotations: (anns || []).length,
+        notes: (notes || []).filter(n => n.kind !== 'translation').length,
+        readingDays: days.size,
+        reading: list.filter(d => d.progress > 0 && d.progress < 0.995).length,
+        finished: list.filter(d => d.progress >= 0.995).length,
+        starred: list.filter(d => d.star).length
+      }
+    }
+  }
+
+  /** 整个库里所有笔记（跨文献检索用，带上文献标题） */
+  const listAllNotes = async () => {
+    const [notes, docs] = await Promise.all([
+      all(STORES.notes).catch(() => []),
+      all(STORES.docs).catch(() => [])
+    ])
+    const titles = new Map((docs || []).map(d => [d.id, d.title || '未命名文献']))
+    return (notes || [])
+      .filter(n => n.kind !== 'translation')
+      .map(n => ({ ...n, docTitle: titles.get(n.docId) || '' }))
+      .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
+  }
+
+  /** 撤销删除用的快照：只剩一条记录时直接塞回去即可 */
+  const restoreDoc = doc => doc && doc.id ? put(STORES.docs, doc) : Promise.resolve()
+  const restoreAnnotation = ann => ann && ann.id ? put(STORES.annotations, ann) : Promise.resolve()
+  const restoreNote = note => note && note.id ? put(STORES.notes, note) : Promise.resolve()
+
+  /* ---------------- 通用附件 Blob ----------------
+   * 原先 blobs store 只服务于 PDF 本体（key 就是 doc.id）。
+   * 图区批注要存缩略图，这里补两个通用读写，
+   * 约定 id 用前缀区分（如 'thumb-ann_xxx'），避免与文献 id 撞车。 */
+
+  const putBlob = (id, data) => put(STORES.blobs, { id, data })
+
+  const getBlob = async id => {
+    const row = await get(STORES.blobs, id)
+    return row ? row.data : undefined
+  }
+
+  const deleteBlob = id => del(STORES.blobs, id)
 
   /* ---------------- 设置 ---------------- */
 
@@ -371,6 +528,8 @@
     STORES,
     uid,
     saveDoc,
+    updateDoc,
+    updateDocs,
     listDocs,
     getDoc,
     getDocBlob,
@@ -384,9 +543,17 @@
     removeAnnotation,
     saveNote,
     listNotes,
+    listAllNotes,
+    librarySnapshot,
     removeNote,
+    restoreDoc,
+    restoreAnnotation,
+    restoreNote,
     saveSetting,
     getSetting,
+    putBlob,
+    getBlob,
+    deleteBlob,
     clearAll
   })
 })()

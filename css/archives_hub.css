@@ -1,0 +1,737 @@
+/* ============================================================
+ * 文章合并页 /archives/ —— 时间轴 + 分类 + 标签 三合一
+ * ------------------------------------------------------------
+ * 顶栏「文章」原先拆成「时间轴 / 标签 / 分类」三个入口，三页各看一半；
+ * 这里合成一页：顶部一排视图切换 + 分类筛选条，一条按年分组的时间轴，
+ * 分类与标签都能在时间轴上就地筛选，不再跳走。
+ *
+ * 页面结构见 source/archives/index.md，数据由
+ * scripts/biko-index.js 产出到 /json/post-index.json。
+ *
+ * ⚠️ 第 1 节的选择器统一带 .page.type-archives 前缀。这个类由
+ *    index.md 的 type: archives 带到 #body-wrap 上（与 /calendar/ 的
+ *    .page.type-calendar 同一机制），不带前缀会误伤首页卡片。
+ *    第 2 节起的选择器都挂在 .ar 根节点下，本身就是局部的。
+ * ============================================================ */
+
+/* ---------- 1. 版心：压掉 banner，理由同 /calendar/ ---------- */
+/* front-matter 的 top_img: '' 并不会关掉 banner（主题会 fallback 到
+ * default_top_img），所以这里显式压成与顶栏等高的 61px。 */
+.page.type-archives #page-header {
+  height: 61px;
+  min-height: 61px;
+  padding: 0 !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  transition: none !important;
+  margin-bottom: 0 !important;
+}
+.page.type-archives #page-header #page-site-info { display: none !important; }
+.page.type-archives #content-inner { padding-top: 0 !important; }
+
+/* ---------- 2. 外层 ---------- */
+.ar {
+  /* 与 /calendar/ 的 .wl 同宽，两页切换时版心不跳 */
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px 20px 56px;
+  font-family: var(--font-ui);
+  color: var(--fg);
+}
+
+/* 页头卡片：与 /calendar/ 的 .wl-head 同一套底与圆角 */
+.ar-head {
+  padding: 22px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+.ar-eyebrow {
+  margin: 0 0 10px;
+  font-size: 12px;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--fg-mute);
+}
+.ar-head h1 {
+  margin: 0;
+  font-size: 32px;
+  line-height: 1.25;
+  color: var(--fg-strong);
+  letter-spacing: .02em;
+}
+.ar-sub {
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--fg-dim);
+}
+.ar-sub b { color: var(--fg-strong); font-weight: 700; }
+
+/* ---------- 3. 视图切换：时间轴 / 分类 / 标签 ---------- */
+.ar-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 18px 0 0;
+  padding: 5px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--card-2);
+  width: max-content;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.ar-tabs::-webkit-scrollbar { display: none; }
+.ar-tabs button {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--fg-dim);
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background .25s, color .25s;
+}
+.ar-tabs button:hover { color: var(--fg-strong); background: var(--card-hover); }
+.ar-tabs button[aria-selected="true"] {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+.ar-tabs .ar-tab-n {
+  font-size: 11.5px;
+  opacity: .75;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 640px) {
+  .ar { padding: 14px 12px 48px; }
+  .ar-head { padding: 18px 16px; }
+  .ar-head h1 { font-size: 26px; }
+  .ar-tabs { width: 100%; border-radius: var(--r-control); }
+  .ar-tabs button { flex: 1 1 0; justify-content: center; padding: 9px 6px; }
+}
+
+
+/* ---------- 4. 筛选条（时间轴上方那排分类） ---------- */
+.ar-filterbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 16px 0 0;
+}
+.ar-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--card-2);
+  color: var(--fg-dim);
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+  cursor: pointer;
+  transition: background .22s, color .22s, border-color .22s;
+}
+.ar-chip:hover {
+  background: var(--card-hover);
+  color: var(--fg-strong);
+  border-color: var(--line-strong);
+}
+.ar-chip[aria-pressed="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
+}
+.ar-chip-n {
+  font-size: 11.5px;
+  opacity: .72;
+  font-variant-numeric: tabular-nums;
+}
+.ar-chip[aria-pressed="true"] .ar-chip-n { opacity: .85; }
+
+/* 当前生效的筛选提示（点过卡片上的分类/标签后出现） */
+.ar-active {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--fg-mute);
+}
+.ar-active:empty { display: none; }
+.ar-active-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--card-3);
+  color: var(--fg-strong);
+  font-size: 12.5px;
+}
+.ar-active-tag button {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--fg-mute);
+  font-size: 12px;
+  cursor: pointer;
+}
+.ar-active-tag button:hover { color: var(--accent); }
+
+
+/* ---------- 5. 时间轴 ---------- */
+.ar-timeline { position: relative; margin-top: 26px; }
+/* 竖向轴线：左侧 7px，从第一年到最后一个条目 */
+.ar-timeline::before {
+  content: "";
+  position: absolute;
+  left: 7px;
+  top: 6px;
+  bottom: 6px;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(to bottom, var(--line-strong), var(--line), transparent);
+}
+
+.ar-year {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 26px 0 12px;
+  padding-left: 30px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  color: var(--fg-mute);
+  font-variant-numeric: tabular-nums;
+}
+.ar-year::before {
+  content: "";
+  position: absolute;
+  left: 1px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--card-3);
+}
+.ar-year i { flex: 1 1 auto; max-width: 100%; height: 1px; background: var(--line); }
+.ar-timeline > .ar-year:first-child { margin-top: 4px; }
+
+.ar-list { list-style: none; margin: 0; padding: 0; }
+
+.ar-item {
+  position: relative;
+  margin: 0 0 10px;
+  padding-left: 30px;
+}
+/* 每条前面一个小圆点，压在轴线上 */
+.ar-item::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 22px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--card-solid);
+  border: 2px solid var(--line-strong);
+  transition: border-color .22s, background .22s;
+}
+.ar-item:hover::before { border-color: var(--accent); background: var(--accent); }
+
+.ar-card {
+  display: flex;
+  gap: 14px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  color: inherit;
+  transition: transform .22s, border-color .22s, box-shadow .22s;
+}
+.ar-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow);
+}
+
+/* 缩略图：写死 64×64，img 也单独上约束。
+ * 主题有 `.container img { max-width: 100% }`，只给容器定宽会被撑成整行宽。 */
+.ar-thumb {
+  flex: 0 0 64px;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--r-control);
+  overflow: hidden;
+  background: var(--card-3);
+}
+.ar-card .ar-thumb img {
+  display: block;
+  width: 64px;
+  height: 64px;
+  max-width: 64px;
+  margin: 0;
+  object-fit: cover;
+  border-radius: var(--r-control);
+}
+.ar-thumb.is-hidden { display: none; }
+
+.ar-body { min-width: 0; flex: 1 1 auto; }
+.ar-date {
+  font-size: 12px;
+  color: var(--fg-mute);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+}
+.ar-title {
+  display: block;
+  margin: 3px 0 0;
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 700;
+  color: var(--fg-strong);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ar-card:hover .ar-title { color: var(--accent); }
+.ar-desc {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--fg-dim);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---------- 6. 分类视图：磁贴墙 ---------- */
+.ar-catwall {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px;
+  margin-top: 24px;
+}
+.ar-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px 18px 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+  text-align: left;
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: transform .22s, border-color .22s, box-shadow .22s;
+}
+.ar-tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow);
+}
+.ar-tile[aria-pressed="true"] { border-color: var(--accent); }
+.ar-tile-name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--fg-strong);
+}
+.ar-tile-name i { font-size: 12.5px; color: var(--accent); }
+.ar-tile-n { font-size: 12px; color: var(--fg-mute); }
+/* 底部进度条：该类文章占全站的比例 */
+.ar-tile-bar {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 12px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--line);
+  overflow: hidden;
+}
+.ar-tile-bar span {
+  display: block;
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+/* ---------- 7. 标签视图：标签云 ---------- */
+.ar-cloud {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 10px 12px;
+  margin-top: 24px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+}
+.ar-cloud button {
+  border: 0;
+  padding: 2px 4px;
+  background: transparent;
+  color: var(--fg-dim);
+  font-family: inherit;
+  /* 字号由 JS 按出现次数线性映射到 13~22px */
+  font-size: 15px;
+  cursor: pointer;
+  transition: color .2s;
+}
+.ar-cloud button:hover { color: var(--accent); }
+.ar-cloud button[aria-pressed="true"] {
+  color: var(--accent);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.ar-cloud .ar-cloud-n {
+  font-size: 10.5px;
+  vertical-align: super;
+  opacity: .6;
+  margin-left: 1px;
+}
+
+/* ---------- 8. 空状态 / 加载更多 ---------- */
+.ar-empty {
+  margin-top: 26px;
+  padding: 40px 20px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--fg-mute);
+}
+.ar-empty i { display: block; margin-bottom: 10px; font-size: 22px; opacity: .6; }
+.ar-empty button {
+  margin-top: 14px;
+  padding: 7px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--card-3);
+  color: var(--fg-strong);
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.ar-empty button:hover { background: var(--card-hover); }
+
+/* 「加载更多」：只渲染前 N 条，避免一次插入上百个卡片 */
+.ar-more {
+  display: block;
+  margin: 20px auto 0;
+  padding: 9px 22px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  background: var(--card-2);
+  color: var(--fg-strong);
+  font-family: inherit;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition: background .22s;
+}
+.ar-more:hover { background: var(--card-hover); }
+.ar-more[hidden] { display: none; }
+
+/* ---------- 9. 移动端 ---------- */
+@media (max-width: 640px) {
+  .ar-card { padding: 10px 12px; gap: 11px; }
+  .ar-thumb,
+  .ar-card .ar-thumb img { width: 52px; height: 52px; max-width: 52px; }
+  .ar-thumb { flex-basis: 52px; }
+  .ar-title { font-size: 15px; white-space: normal; }
+  .ar-desc { font-size: 12.5px; }
+  .ar-catwall { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; }
+  .ar-tile { padding: 13px 14px 20px; }
+  .ar-tile-bar { left: 14px; right: 14px; }
+  .ar-cloud { padding: 16px; gap: 8px 10px; }
+}
+
+.ar-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+/* 卡片上的分类 / 标签按钮：就地筛选，不跳页 */
+.ar-meta button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  border: 1px solid transparent;
+  border-radius: var(--r-pill);
+  background: var(--card-3);
+  color: var(--fg-mute);
+  font-family: inherit;
+  font-size: 12px;
+  line-height: 1.7;
+  cursor: pointer;
+  transition: color .2s, background .2s;
+}
+.ar-meta button:hover { color: var(--accent-fg); background: var(--accent); }
+.ar-meta .ar-tag::before { content: "#"; opacity: .55; }
+.ar-meta .ar-cat { color: var(--fg-dim); }
+.ar-meta .ar-cat i { font-size: 10.5px; opacity: .8; }
+/* 标签收起：只露前 2 个，其余在「+N」后面 */
+.ar-meta .ar-tag-more {
+  padding: 2px 8px;
+  border-style: dashed;
+  border-color: var(--line-strong);
+  color: var(--fg-mute);
+  font-variant-numeric: tabular-nums;
+}
+.ar-meta .ar-tag-more.is-open { border-style: solid; }
+/* 收起的标签用 display: contents 让它像「没有包裹层」一样参与换行。
+ * 注意：浏览器的 [hidden]{display:none} 只是元素级默认样式，
+ * 优先级低于这里的类选择器 —— 所以 .ar-tags-rest[hidden] 必须显式写
+ * display:none，否则整串标签会一直露在外面（踩过一次）。 */
+.ar-meta .ar-tags-rest { display: contents; }
+.ar-meta .ar-tags-rest[hidden] { display: none; }
+
+/* ============================================================
+ * 10. 方案 A：工具栏（视图 + 密度）、月份链路、三种密度
+ * ------------------------------------------------------------
+ * 时间轴容器上会挂 is-compact / is-standard / is-grid，
+ * 三种密度共用同一份 DOM，只靠这里的规则改行高与排布。
+ * ============================================================ */
+
+/* ---------- 10.1 工具栏：左边三视图，右边密度 ---------- */
+.ar-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+.ar-toolbar .ar-tabs { margin: 0; }
+
+.ar-density {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--card-2);
+}
+.ar-density button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--fg-mute);
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+  transition: background .22s, color .22s;
+}
+.ar-density button i { font-size: 11.5px; }
+.ar-density button:hover { color: var(--fg-strong); background: var(--card-hover); }
+.ar-density button[aria-pressed="true"] {
+  background: var(--card);
+  color: var(--fg-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ---------- 10.2 月份链路：年 → 月 → 文章 ---------- */
+.ar-rail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: -6px 0 14px;
+  padding-left: 2px;
+}
+.ar-month {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  padding: 3px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  background: var(--card-2);
+  color: var(--fg-dim);
+  font-family: inherit;
+  font-size: 12.5px;
+  line-height: 1.7;
+  cursor: pointer;
+  transition: color .2s, border-color .2s, background .2s;
+}
+.ar-month:hover { color: var(--fg-strong); border-color: var(--line-strong); }
+.ar-month-n {
+  font-size: 10.5px;
+  color: var(--fg-mute);
+  font-variant-numeric: tabular-nums;
+}
+.ar-month[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+.ar-month[aria-pressed="true"] .ar-month-n { color: var(--accent-fg); opacity: .8; }
+
+/* ---------- 10.3 密度：紧凑 ---------- */
+/* 一行 40px 左右，不显示摘要和缩略图，标签只在 hover / focus 时出现。
+ * 15 篇大约 650px，一屏能看完一整年。 */
+.ar-timeline.is-compact .ar-list { display: flex; flex-direction: column; gap: 2px; }
+.ar-timeline.is-compact .ar-card {
+  padding: 7px 12px;
+  border-color: transparent;
+  border-radius: var(--r-control);
+  background: transparent;
+  box-shadow: none;
+}
+.ar-timeline.is-compact .ar-card:hover,
+.ar-timeline.is-compact .ar-card:focus-visible {
+  border-color: var(--line);
+  background: var(--card-2);
+}
+.ar-timeline.is-compact .ar-thumb { display: none; }
+.ar-timeline.is-compact .ar-body {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+}
+.ar-timeline.is-compact .ar-date {
+  flex: 0 0 auto;
+  width: 74px;
+  margin: 0;
+  font-size: 12px;
+}
+.ar-timeline.is-compact .ar-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 14.5px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ar-timeline.is-compact .ar-desc { display: none; }
+/* 紧凑态把标签折到行尾，默认不占高度 */
+.ar-timeline.is-compact .ar-meta {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  margin: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .2s;
+}
+.ar-timeline.is-compact .ar-card:hover .ar-meta,
+.ar-timeline.is-compact .ar-card:focus-within .ar-meta {
+  opacity: 1;
+  pointer-events: auto;
+}
+.ar-timeline.is-compact .ar-meta button {
+  padding: 0 7px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+/* ---------- 10.4 密度：标准（原卡片，摘要收成 1 行） ---------- */
+.ar-timeline.is-standard .ar-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ar-timeline.is-standard .ar-card:hover .ar-desc,
+.ar-timeline.is-standard .ar-card:focus-within .ar-desc {
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+/* ---------- 10.5 密度：网格（封面平铺） ---------- */
+.ar-timeline.is-grid .ar-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 16px;
+  padding: 4px 0 0;
+}
+/* 网格里不需要时间轴那条竖线和圆点 */
+.ar-timeline.is-grid::before { display: none; }
+.ar-timeline.is-grid .ar-item { padding-left: 0; }
+.ar-timeline.is-grid .ar-item::before { display: none; }
+.ar-timeline.is-grid .ar-card {
+  flex-direction: column;
+  height: 100%;
+  padding: 0 0 12px;
+  overflow: hidden;
+  border-radius: var(--r-card);
+}
+.ar-timeline.is-grid .ar-thumb,
+.ar-timeline.is-grid .ar-card .ar-thumb img {
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  flex-basis: auto;
+  aspect-ratio: 16 / 10;
+  border-radius: 0;
+  object-fit: cover;
+}
+.ar-timeline.is-grid .ar-body { padding: 11px 14px 0; }
+.ar-timeline.is-grid .ar-date { margin-bottom: 5px; }
+.ar-timeline.is-grid .ar-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 15px;
+  white-space: normal;
+  text-overflow: clip;
+}
+.ar-timeline.is-grid .ar-desc { display: none; }
+.ar-timeline.is-grid .ar-meta { margin-top: 7px; }
+
+/* ---------- 10.6 工具栏 / 链路的移动端 ---------- */
+@media (max-width: 640px) {
+  .ar-toolbar { gap: 8px; }
+  .ar-density { margin-left: 0; width: 100%; }
+  .ar-density button { flex: 1 1 0; justify-content: center; }
+  .ar-rail { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .ar-rail::-webkit-scrollbar { display: none; }
+  .ar-month { flex: 0 0 auto; }
+  .ar-timeline.is-compact .ar-body { flex-direction: column; align-items: flex-start; gap: 2px; }
+  .ar-timeline.is-compact .ar-date { width: auto; }
+  /* 触屏没有 hover：紧凑态的标签直接可见、可点 */
+  .ar-timeline.is-compact .ar-meta {
+    opacity: 1;
+    pointer-events: auto;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+  /* 窄屏固定两列（auto-fill + minmax 在 350px 版心会排出「一列半」并溢出） */
+  .ar-timeline.is-grid .ar-list { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+}

@@ -31,6 +31,7 @@
     fit: 'width',         // width | page | custom
     activePage: 1,
     activeAnnotation: null,
+    popAnnotation: null,
     selection: null,
     annotations: [],
     notes: [],
@@ -43,6 +44,7 @@
     pageTasks: new Map(), // 正在渲染中的页码 → Promise
     idleTask: null,
     keepRange: 6,         // 可视页前后保留多少页位图
+    lastScrollAt: 0,      // 上次滚动/layout-shift 的时间戳（用于「滚动变慢」判定）
     // 搜索
     fullText: null,       // 整篇文本缓存
     textTask: null,
@@ -55,6 +57,7 @@
     busy: false,
     // 图区预览（超高分辨率局部放大）
     regionMode: false,    // 是否处于「框选放大」模式
+    annotRegionMode: false, // 是否处于「框选图片写批注」模式（一次性）
     regionHot: [],        // 当前页自动识别出的图区（页面基础坐标）
     regionHotPage: 0,
     regionDrag: null,
@@ -64,6 +67,7 @@
     regionCanvas: null,
     regionTask: null,     // 预览渲染的 RenderTask（关闭时取消）
     regionUrl: null,
+    view: 'reader',       // reader | shelf（书架视图由 library.js 渲染）
     listeners: []         // pjax 清理用
   }
 
@@ -229,7 +233,10 @@
     if (!state.measured) return state.scale
     const box = scroller()
     if (!box) return state.scale
-    const avail = box.clientWidth - 32
+    // 减去左右 padding（各 16px），再减掉竖直滚动条占掉的宽度：
+    // 否则「适宽」算出来的页面正好等于可用宽度，滚动条一出现就横向溢出、底部冒出横向滚动条。
+    const bar = Math.max(0, box.offsetWidth - box.clientWidth)
+    const avail = box.clientWidth - 32 - bar
     if (state.fit === 'width') return Math.max(0.2, avail / state.measured.width)
     if (state.fit === 'page') {
       const h = window.innerHeight - 180
@@ -238,18 +245,34 @@
     return state.scale
   }
 
+  /**
+   * 工具栏百分比。
+   * 以前这个标签在 index.html 里写死 100%，JS 从不更新，放大缩小都显示 100%。
+   * 注意：fit=width/page 时 state.scale 是「上次的值」，真实倍率要由 computeScale 算。
+   */
+  const syncZoomLabel = () => {
+    const label = cache('bk-zoom-label')
+    if (!label) return
+    const scale = state.pdf ? computeScale() : state.scale
+    label.textContent = Math.round(scale * 100) + '%'
+  }
+
 
   /* ---------------- 骨架：只建占位，不画位图 ---------------- */
   const buildSkeleton = async () => {
     const box = scroller()
     if (!box) return
+    // 清空 DOM 会让 scrollHeight 归零，浏览器随即把 scrollTop 钳到 0。
+    // 即便调用方随后会 restoreAnchor，中间那一帧的「跳回顶部」也已经被用户看到了。
+    // 所以先记下来，骨架一建好立刻写回，全程不出现 0。
+    const keepScroll = box.scrollTop
     box.innerHTML = ''
-    box.scrollTop = 0
     const first = await state.pdf.getPage(1)
     const vp = first.getViewport({ scale: 1 })
     state.measured = { width: vp.width, height: vp.height }
     state.scale = computeScale()
     syncMetrics()
+    syncZoomLabel()
 
     const total = state.pageCount
     const w = Math.round(state.measured.width * state.scale)
@@ -268,6 +291,11 @@
       frag.appendChild(page)
     }
     box.appendChild(frag)
+    // 新骨架的高度已就位，把清空期间被钳掉的滚动位置写回（同样压掉 smooth）
+    const prevBehavior = box.style.scrollBehavior
+    box.style.scrollBehavior = 'auto'
+    box.scrollTop = keepScroll
+    box.style.scrollBehavior = prevBehavior
 
     observePages()
   }
@@ -317,6 +345,9 @@
 
   /* 预取：只画位图不建文本层，滚到再把文本层补上 */
   const prefetchPage = async n => {
+    // 已经在正式渲染（或排队中）的页不要再开第二个 render：
+    // PDF.js 对同一 canvas 并发两次 render，会互相打断，最后留下半张残图。
+    if (state.pageTasks.has(n) || state.rendered.has(n)) return
     const node = qs(scroller(), `.bk-page[data-page="${n}"]`)
     if (!node || !state.pdf) return
     if (node.dataset.rendered !== '0') return
@@ -380,7 +411,7 @@
     const box = cache('bk-toast')
     if (!box) return
     box.textContent = msg
-    box.className = 'bk-toast is-show' + (type ? ' is-' + type : '')
+    box.className = 'bk-toast is-on' + (type ? ' is-' + type : '')
     clearTimeout(toastTimer)
     toastTimer = setTimeout(() => { box.className = 'bk-toast' }, ms)
   }
@@ -389,13 +420,13 @@
     state.busy = flag
     const box = cache('bk-busy')
     if (!box) return
-    box.classList.toggle('is-show', !!flag)
+    box.classList.toggle('is-on', !!flag)
     if (label) qs(box, '.bk-busy-text').textContent = label
   }
 
   /** 让某一页的高亮块闪烁一下（搜索命中 / 跳转定位用） */
   const flashMarks = pageNo => {
-    const pageEl = document.getElementById(`bk-p${pageNo}`)
+    const pageEl = pageNode(pageNo)
     if (!pageEl) return
     pageEl.querySelectorAll('.bk-hl, .bk-hit').forEach(mark => {
       mark.classList.remove('is-flash')
@@ -405,9 +436,67 @@
     })
   }
 
+  /**
+   * 合并同一行里相邻的高亮矩形。
+   *
+   * 为什么需要：PDF 文本层用「绝对定位跳格」还原原文排版，词与词之间常常是
+   * 跳过一段空白而不是打一个空格字符（实测本仓库那份双栏 PDF：`mediated`
+   * 右边界 756，下一个词从 773 才开始，中间空出 17px）。于是 getClientRects()
+   * 会为一个连续句子返回好几段矩形，画出来就是断断续续的碎块。
+   * 这里只合并「同一行 + 间隙小于阈值」的矩形，绝不跨行合并（双栏会被粘在一起）。
+   */
+  const mergeRects = (rects, pageWidth = 0) => {
+    if (rects.length < 2) return rects
+    // 单段连续高亮的上限：页宽的一半。双栏 PDF 左右栏之间的留白通常更大，
+    // 这条限制保证「双栏不会被粘成一整条横贯页面的色带」。
+    // 传了 pageWidth 就用页宽（可靠），否则退化为本组矩形的跨度。
+    const span = pageWidth > 0
+      ? pageWidth
+      : Math.max(...rects.map(r => r.left + r.width)) - Math.min(...rects.map(r => r.left))
+    const maxRun = span * 0.55
+    const rows = []
+    // 先按 top 分行（容差 30% 行高，应对上下标造成的 1~2px 抖动）
+    ;[...rects].sort((a, b) => a.top - b.top || a.left - b.left).forEach(rect => {
+      const row = rows.find(r => Math.abs(r.top - rect.top) < Math.max(2, rect.height * 0.3))
+      if (row) {
+        row.items.push(rect)
+        row.top = Math.min(row.top, rect.top)
+        row.height = Math.max(row.height, rect.height)
+      } else {
+        rows.push({ top: rect.top, height: rect.height, items: [rect] })
+      }
+    })
+
+    const out = []
+    rows.forEach(row => {
+      row.items.sort((a, b) => a.left - b.left)
+      // 阈值用「本行矩形高度的中位数」，而不是随合并不断变化的 row.height
+      const heights = row.items.map(r => r.height).sort((a, b) => a - b)
+      const lineH = heights[Math.floor(heights.length / 2)] || row.height || 1
+      const limit = lineH * 0.8
+      let cur = { ...row.items[0] }
+      row.items.slice(1).forEach(rect => {
+        const gap = rect.left - (cur.left + cur.width)
+        // 间隙为负（矩形重叠）或小于阈值 → 视为同一行的连续文字
+        if (gap < limit) {
+          const right = Math.max(cur.left + cur.width, rect.left + rect.width)
+          if (right - cur.left <= maxRun) {
+            cur.width = right - cur.left
+            cur.height = Math.max(cur.height, rect.height)
+            return
+          }
+        }
+        out.push(cur)
+        cur = { ...rect }
+      })
+      out.push(cur)
+    })
+    return out
+  }
+
   /** 把某一页的标注画到它的高亮层上（锚点重新定位，缩放不丢） */
   const paintHighlights = pageNo => {
-    const pageEl = document.getElementById(`bk-p${pageNo}`)
+    const pageEl = pageNode(pageNo)
     if (!pageEl) return
     const wrap = pageEl.querySelector('.bk-canvas-wrap')
     const textLayer = wrap && wrap.querySelector('.textLayer')
@@ -418,12 +507,53 @@
     state.annotations
       .filter(a => Number(a.page) === Number(pageNo))
       .forEach(a => {
+        // 图区标注没有文字，不能走锚点引擎：直接按存的点坐标 × 缩放画框
+        if (isRegionAnn(a)) {
+          if (!a.region) return
+          const k = state.scale
+          const r = a.region
+          const box = document.createElement('div')
+          box.className = 'bk-hl is-region has-note'
+          box.dataset.id = a.id
+          box.dataset.type = 'region'
+          box.style.left = (r.x * k) + 'px'
+          box.style.top = (r.y * k) + 'px'
+          box.style.width = Math.max(0, r.width * k) + 'px'
+          box.style.height = Math.max(0, r.height * k) + 'px'
+          box.style.setProperty('--bk-region-color', a.color || '#7aa7ff')
+          // 父层 .bk-hl-layer 是 pointer-events:none，子元素必须显式改回 auto
+          // 才能接收鼠标（同为「可点开批注」，与文字高亮的规则一致）
+          box.style.pointerEvents = 'auto'
+          box.title = '点开批注'
+          // 气泡要贴着框的左上角出（与文字高亮同一套定位）
+          a._box = {
+            left: r.x * k,
+            top: r.y * k,
+            right: (r.x + r.width) * k,
+            bottom: (r.y + r.height) * k,
+            page: Number(pageNo)
+          }
+          hlLayer.appendChild(box)
+          return
+        }
         const ranges = anchor.toRanges(a, textLayer)
         if (!ranges.length) {
           console.warn('[books] annotation anchor failed', a.id, String(a.quote).slice(0, 40))
           return
         }
-        anchor.rectsOf(ranges, textLayer).forEach(rect => {
+        const merged = mergeRects(anchor.rectsOf(ranges, textLayer), pageEl.offsetWidth)
+        // 记下这条标注的包围盒，气泡定位要用（多行时取并集）
+        const box = merged.reduce((acc, r) => {
+          if (!acc) return { left: r.left, top: r.top, right: r.left + r.width, bottom: r.top + r.height }
+          return {
+            left: Math.min(acc.left, r.left),
+            top: Math.min(acc.top, r.top),
+            right: Math.max(acc.right, r.left + r.width),
+            bottom: Math.max(acc.bottom, r.top + r.height)
+          }
+        }, null)
+        if (box) a._box = { ...box, page: Number(pageNo) }
+        merged.forEach(rect => {
           const mark = document.createElement('div')
           mark.className = 'bk-hl'
           mark.dataset.id = a.id
@@ -441,7 +571,13 @@
           } else {
             mark.style.background = color
           }
-          if (String(a.note || '').trim()) mark.classList.add('has-note')
+          if (String(a.note || '').trim()) {
+            mark.classList.add('has-note')
+            // 有批注的高亮才接收鼠标：点一下直接出气泡，不必去右侧列表里找
+            // （纯高亮仍然穿透，选字交给 textLayer）
+            mark.style.pointerEvents = 'auto'
+            mark.title = '点开批注'
+          }
           hlLayer.appendChild(mark)
         })
       })
@@ -449,6 +585,494 @@
 
   const repaintAll = () => {
     state.rendered.forEach(n => paintHighlights(n))
+  }
+
+  /* ---------------- 随文批注气泡 ---------------- */
+
+  /**
+   * 气泡挂在 .bk-page 里，用页面内绝对坐标定位。
+   * 这样它随页面滚动、随缩放重排一起动，不需要任何 position:fixed 的同步逻辑。
+   */
+  let popId = null            // 当前打开的标注 id
+  let popEditing = false      // 是否处于编辑态
+
+  const popNode = () => {
+    const box = scroller()
+    return box ? qs(box, '.bk-note-pop') : null
+  }
+
+  /** 彻底移除气泡（切换标注、关闭、页面重排时调用） */
+  const closeNotePop = () => {
+    const box = scroller()
+    if (!box) return
+    const node = qs(box, '.bk-note-pop')
+    if (node) node.remove()
+    const lead = qs(box, '.bk-note-pop-lead')
+    if (lead) lead.remove()
+    box.querySelectorAll('.bk-hl.is-selected').forEach(el => el.classList.remove('is-selected'))
+    popId = null
+    popEditing = false
+    state.popAnnotation = null
+  }
+
+  /**
+   * 计算气泡位置与宽度。
+   *
+   * 优先顺序：页内左右空隙 → 页内空白处盖住少量文字 → 高亮下方 / 上方。
+   * 宽度会按实际可用空间收缩（最小 200px），而不是死守 300px ——
+   * 「适宽」模式下页面几乎占满滚动区，页外留白只有 16px 左右，
+   * 死守 300px 就只可能整个压在正文上，遮挡面积更大。
+   */
+  const placeNotePop = (pop, pageEl, rect) => {
+    const pageW = pageEl.offsetWidth
+    const pageH = pageEl.offsetHeight
+    const pad = 8
+    const gap = 8
+    const MIN_W = 200
+    const MAX_W = 320
+
+    // 先量高度（宽度先按最大给，避免因换行把高度算少）
+    pop.style.width = MAX_W + 'px'
+    pop.style.left = '0px'
+    pop.style.top = '0px'
+    const hFull = pop.offsetHeight || 200
+
+    const rightSpace = pageW - rect.right      // 高亮右侧的本行余量
+    const leftSpace = rect.left                // 高亮左侧的本行余量
+
+    let left
+    let top
+    let w = MAX_W
+
+    if (rightSpace >= MIN_W + gap && rightSpace >= leftSpace) {
+      // 放在高亮右侧，宽度取可用空间（最多 MAX_W）
+      w = Math.min(MAX_W, rightSpace - gap)
+      left = rect.right + gap
+      top = rect.top
+    } else if (leftSpace >= MIN_W + gap) {
+      w = Math.min(MAX_W, leftSpace - gap)
+      left = rect.left - w - gap
+      top = rect.top
+    } else if (pageH - rect.bottom >= hFull + gap + pad) {
+      // 行太满：放到高亮下方（窄一点，减少遮挡）
+      w = Math.min(pageW - pad * 2, 280)
+      left = Math.min(rect.left, pageW - w - pad)
+      top = rect.bottom + gap
+    } else {
+      w = Math.min(pageW - pad * 2, 280)
+      left = Math.min(rect.left, pageW - w - pad)
+      top = Math.max(pad, rect.top - hFull - gap)
+    }
+
+    pop.style.width = Math.round(w) + 'px'
+    const h = Math.min(pop.offsetHeight || hFull, pageH - pad * 2)
+    left = Math.max(pad, Math.min(left, pageW - w - pad))
+    top = Math.max(pad, Math.min(top, Math.max(pad, pageH - h - pad)))
+    pop.style.left = Math.round(left) + 'px'
+    pop.style.top = Math.round(top) + 'px'
+    return { left, top, w, h }
+  }
+
+  /**
+   * 拖动时把气泡收进视口。
+   *
+   * 页面通常比视口高好几倍，如果只按页面边界夹紧，气泡会被拖到
+   * 屏幕下方「消失」——用户看不到也抓不回来。这里改用页面内坐标与
+   * 视口的交集做约束，保证拖动过程中气泡始终整块可见。
+   */
+  const keepInView = (pop, at) => {
+    const pageEl = pop.parentElement
+    const pageRect = pageEl.getBoundingClientRect()
+    const view = scroller().getBoundingClientRect()
+    const margin = 8
+    const minY = view.top - pageRect.top + margin
+    const maxY = view.bottom - pageRect.top - at.h - margin
+    const top = Math.max(minY, Math.min(at.top, maxY))
+    if (top !== at.top) {
+      pop.style.top = Math.round(top) + 'px'
+      at.top = top
+    }
+    return at
+  }
+
+  /**
+   * 让气泡落在指定偏移处（已拖动过的标注走这里）。
+   * 不重新做「找空白」的排版决策，只负责夹进页面边界内。
+   */
+  const placeNotePopAt = (pop, pageEl, pos) => {
+    const pageW = pageEl.offsetWidth
+    const pageH = pageEl.offsetHeight
+    const pad = 8
+    const w = Math.min(pos.w || pop.offsetWidth || 320, pageW - pad * 2)
+    const h = Math.min(pop.offsetHeight || 120, pageH - pad * 2)
+    const left = Math.max(pad, Math.min(pos.left, pageW - w - pad))
+    const top = Math.max(pad, Math.min(pos.top, pageH - h - pad))
+    pop.style.width = Math.round(w) + 'px'
+    pop.style.left = Math.round(left) + 'px'
+    pop.style.top = Math.round(top) + 'px'
+    return { left, top, w, h }
+  }
+
+  /**
+   * 把气泡变成可拖动。
+   *
+   * 只认 `.bk-note-pop-head` 作为手柄——正文区/按钮照常可点，也不会误触发选中。
+   * 用 pointer capture 而不是 window mousemove：
+   * 指针移出气泡甚至移出页面，事件仍然回到这个元素，松手一定收得到。
+   * 拖动结束把位置写回标注（ann.pos），下次打开就在原地。
+   */
+  const wireDrag = pop => {
+    const head = qs(pop, '.bk-note-pop-head')
+    if (!head || head.dataset.dragWired) return
+    head.dataset.dragWired = '1'
+
+    let drag = null
+    let lastTap = 0
+
+    head.addEventListener('pointerdown', e => {
+      // 头部上的按钮不是手柄，别抢它们的点击
+      if (e.target.closest('button')) return
+      if (e.button !== 0) return
+      e.preventDefault()
+
+      // 手动判双击：pointerdown 的 preventDefault 会抑制 dblclick 事件，
+      // 所以不能靠 'dblclick'，只能自己数两次按下的时间间隔。
+      const now = Date.now()
+      if (now - lastTap < 320) {
+        lastTap = 0
+        const ann = state.annotations.find(a => a.id === pop.dataset.id)
+        if (ann && ann.pos) {
+          ann.pos = null
+          store.saveAnnotation(ann).catch(() => {})
+          openNotePop(ann.id, { force: true, editing: popEditing })
+          toast('已恢复自动位置')
+        }
+        return
+      }
+      lastTap = now
+
+      const pageEl = pop.parentElement
+      drag = {
+        id: e.pointerId,
+        sx: e.clientX,
+        sy: e.clientY,
+        ox: pop.offsetLeft,
+        oy: pop.offsetTop,
+        pageEl
+      }
+      pop.classList.add('is-dragging')
+      document.body.classList.add('bk-dragging-pop')
+      try { head.setPointerCapture(e.pointerId) } catch (_) {}
+    })
+
+    head.addEventListener('pointermove', e => {
+      if (!drag || e.pointerId !== drag.id) return
+      const pageEl = drag.pageEl
+      // 拖动过程中版面可能因缩放改变，每次都按当前尺寸夹一遍
+      const at = placeNotePopAt(pop, pageEl, {
+        left: drag.ox + (e.clientX - drag.sx),
+        top: drag.oy + (e.clientY - drag.sy),
+        w: pop.offsetWidth
+      })
+      // 再把气泡整体留在视口内：否则拖到页面边缘后，气泡会停在
+      // 屏幕外抓不回来（页面比视口高得多时很常见）。
+      keepInView(pop, at)
+      const ann = state.annotations.find(a => a.id === pop.dataset.id)
+      const rect = ann && ann._box
+      if (rect) drawLead(pageEl, rect, at)
+    })
+
+    const end = e => {
+      if (!drag || (e && e.pointerId !== drag.id)) return
+      try { head.releasePointerCapture(drag.id) } catch (_) {}
+      pop.classList.remove('is-dragging')
+      document.body.classList.remove('bk-dragging-pop')
+      drag = null
+      const ann = state.annotations.find(a => a.id === pop.dataset.id)
+      if (!ann) return
+      const pos = {
+        left: Math.round(pop.offsetLeft),
+        top: Math.round(pop.offsetTop),
+        w: Math.round(pop.offsetWidth)
+      }
+      // 没真的移动就别写库，避免无谓 IO
+      if (ann.pos && ann.pos.left === pos.left && ann.pos.top === pos.top) return
+      ann.pos = pos
+      store.saveAnnotation(ann).catch(() => {})
+    }
+    head.addEventListener('pointerup', end)
+    head.addEventListener('pointercancel', end)
+  }
+
+  /** 从高亮到气泡画一条细引线，明确「这张便签属于这段文字」 */
+  const drawLead = (pageEl, rect, at) => {
+    let lead = qs(pageEl, '.bk-note-pop-lead')
+    if (!lead) {
+      lead = document.createElement('div')
+      lead.className = 'bk-note-pop-lead'
+      pageEl.appendChild(lead)
+    }
+    const rightSide = at.left >= rect.right
+    const leftSide = at.left + at.w <= rect.left
+    if (rightSide || leftSide) {
+      const y = Math.max(rect.top, at.top) + 12
+      const x1 = rightSide ? rect.right : at.left + at.w
+      const x2 = rightSide ? at.left : rect.left
+      lead.style.display = ''
+      lead.style.left = Math.round(x1) + 'px'
+      lead.style.top = Math.round(y) + 'px'
+      lead.style.width = Math.round(Math.max(0, x2 - x1)) + 'px'
+      lead.style.height = '1px'
+    } else {
+      lead.style.display = 'none'
+    }
+  }
+
+  /** 渲染气泡内容（只读态 / 编辑态） */
+  const renderNotePop = (ann, pageEl, rect, editing) => {
+    const pop = document.createElement('div')
+    pop.className = 'bk-note-pop'
+    pop.dataset.id = ann.id
+    pop.style.setProperty('--pop-color', ann.color || '#ffd666')
+
+    const quote = String(ann.quote || '')
+    const text = String(ann.note || '')
+    pop.innerHTML = `
+      <div class="bk-note-pop-head">
+        <i class="fas fa-grip-vertical bk-note-pop-grip" aria-hidden="true"></i>
+        <span class="bk-note-pop-page">P${ann.page}</span>
+        <span class="bk-note-pop-sp"></span>
+        <button type="button" data-pop="edit" title="${editing ? '完成' : '编辑批注'}">
+          <i class="fas ${editing ? 'fa-check' : 'fa-pen'}"></i>
+        </button>
+        <button type="button" data-pop="locate" title="在右侧列表中定位"><i class="fas fa-list"></i></button>
+        <button type="button" data-pop="close" title="关闭"><i class="fas fa-xmark"></i></button>
+      </div>
+      ${isRegionAnn(ann)
+        ? regionPopFigure(ann)
+        : `<p class="bk-note-pop-quote">${esc(quote)}\u200b</p>`}
+      ${editing
+        ? `<textarea class="bk-note-pop-body" placeholder="写下你的批注…（Ctrl+Enter 保存，Esc 取消）">${esc(text)}</textarea>`
+        : `<div class="bk-note-pop-text${text.trim() ? '' : ' is-empty'}">${text.trim() ? esc(text) : '还没有批注内容，点右上角笔形图标开始写'}</div>`}
+      <div class="bk-note-pop-foot">
+        <button type="button" data-pop="delete" title="删除这条标注">删除</button>
+        <span class="bk-note-pop-sp"></span>
+        ${editing ? '<button type="button" class="is-primary" data-pop="save">保存</button>' : ''}
+      </div>`
+
+    pageEl.appendChild(pop)
+    // 拖过的气泡记住上次位置；没拖过才自动排版到空白处
+    const saved = ann.pos
+    const at = saved
+      ? placeNotePopAt(pop, pageEl, saved)
+      : placeNotePop(pop, pageEl, rect)
+    drawLead(pageEl, rect, at)
+    wireDrag(pop)
+
+    // 图区标注：先出门气泡（不被渲染拖慢），缩略图到了再填进去
+    if (isRegionAnn(ann)) fillPopThumb(pop)
+
+    if (editing) {
+      const area = qs(pop, '.bk-note-pop-body')
+      if (area) {
+        area.focus()
+        // 光标放末尾，方便接着往下写
+        area.setSelectionRange(area.value.length, area.value.length)
+      }
+    }
+    return pop
+  }
+
+  /**
+   * 打开某条标注的气泡。
+   *
+   * 关键：气泡能不能出现，只取决于「那条高亮在哪」。
+   * 页面没渲染时整页 PDF 重绘要几百毫秒，但高亮的位置其实可以用
+   * 锚点引擎在文本层之外先算出来 —— 所以这里绝不为气泡去 await 整页渲染，
+   * 而是先把气泡画出来，页面渲染好之后再自动校正一次位置。
+   */
+  const openNotePop = async (annId, opts = {}) => {
+    const ann = state.annotations.find(a => a.id === annId)
+    if (!ann) return
+    closeNotePop()
+    const pageEl = pageNode(ann.page)
+    if (!pageEl) return
+
+    const render = () => {
+      // 同一 id 的气泡已经在了就别重建，省掉一次 DOM 抖动
+      const existing = qs(pageEl, '.bk-note-pop')
+      if (existing && existing.dataset.id === ann.id && !opts.force) return existing
+      if (existing) closeNotePop()
+      popId = ann.id
+      popEditing = !!opts.editing
+      state.popAnnotation = ann
+      return renderNotePop(ann, pageEl, ann._box, popEditing)
+    }
+
+    let pop = null
+    if (isRegionAnn(ann)) {
+      // 图区标注的坐标存在 region 里，不依赖文本层，也就无需等渲染
+      paintHighlights(ann.page)
+      syncRegionBoxes(ann.page)
+      if (ann._box) pop = render()
+    } else if (ann._box) {
+      pop = render()
+    } else {
+      // 没有包围盒：先用锚点算一次位置（不依赖页面已渲染）
+      paintHighlights(ann.page)
+      if (ann._box) {
+        pop = render()
+      } else if (!pageEl.querySelector('.textLayer')) {
+        // 连文本层都没有：先渲染，这一步无法绕过（没有文字就没有坐标）
+        toast('正在渲染这一页…', 'info')
+        await ensurePage(ann.page)
+        paintHighlights(ann.page)
+        if (ann._box) pop = render()
+      }
+    }
+    if (!pop) { toast('这一页的标注定位失败', 'warn'); return }
+
+    pageEl.querySelectorAll(`.bk-hl[data-id="${ann.id}"]`).forEach(el => el.classList.add('is-selected'))
+
+    // 气泡若落在视口外，轻轻地滚进来；已在视口内则不动，免得打断阅读节奏
+    const rect = pop.getBoundingClientRect()
+    const view = scroller().getBoundingClientRect()
+    if (rect.top < view.top + 8) {
+      scroller().scrollBy({ top: rect.top - view.top - 24, behavior: 'smooth' })
+    } else if (rect.bottom > view.bottom - 8) {
+      scroller().scrollBy({ top: rect.bottom - view.bottom + 24, behavior: 'smooth' })
+    }
+
+    // 联动右侧列表
+    state.activeAnnotation = ann.id
+    markActiveNote()
+  }
+
+  /** 保存气泡里编辑的批注文本 */
+  const saveNotePop = async () => {
+    const pop = popNode()
+    if (!pop || !popId) return
+    const area = qs(pop, '.bk-note-pop-body')
+    const ann = state.annotations.find(a => a.id === popId)
+    if (!area || !ann) return
+    ann.note = area.value
+    try {
+      await store.saveAnnotation(ann)
+    } catch (err) {
+      toast('保存失败：' + (err && err.message ? err.message : '未知错误'), 'error')
+      return
+    }
+    // 右侧卡片里也有同一个批注框，保持内容一致
+    const card = document.querySelector(`.bk-ann[data-id="${ann.id}"] .bk-ann-note`)
+    if (card && card.value !== ann.note) card.value = ann.note
+    paintHighlights(ann.page)
+    openNotePop(ann.id, { editing: false })
+    toast('批注已保存')
+  }
+
+  /** 删除标注（气泡与侧栏共用同一条路径） */
+  const deleteAnnotation = async id => {
+    const ann = state.annotations.find(a => a.id === id)
+    if (!ann) return
+    await store.removeAnnotation(id)
+    // 图区标注还挂着缩略图 blob，一起回收，否则 IndexedDB 里会越攒越多
+    if (isRegionAnn(ann)) {
+      releaseThumb(id)
+      store.deleteBlob(thumbKey(id)).catch(() => {})
+    }
+    state.annotations = state.annotations.filter(a => a.id !== id)
+    if (popId === id) closeNotePop()
+    repaintAll()
+    renderAnnotationList()
+  }
+
+
+  /** 气泡相关的事件：按钮、快捷键、点高亮打开 */
+  const wireNotePop = () => {
+    const box = scroller()
+    if (!box) return
+
+    on(box, 'click', async e => {
+      const mark = e.target.closest('.bk-hl')
+      if (mark) {
+        e.preventDefault()
+        e.stopPropagation()
+        openNotePop(mark.dataset.id)
+        return
+      }
+      const btn = e.target.closest('[data-pop]')
+      if (!btn) {
+        // 点到页面空白处收起气泡
+        if (!e.target.closest('.bk-note-pop') && e.target.closest('.bk-page')) closeNotePop()
+        return
+      }
+      const pop = btn.closest('.bk-note-pop')
+      if (!pop) return
+      const id = pop.dataset.id
+      const action = btn.dataset.pop
+      if (action === 'close') { closeNotePop(); return }
+      if (action === 'edit') {
+        if (popEditing) { await saveNotePop(); return }
+        openNotePop(id, { editing: true })
+        return
+      }
+      if (action === 'save') { await saveNotePop(); return }
+      if (action === 'zoom') {
+        // 复用已有的超清预览浮层：同一块矩形、同一条渲染路径
+        const ann = state.annotations.find(a => a.id === id)
+        if (ann && ann.region) showRegion(ann.page, ann.region)
+        return
+      }
+      if (action === 'delete') {
+        if (!window.confirm('删除这条标注？')) return
+        await deleteAnnotation(id)
+        return
+      }
+      if (action === 'locate') {
+        // 切到「标注」页，把对应卡片滚进视野并闪一下
+        switchTab('ann')
+        window.setTimeout(() => {
+          const card = document.querySelector(`.bk-ann[data-id="${id}"]`)
+          if (!card) return
+          card.scrollIntoView({ block: 'center', behavior: 'smooth' })
+          card.classList.add('is-flash')
+          window.setTimeout(() => card.classList.remove('is-flash'), 1400)
+        }, 60)
+      }
+    })
+
+    // 编辑态快捷键：Ctrl/Cmd+Enter 保存，Esc 取消
+    on(box, 'keydown', e => {
+      const area = e.target.closest && e.target.closest('.bk-note-pop-body')
+      if (!area) return
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); saveNotePop() }
+      else if (e.key === 'Escape') { e.preventDefault(); closeNotePop() }
+    })
+
+    // 编辑时别让选区的 mousedown 逻辑把气泡关掉
+    on(box, 'mousedown', e => {
+      if (e.target.closest('.bk-note-pop')) e.stopPropagation()
+    }, true)
+  }
+
+  /**
+   * 取某页的骨架节点。
+   * 骨架页只有 data-page，没有 id（早期代码用 id="bk-pN" 查找，找不到时静默失败，
+   * 造成定位、高亮、翻页、释放全部失灵），所以统一从 data-page 查。
+   */
+  const pageNode = n => qs(scroller(), `.bk-page[data-page="${Number(n)}"]`)
+
+  /**
+   * 刷新书架统计（阅读时长 / 进度变化后）。
+   * 早期版本这里调用的是一个从未定义的 tabTick()，导致 IntersectionObserver 回调直接抛
+   * ReferenceError：同一批 entry 里后续页面不再处理，saveLastPage/recordProgress 也走不到。
+   * 书架没打开时不必重算（library.refresh 会重排列表，有成本）。
+   */
+  const statsTick = () => {
+    const lib = window.BOOKS_LIBRARY
+    if (!lib || typeof lib.refresh !== 'function') return
+    if (typeof lib.isOpen === 'function' && !lib.isOpen()) return
+    Promise.resolve(lib.refresh()).catch(() => {})
   }
 
   /**
@@ -475,10 +1099,10 @@
             renderVisiblePages()
             // 图区模式：换页要重新识别这一页的图区
             if (state.regionMode && state.regionHotPage !== n) paintHotzones()
-            if (changed) { tabTick(); saveLastPage() }
+            if (changed) { statsTick(); saveLastPage() }
           } else {
   // 兜底：PDF.js 在文本层就绪后才有文字，缩放后 old 页可能比例偏差
-            const partial = document.getElementById(`bk-p${n}`)
+            const partial = pageNode(n)
             if (partial && partial.dataset.rendered === 'partial') ensurePage(n)
           }
         } else if (state.rendered.has(n)) {
@@ -513,14 +1137,13 @@
         const entries = list.getEntries()
         const last = entries[entries.length - 1]
         if (!last) return
+        // 先取上一次滚动时间，再记录本次（顺序反了会让下面的「滚动变慢」判断恒为 false）
+        const sinceScroll = performance.now() - (state.lastScrollAt || 0)
         state.lastScrollAt = performance.now()
         releaseFarPages()
-        clearTimeout(state.progressTimer)
-        degradeQuality('页面高度变化')
-      // 停顿超过 900ms 且布局剧烈变动 → 很可能是内存压力触发了重排
-        if (last.duration > 90 && last.startTime - (state.lastScrollAt || 0) > 900) {
-          degradeQuality('滚动变慢')
-        }
+        // layout-shift 在正常的翻页 / 首次绘制时也会触发，不能无条件降画质，
+        // 否则用户每翻一页画质就掉一档。只有「Shift 分数较大 + 距上次滚动已停顿」才降级。
+        if (last.value > 0.25 && sinceScroll > 900) degradeQuality('滚动变慢')
       })
       scrollWatcher.observe({ type: 'layout-shift', buffered: false })
       } catch (_) { /* 尺寸读取失败忽略 */ }
@@ -545,7 +1168,7 @@
         const add = session.ms
         session.ms = 0
         store.touchHistory(state.doc.id, { onMs: add, lastPage: state.activePage })
-          .then(() => tabTick())
+          .then(() => statsTick())
           .catch(() => {})
       }
     }, 15000)
@@ -627,15 +1250,15 @@
     }, 10)
   }
 
-  /** 从当前选区创建一个标注 */
-  const createAnnotation = async (type, color) => {
+  /** 从当前选区创建一个标注（type 为 0 表示只建高亮，见 createAnnotationWithNote） */
+  const createAnnotation = async (type, color, editing = false) => {
     const info = state.selectedAnchor
     if (!info || !state.doc) { toast('请先划选一段文字再标注', 'warn'); return }
     const record = await store.saveAnnotation({
       docId: state.doc.id,
       page: info.page,
-      type,
-      color,
+      type: type || 'highlight',
+      color: color || '#ffd666',
       quote: info.quote,
       prefix: info.prefix,
       suffix: info.suffix,
@@ -648,33 +1271,15 @@
     renderAnnotationList()
     hideMenu()
     window.getSelection().removeAllRanges()
-    toast('已添加' + ({ highlight: '高亮', underline: '划线', strike: '删除线' }[type] || '标注'))
+    // 标完立刻在原文旁边长出气泡，顺手就能写批注（不必再跑到右侧去找）
+    openNotePop(record.id, { editing })
   }
 
   /** 划词后直接写批注 */
   const createAnnotationWithNote = async () => {
-    const info = state.selectedAnchor
-    if (!info || !state.doc) { toast('请先划选一段文字再标注', 'warn'); return }
-    const note = window.prompt('给这条标注补充说明？', '')
-    if (note === null) return
-    const record = await store.saveAnnotation({
-      docId: state.doc.id,
-      page: info.page,
-      type: 'highlight',
-      color: '#7ee0c0',
-      quote: info.quote,
-      prefix: info.prefix,
-      suffix: info.suffix,
-      occurrence: info.occurrence,
-      note: note.trim()
-    })
-    state.annotations.push(record)
-    state.annotations.sort((a, b) => a.page - b.page || a.createdAt - b.createdAt)
-    paintHighlights(record.page)
-    renderAnnotationList()
-    hideMenu()
-    window.getSelection().removeAllRanges()
-    toast('已复制选中的文字')
+    // 以前用 window.prompt 弹系统输入框，会打断阅读、且无法边看原文边写；
+    // 现在统一走「先建标注 → 在旁边弹出气泡并进入编辑态」。
+    await createAnnotation(0, '#7ee0c0', true)
   }
 
   /** 复制选中的原文 */
@@ -733,7 +1338,7 @@
 
   /* ---------------- 侧栏：标注列表 ---------------- */
 
-  const ANNOT_LABEL = { highlight: '高亮', underline: '划线', strike: '删除线' }
+  const ANNOT_LABEL = { highlight: '高亮', underline: '划线', strike: '删除线', region: '图片' }
 
   const renderAnnotationList = () => {
     const box = cache('bk-ann-list')
@@ -752,56 +1357,44 @@
           <span class="bk-ann-index">#${i + 1}</span>
               <button class="bk-ann-del" type="button" title="删除标注" aria-label="删除标注">✕</button>
         </header>
-        <p class="bk-ann-quote">${esc(String(a.quote).slice(0, 400))}</p>
+        <p class="bk-ann-quote${isRegionAnn(a) ? ' is-region' : ''}">${isRegionAnn(a)
+          ? `[图片] ${Math.round((a.region && a.region.width) || 0)}×${Math.round((a.region && a.region.height) || 0)}pt`
+          : esc(String(a.quote).slice(0, 400))}</p>
               <textarea class="bk-ann-note" rows="2" placeholder="补充说明…">${esc(a.note || '')}</textarea>
       </article>`).join('')
   }
 
   const markActiveNote = () => {
     document.querySelectorAll('.bk-ann').forEach(node => {
-      node.classList.toggle('is-active', Number(node.dataset.page) === state.activePage)
+      // 有具体选中的标注时，只点亮那一条；否则退化为「点亮当前页的全部标注」
+      const active = state.activeAnnotation
+        ? node.dataset.id === state.activeAnnotation
+        : Number(node.dataset.page) === state.activePage
+      node.classList.toggle('is-active', active)
     })
   }
 
-  /* ---------------- 侧栏：随手笔记 ---------------- */
+  /* ---------------- 侧栏：随手笔记（渲染与编辑交给 notes.js） ---------------- */
 
   const renderNotes = () => {
-    const box = cache('bk-note-list')
-    if (!box) return
-    const list = state.notes.filter(n => n.kind !== 'summary' && n.kind !== 'translation')
-    const badge = cache('bk-note-count')
-    if (badge) badge.textContent = list.length ? String(list.length) : ''
-    if (!list.length) {
-    box.innerHTML = '<p class="bk-empty">还没有笔记。点击右侧的输入框写下理解，或对选中文字添加批注，都会在这里汇总。</p>'
-      return
+    if (window.BOOKS_NOTES && typeof window.BOOKS_NOTES.refresh === 'function') {
+      window.BOOKS_NOTES.refresh().catch(() => {})
+    } else {
+      const badge = cache('bk-note-count')
+      if (badge) badge.textContent = ''
     }
-    box.innerHTML = list.map(n => `
-      <article class="bk-note" data-id="${esc(n.id)}">
-        <header class="bk-note-head">
-          <input class="bk-note-title" type="text" value="${esc(n.title || '')}"
-              placeholder="写点想法…" aria-label="笔记内容">
-            <span class="bk-note-page">${n.page ? 'P' + n.page : '—'}</span>
-            <button class="bk-note-del" type="button" title="删除笔记" aria-label="删除笔记">✕</button>
-        </header>
-          <textarea class="bk-note-text" rows="4" placeholder="补充细节…">${esc(n.text || '')}</textarea>
-      </article>`).join('')
   }
 
-  const addNote = async (preset = {}) => {
+  const addNote = (preset = {}) => {
     if (!state.doc) { toast('请先打开一篇文献', 'warn'); return }
-    const record = await store.saveNote({
-      docId: state.doc.id,
-      kind: 'note',
-      title: preset.title || '',
-      text: preset.text || '',
-      page: preset.page || state.activePage
-    })
-    state.notes.push(record)
-    renderNotes()
     switchTab('notes')
-    const box = cache('bk-note-list')
-    const last = box && box.querySelector(`.bk-note[data-id="${record.id}"] .bk-note-text`)
-    if (last) last.focus()
+    if (window.BOOKS_NOTES && typeof window.BOOKS_NOTES.create === 'function') {
+      window.BOOKS_NOTES.create({
+        title: preset.title || '',
+        text: preset.text || '',
+        page: preset.page || state.activePage
+      })
+    }
   }
 
   /* ---------------- 侧栏：中英对照 ---------------- */
@@ -1036,6 +1629,12 @@
       cache('bk-workspace').classList.add('is-ready')
       startTimer()
       if (window.innerWidth > 1180) openOutlineOnWide()
+      if (state.view !== 'reader') showReader()
+      const shelf = lib()
+      if (shelf && typeof shelf.markCurrent === 'function') shelf.markCurrent(record.id)
+      if (window.BOOKS_NOTES && typeof window.BOOKS_NOTES.setDoc === 'function') {
+        await window.BOOKS_NOTES.setDoc(record)
+      }
       toast('已打开：' + record.title)
     } catch (err) {
       toast(err && err.message ? err.message : '打开失败', 'error', 7000)
@@ -1053,7 +1652,7 @@
     state.activePage = page
     if (page > 1 || ratio > 0.02) {
       requestAnimationFrame(() => {
-        const node = document.getElementById(`bk-p${page}`)
+        const node = pageNode(page)
         if (!node) return
         box.scrollTop = Math.max(0, node.offsetTop + ratio * Math.max(0, node.offsetHeight - box.clientHeight))
         const label = cache('bk-page-label')
@@ -1112,6 +1711,54 @@
       setBusy(false)
       toast(err.message || '打开失败', 'error', 7000)
     }
+  }
+
+  /* ---------------- 视图路由：书架 ⇄ 阅读 ---------------- */
+
+  const lib = () => (window.BOOKS_LIBRARY && typeof window.BOOKS_LIBRARY.show === 'function')
+    ? window.BOOKS_LIBRARY
+    : null
+
+  const syncViewNav = () => {
+    const shelf = state.view === 'shelf'
+    const a = cache('bk-view-shelf')
+    const b = cache('bk-view-reader')
+    if (a) {
+      a.classList.toggle('is-on', shelf)
+      a.setAttribute('aria-selected', shelf ? 'true' : 'false')
+    }
+    if (b) {
+      b.classList.toggle('is-on', !shelf)
+      b.setAttribute('aria-selected', shelf ? 'false' : 'true')
+    }
+  }
+
+  /** 切到书架：文献库抽屉没有必要再开着 */
+  const showShelf = async () => {
+    const library = lib()
+    if (!library) { toast('书架还没准备好', 'warn'); return }
+    state.view = 'shelf'
+    closeLibrary()
+    closePanels()
+    closeRegion()
+    setRegionMode(false)
+    syncViewNav()
+    await library.show()
+    if (state.doc && typeof library.markCurrent === 'function') library.markCurrent(state.doc.id)
+  }
+
+  /** 回到阅读视图（没有文档时展示空态） */
+  const showReader = () => {
+    const library = lib()
+    state.view = 'reader'
+    if (library) library.hide()
+    syncViewNav()
+    if (!state.pdf) renderRecent()
+  }
+
+  const toggleView = () => {
+    if (state.view === 'shelf') showReader()
+    else showShelf()
   }
 
   /** 从库里重新打开 */
@@ -1373,12 +2020,49 @@
     state.idleTask = null
     await buildSkeleton()
     await renderVisiblePages()
+    syncZoomLabel()
+  }
+
+  /**
+   * 记录当前阅读锚点：哪一页、位于该页高度的百分之几。
+   *
+   * 必须记「比例」而不只是页码：用户常常读到第 5 页的中间，
+   * 只记页码再按「页顶对齐」回去，就会把阅读位置生生拽到页首。
+   */
+  const readAnchor = () => {
+    const box = scroller()
+    const page = state.activePage
+    if (!box) return { page, ratio: 0 }
+    const node = pageNode(page)
+    if (!node || !node.offsetHeight) return { page, ratio: 0 }
+    return {
+      page,
+      ratio: Math.min(1, Math.max(0, (box.scrollTop - node.offsetTop) / node.offsetHeight))
+    }
+  }
+
+  /**
+   * 按锚点还原滚动位置。
+   * behavior 必须是 'auto'：重排本身已经花了上百毫秒，再叠一次 1 秒平滑滚动，
+   * 用户看到的就是「先闪回页首、再慢慢爬回来」，也就是所谓的上下跳动。
+   */
+  const restoreAnchor = anchor => {
+    const box = scroller()
+    if (!box || !anchor) return
+    const node = pageNode(anchor.page)
+    if (!node) return
+    // CSS 上 .bk-scroller 有 scroll-behavior: smooth，会覆盖 scrollTo 的 behavior:'auto'，
+    // 让「还原」变成一段 1 秒的动画（视觉上就是页面自己乱跳）。这里临时压掉它再还原。
+    const prev = box.style.scrollBehavior
+    box.style.scrollBehavior = 'auto'
+    box.scrollTop = node.offsetTop + node.offsetHeight * anchor.ratio
+    box.style.scrollBehavior = prev
   }
 
   const scrollToPage = n => {
     const target = Math.min(Math.max(1, n), state.pageCount || 1)
     state.activePage = target
-    const node = document.getElementById(`bk-p${target}`)
+    const node = pageNode(target)
     const box = scroller()
     if (node && box) {
     // 用滚动容器的相对位置滚动：比 scrollIntoView 更可控（不会连带动外层）
@@ -1402,8 +2086,8 @@
     const next = state.activePage + dir
     if (next < 1) { toast('已经是第一页了'); return }
     if (next > state.pageCount) { toast('已经是最后一页了'); return }
-    const cur = document.getElementById(`bk-p${state.activePage}`)
-    const nxt = document.getElementById(`bk-p${next}`)
+    const cur = pageNode(state.activePage)
+    const nxt = pageNode(next)
     const measuredH = state.measured ? state.measured.height + 22 : 0
     const delta = cur && nxt && cur.offsetHeight
       ? nxt.offsetTop - cur.offsetTop
@@ -1428,7 +2112,7 @@
   }
 
   const releaseOne = n => {
-    const container = document.getElementById(`bk-p${n}`)
+    const container = pageNode(n)
     if (container) {
       if (container.__bkTask && container.__bkTask.cancel) {
         try { container.__bkTask.cancel() } catch (_) {}
@@ -1441,9 +2125,13 @@
   }
 
   const zoomBy = delta => {
+    // fit=width 时 state.scale 是「上次」的倍率，不能直接在上面加减；
+    // 先换算成当前实际倍率，用户看到的百分比才是他以为的那一档。
+    const current = state.pdf ? computeScale() : state.scale
+    const next = Math.min(4, Math.max(0.25, current + delta))
     state.fit = 'custom'
     state.fitMode = 'custom'
-    state.scale = Math.min(4, Math.max(0.25, state.scale + delta))
+    state.scale = next
     rerenderPages()
   }
   const setFit = mode => {
@@ -1453,18 +2141,27 @@
   }
 
   let rerenderTimer = null
+  /**
+   * 重排页面（缩放 / 适宽 / 窗口尺寸变化都走这里）。
+   *
+   * 三个要点：
+   * 1) 防抖收敛：连点 5 次放大只重排一次，而不是排队 5 轮「清空+重建」。
+   * 2) 锚点在重排「之前」读取，之后立刻（非平滑）还原，避免跳回页首再爬回来。
+   * 3) 旧渲染任务必须真正 cancel，否则旧尺寸的位图还会往新 DOM 上贴。
+   */
   const rerenderPages = () => {
     if (!state.pdf) return
     clearTimeout(rerenderTimer)
     rerenderTimer = setTimeout(async () => {
+      // 锚点必须在 DOM 被重建前读取
+      const anchor = readAnchor()
+      // 气泡用的是页面内坐标，骨架重建后必然对不上，先收起（重排完不再乱弹）
+      closeNotePop()
       try {
-      setBusy(true, '重排页面…')
-        const keepPage = state.activePage
-    // 重建骨架前先真正取消旧任务：否则 PDF.js 还在后台画旧尺寸的位图，
-    // 既浪费 CPU，画完又往已经重建的 DOM 上贴，快速缩放时会闪旧比例。
+        setBusy(true, '重排页面…')
         state.pageTasks.forEach(promise => promise.catch(() => {}))
         state.pageTasks.forEach((_, n) => {
-          const old = document.getElementById(`bk-p${n}`)
+          const old = pageNode(n)
           if (!old) return
           old.dataset.rendered = 'cancel'
           if (old.__bkTask && old.__bkTask.cancel) {
@@ -1473,7 +2170,10 @@
           old.__bkTask = null
         })
         await layoutPages()
-        requestAnimationFrame(() => scrollToPage(keepPage))
+        // 骨架尺寸已就绪，同步还原：不加平滑动画，否则会被看成页面自己乱跳
+        restoreAnchor(anchor)
+        // 还原后再补一次可视区渲染，保证落点处是清晰位图而不是空白占位
+        renderVisiblePages()
       } catch (err) {
       toast(err && err.message ? err.message : '重排失败', 'error')
       } finally {
@@ -1546,11 +2246,15 @@
   }
 
   const openOutlineOnWide = () => {
-    const panel = cache('bk-panel-outline')
+    const panel = cache('bk-outline-panel')
     if (!panel || panel.dataset.auto) return
+    // 没有书签的文献不自动展开：展开的只是一个空面板，还会挡住工具栏上的翻页按钮
+    if (!state.outline || !state.outline.length) return
     panel.dataset.auto = '1'
     panel.classList.add('is-on')
-    panel.setAttribute('aria-pressed', 'true')
+    panel.setAttribute('aria-hidden', 'false')
+    const btn = cache('bk-panel-outline')
+    if (btn) btn.setAttribute('aria-pressed', 'true')
     renderOutline()
   }
 
@@ -1565,7 +2269,7 @@
       const page = node ? await resolveDest(node) : 0
       if (!page) { toast('这个目录项没有对应的页', 'warn'); return }
       // 目录是浮层，点完自动收起，避免挡住正文
-      cache('bk-panel-outline').classList.remove('is-on')
+      cache('bk-outline-panel').classList.remove('is-on')
       cache('bk-panel-outline').setAttribute('aria-pressed', 'false')
       scrollToPage(page)
       toast(`已跳到「${node.title}」第 ${page} 页`)
@@ -1652,10 +2356,11 @@
     const total = state.hits.length
     state.hitIndex = ((i % total) + total) % total
     renderSearchResults()
-    const panel = cache('bk-panel-search')
+    const panel = cache('bk-search-panel')
     if (panel && !panel.classList.contains('is-on')) {
       panel.classList.add('is-on')
-      panel.setAttribute('aria-pressed', 'true')
+      const btn = cache('bk-panel-search')
+      if (btn) btn.setAttribute('aria-pressed', 'true')
     }
     const hit = state.hits[state.hitIndex]
     scrollToPage(hit.page)
@@ -1685,7 +2390,8 @@
       } else if (e.key === 'Escape') {
         e.preventDefault()
         input.blur()
-        cache('bk-panel-search').classList.remove('is-on')
+        cache('bk-search-panel').classList.remove('is-on')
+        cache('bk-panel-search').setAttribute('aria-pressed', 'false')
       }
     })
     on(cache('bk-search-prev'), 'click', () => goHit(state.hitIndex - 1))
@@ -1709,6 +2415,7 @@
     state.fit = 'width'
     state.fitMode = 'width'
     rerenderPages()
+    syncZoomLabel()
   }
 
   /** 让 j/k 按屏幕一屏地滚，而不是整页硬跳 */
@@ -1720,11 +2427,17 @@
 
   const closePanels = () => {
     hideMenu()
-    cache('bk-library').classList.remove('is-on')
-    cache('bk-helpbox').classList.remove('is-on')
-    cache('bk-panel-outline').classList.remove('is-on')
-    cache('bk-panel-search').classList.remove('is-on')
-    cache('bk-toolbar-more').classList.remove('is-on')
+    const off = (id, btnId) => {
+      const node = cache(id)
+      if (node) node.classList.remove('is-on')
+      const btn = btnId ? cache(btnId) : null
+      if (btn) btn.setAttribute('aria-pressed', 'false')
+    }
+    off('bk-library')
+    off('bk-helpbox')
+    off('bk-outline-panel', 'bk-panel-outline')
+    off('bk-search-panel', 'bk-panel-search')
+    off('bk-more-panel')
   }
 
   const wireKeys = () => {
@@ -1734,31 +2447,49 @@
 
       if (meta && (e.key === 'f' || e.key === 'F')) {
         e.preventDefault()
-        const panel = cache('bk-panel-search')
-        panel.classList.add('is-on')
-        panel.setAttribute('aria-pressed', 'true')
+        const panel = cache('bk-search-panel')
+        const btn = cache('bk-panel-search')
+        if (panel) panel.classList.add('is-on')
+        if (btn) btn.setAttribute('aria-pressed', 'true')
         const input = cache('bk-search-input')
         if (input) { input.focus(); input.select() }
         return
       }
       if (meta && (e.key === 'o' || e.key === 'O')) {
         e.preventDefault()
-        openLibrary()
+        showShelf()
         return
+      }
+      // 不在输入框里时：L 切换书架，/ 打开全文搜索
+      if (!isTyping(e.target) && !meta) {
+        if (e.key === 'l' || e.key === 'L') { e.preventDefault(); toggleView(); return }
+        if (e.key === '/' && state.view === 'reader') {
+          e.preventDefault()
+          const panel = cache('bk-search-panel')
+          if (panel) panel.classList.add('is-on')
+          const btn = cache('bk-panel-search')
+          if (btn) btn.setAttribute('aria-pressed', 'true')
+          cache('bk-outline-panel').classList.remove('is-on')
+          const input = cache('bk-search-input')
+          if (input) { input.focus(); input.select() }
+          return
+        }
       }
       if (e.key === 'Escape') {
         // 预览浮层优先关（它是模式化的最上层）
         const region = cache('bk-region')
         if (region && region.classList.contains('is-on')) { closeRegion(); return }
         if (state.regionMode) { setRegionMode(false); return }
+        // 书架视图下，Esc 回到阅读
+        if (state.view === 'shelf') { showReader(); return }
         closePanels()
         return
       }
-    // 正在写笔记 / 批注 / 输入地址时不抢按键
-      if (isTyping(e.target) || !state.pdf) return
+    // 正在写笔记 / 批注 / 输入地址时不抢按键；书架视图里 j/k 等不生效
+      if (state.view !== 'reader' || isTyping(e.target) || !state.pdf) return
     // 搜索面板开着时，上下键用来在命中之间走
       if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && state.hits.length &&
-          cache('bk-panel-search').classList.contains('is-on')) {
+          cache('bk-search-panel').classList.contains('is-on')) {
         e.preventDefault()
         goHit(state.hitIndex + (e.key === 'ArrowDown' ? 1 : -1))
         return
@@ -1857,9 +2588,6 @@
 
   /** 当前倍率上限（用户可调 4x ~ 16x） */
   const REGION_SCALES = [4, 8, 12, 16]
-
-  /** 取某页的骨架节点 */
-  const pageNode = n => document.getElementById(`bk-p${n}`)
 
   /**
    * 屏幕坐标（clientX/Y）→ 页面基础坐标（scale=1 的点）。
@@ -2061,7 +2789,7 @@
   const setRegionMode = flag => {
     state.regionMode = !!flag
     const box = scroller()
-    if (box) box.classList.toggle('is-region', state.regionMode)
+    if (box) box.classList.toggle('is-region', state.regionMode || state.annotRegionMode)
     const btn = cache('bk-region-toggle')
     if (btn) {
       btn.classList.toggle('is-on', state.regionMode)
@@ -2078,8 +2806,198 @@
     }
   }
 
+  /** 进入 / 退出「图区批注」框选模式（一次性：拖完自动退出） */
+  const setAnnotRegionMode = flag => {
+    state.annotRegionMode = !!flag
+    const box = scroller()
+    if (box) box.classList.toggle('is-region', state.annotRegionMode || state.regionMode)
+    if (state.annotRegionMode) {
+      closePanels()
+      const btn = cache('bk-annot-region')
+      if (btn) {
+        btn.classList.add('is-on')
+        btn.setAttribute('aria-pressed', 'true')
+      }
+      toast('框选图片区域：拖一个矩形盖住图，松开即建批注', 'ok', 3600)
+    } else {
+      const btn = cache('bk-annot-region')
+      if (btn) {
+        btn.classList.remove('is-on')
+        btn.setAttribute('aria-pressed', 'false')
+      }
+      const marquee = cache('bk-marquee')
+      if (marquee) marquee.classList.remove('is-on')
+    }
+  }
+
   const storeRegionScale = () => {
     store.saveSetting('regionScale', state.regionScale).catch(() => {})
+  }
+
+
+  /* ============================================================
+   * 图区批注（type: 'region'）
+   * ------------------------------------------------------------
+   * PDF 里的插图没有文字，锚点引擎（quote/prefix/suffix）无从下手，
+   * 所以这类标注不存文字，而是存一块「页面基础坐标矩形」：
+   *   region: { x, y, width, height }   // scale=1 的点坐标，与缩放无关
+   *
+   * 为什么不用像素：页宽 = viewport(1).width × state.scale，
+   * 用户一按 Ctrl+滚轮，像素值就全废了。点坐标才是不变量。
+   * ============================================================ */
+
+  const REGION_LABEL = '图片'
+
+  const isRegionAnn = a => !!a && a.type === 'region'
+
+  /** 屏幕坐标的框 → 页面基础坐标（带边界钳制，防止拖出页面） */
+  const regionRectFromDrag = (node, x0, y0, x1, y1, minSide = 8) => {
+    const a = clientToPagePoint(node, x0, y0)
+    const b = clientToPagePoint(node, x1, y1)
+    const width = Math.abs(b.x - a.x)
+    const height = Math.abs(b.y - a.y)
+    if (width < minSide || height < minSide) return null
+    const wrap = node.querySelector('.bk-canvas-wrap')
+    const maxW = (wrap && wrap.offsetWidth) || node.offsetWidth
+    const maxH = (wrap && wrap.offsetHeight) || node.offsetHeight
+    const k = state.scale || 1
+    const x = Math.min(Math.max(0, Math.min(a.x, b.x)), Math.max(0, maxW / k))
+    const y = Math.min(Math.max(0, Math.min(a.y, b.y)), Math.max(0, maxH / k))
+    return {
+      x,
+      y,
+      // 钳到页面内，避免存下超界的框（换页/缩放后会画到版心外）
+      width: Math.min(width, Math.max(0, maxW / k - x)),
+      height: Math.min(height, Math.max(0, maxH / k - y))
+    }
+  }
+
+  /** 让所有同页的图区框重新按当前缩放定位（不重建 DOM） */
+  const syncRegionBoxes = pageNo => {
+    const pageEl = pageNode(pageNo)
+    if (!pageEl) return
+    qsa(pageEl, '.bk-hl[data-type="region"]').forEach(box => {
+      const ann = state.annotations.find(a => a.id === box.dataset.id)
+      if (!ann || !ann.region) return
+      const r = ann.region
+      box.style.left = (r.x * state.scale) + 'px'
+      box.style.top = (r.y * state.scale) + 'px'
+      box.style.width = Math.max(0, r.width * state.scale) + 'px'
+      box.style.height = Math.max(0, r.height * state.scale) + 'px'
+      ann._box = {
+        left: r.x * state.scale,
+        top: r.y * state.scale,
+        right: (r.x + r.width) * state.scale,
+        bottom: (r.y + r.height) * state.scale,
+        page: Number(pageNo)
+      }
+    })
+  }
+
+  /**
+   * 从拖出的框建一条图区标注。
+   * 顺手把这一块存成缩略图（blob），这样气泡和侧栏里能直接看到
+   * 被框的是哪张图 —— 否则只有「一个框」没法回忆内容。
+   */
+  const createRegionAnnotation = async (pageNo, rect, opts = {}) => {
+    if (!state.doc) { toast('请先打开一篇文献', 'warn'); return null }
+    if (!rect) return null
+    const record = await store.saveAnnotation({
+      docId: state.doc.id,
+      page: Number(pageNo),
+      type: 'region',
+      color: opts.color || '#7aa7ff',
+      quote: '',
+      note: '',
+      region: {
+        x: +rect.x.toFixed(2),
+        y: +rect.y.toFixed(2),
+        width: +rect.width.toFixed(2),
+        height: +rect.height.toFixed(2)
+      }
+    })
+    state.annotations.push(record)
+    state.annotations.sort((a, b) => a.page - b.page || a.createdAt - b.createdAt)
+    paintHighlights(record.page)
+    renderAnnotationList()
+
+    // 缩略图是「锦上添花」：失败也绝不能影响标注本身
+    makeRegionThumb(record).catch(() => {})
+
+    openNotePop(record.id, { editing: !!opts.editing })
+    return record
+  }
+
+  /** 渲染一块低倍率位图存进 blobs，供气泡 / 侧栏预览 */
+  const makeRegionThumb = async record => {
+    if (!state.pdf || !record.region) return
+    const width = Math.max(1, record.region.width)
+    const { canvas } = await pdfLib.renderRegion(state.pdf, record.page, record.region, {
+      // 只要缩略图，不用追超清：约 420px 宽已足够在气泡里看清
+      scale: Math.min(3, Math.max(1, 420 / width)),
+      dpr: 1
+    })
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', 0.86))
+    if (!blob) return
+    await store.putBlob(thumbKey(record.id), blob)
+    // 已经打开的气泡就地换图，不必让用户关掉重开
+    refreshPopThumb(record)
+  }
+
+  const thumbKey = id => 'thumb-' + id
+
+  /** 取（或懒加载）缩略图 objectURL；同一 id 的并发请求共用一个 Promise */
+  const thumbUrls = {}
+  const thumbTasks = {}
+  const regionThumbUrl = id => {
+    if (thumbUrls[id]) return Promise.resolve(thumbUrls[id])
+    if (thumbTasks[id]) return thumbTasks[id]
+    const key = thumbKey(id)
+    thumbTasks[id] = store.getBlob(key).then(blob => {
+      if (blob) thumbUrls[id] = URL.createObjectURL(blob)
+      return thumbUrls[id] || null
+    }).catch(() => null).then(url => {
+      delete thumbTasks[id]
+      return url
+    })
+    return thumbTasks[id]
+  }
+
+  const releaseThumb = id => {
+    const url = thumbUrls[id]
+    if (url) URL.revokeObjectURL(url)
+    delete thumbUrls[id]
+  }
+
+  /** 气泡里那块预览的填充（异步补图，避免阻塞气泡弹出） */
+  const fillPopThumb = async pop => {
+    if (!pop) return
+    const slot = pop.querySelector('.bk-note-pop-fig')
+    if (!slot) return
+    const url = await regionThumbUrl(pop.dataset.id)
+    if (!url || !slot.isConnected) return
+    slot.innerHTML = `<img src="${url}" alt="图区预览">`
+    slot.classList.add('has-img')
+  }
+
+  const refreshPopThumb = ann => {
+    const pop = popNode()
+    if (pop && pop.dataset.id === ann.id) fillPopThumb(pop)
+  }
+
+  /** 气泡里图区标注的标题块 */
+  const regionPopFigure = ann => {
+    const r = ann.region || {}
+    const size = `${Math.round(r.width || 0)}×${Math.round(r.height || 0)}pt`
+    return `<div class="bk-note-pop-quote is-region">
+      <div class="bk-note-pop-fig"><span class="bk-note-pop-fig-empty">
+        <i class="fas fa-image"></i>${REGION_LABEL} · ${size}
+      </span></div>
+      <button type="button" class="bk-note-pop-zoom" data-pop="zoom"
+              title="超清查看这块图区">
+        <i class="fas fa-magnifying-glass-plus"></i>看原图
+      </button>
+    </div>`
   }
 
   /** 框选交互：pointer 事件统一鼠标与触屏 */
@@ -2102,7 +3020,8 @@
         return
       }
 
-      if (!state.regionMode || e.button !== 0) return
+      if (!state.regionMode && !state.annotRegionMode) return
+      if (e.button !== 0) return
       const pageEl = pageOf(e.target)
       if (!pageEl) return
       e.preventDefault()
@@ -2113,6 +3032,7 @@
       state.regionDrag = {
         page: Number(pageEl.dataset.page),
         node: pageEl,
+        annot: !!state.annotRegionMode,
         x0: e.clientX,
         y0: e.clientY
       }
@@ -2140,6 +3060,14 @@
       state.regionDrag = null
       if (marquee) marquee.classList.remove('is-on')
       if (!drag) return
+      if (drag.annot) {
+        // 图区批注：同一道拖拽手势，落点是「建标注」而不是「超清放大」
+        setAnnotRegionMode(false)
+        const rect = regionRectFromDrag(drag.node, drag.x0, drag.y0, e.clientX, e.clientY, 12)
+        if (rect) createRegionAnnotation(drag.page, rect, { editing: true })
+        else toast('框太小了，请拖一个大一点的范围', 'warn', 2600)
+        return
+      }
       const rect = regionFromEvent(drag.node, drag.x0, drag.y0, e.clientX, e.clientY)
       if (rect) showRegion(drag.page, rect)
       else if (state.regionMode) toast('框太小了，请拖一个大一点的范围', 'warn', 2600)
@@ -2259,7 +3187,12 @@
       if (e.key === 'Enter') { e.preventDefault(); submit() }
     })
 
-    on(cache('bk-library-toggle'), 'click', openLibrary)
+    // 书架 ⇄ 阅读
+    on(cache('bk-view-shelf'), 'click', () => { if (state.view !== 'shelf') showShelf() })
+    on(cache('bk-view-reader'), 'click', () => { if (state.view !== 'reader') showReader() })
+
+    // 「文献库」按钮直接进书架：它比抽屉更好找、也能管理
+    on(cache('bk-library-toggle'), 'click', () => showShelf())
     on(cache('bk-library-close'), 'click', closeLibrary)
 
     // 空态里的「继续阅读」入口
@@ -2269,34 +3202,43 @@
       openFromLibrary(card.dataset.id)
     })
 
-    // 目录 / 搜索 面板
+    // 目录 / 搜索 面板：按钮与浮层是两个元素，切换的是浮层
     on(cache('bk-panel-outline'), 'click', () => {
-      const on_ = cache('bk-panel-outline').classList.toggle('is-on')
+      const panel = cache('bk-outline-panel')
+      const on_ = panel.classList.toggle('is-on')
       cache('bk-panel-outline').setAttribute('aria-pressed', on_ ? 'true' : 'false')
-      cache('bk-panel-search').classList.remove('is-on')
+      panel.setAttribute('aria-hidden', on_ ? 'false' : 'true')
+      cache('bk-search-panel').classList.remove('is-on')
+      cache('bk-panel-search').setAttribute('aria-pressed', 'false')
       if (on_) renderOutline()
-      cache('bk-toolbar-more').classList.remove('is-on')
+      cache('bk-more-panel').classList.remove('is-on')
     })
     on(cache('bk-panel-search'), 'click', () => {
-      const on_ = cache('bk-panel-search').classList.toggle('is-on')
+      const panel = cache('bk-search-panel')
+      const on_ = panel.classList.toggle('is-on')
       cache('bk-panel-search').setAttribute('aria-pressed', on_ ? 'true' : 'false')
-      cache('bk-panel-outline').classList.remove('is-on')
+      panel.setAttribute('aria-hidden', on_ ? 'false' : 'true')
+      cache('bk-outline-panel').classList.remove('is-on')
+      cache('bk-panel-outline').setAttribute('aria-pressed', 'false')
       if (on_) {
         const input = cache('bk-search-input')
         if (input) input.focus()
         else renderSearchResults()
       }
-      cache('bk-toolbar-more').classList.remove('is-on')
-    })
-    on(cache('bk-toolbar-more'), 'click', () => {
-      cache('bk-toolbar-more').classList.toggle('is-on')
+      cache('bk-more-panel').classList.remove('is-on')
     })
 
     // 浮层面板的关闭按钮（目录 / 搜索）
     document.querySelectorAll('.bk-float-close').forEach(btn => {
       on(btn, 'click', () => {
         const box = cache(btn.dataset.close)
-        if (box) box.classList.remove('is-on')
+        if (box) {
+          box.classList.remove('is-on')
+          box.setAttribute('aria-hidden', 'true')
+        }
+        const pair = { 'bk-outline-panel': 'bk-panel-outline', 'bk-search-panel': 'bk-panel-search' }
+        const trigger = cache(pair[btn.dataset.close])
+        if (trigger) trigger.setAttribute('aria-pressed', 'false')
       })
     })
 
@@ -2338,13 +3280,25 @@
     if (!n || n < 1 || n > state.pageCount) { toast('页码超出范围', 'warn'); return }
       scrollToPage(n)
     })
-    on(cache('bk-toolbar-more'), 'click', () => cache('bk-toolbar-more').classList.toggle('is-on'))
+    on(cache('bk-toolbar-more'), 'click', () => cache('bk-more-panel').classList.toggle('is-on'))
 
     // 图区预览：切换「框选放大」模式
     on(cache('bk-region-toggle'), 'click', () => {
       if (!state.pdf) { toast('请先打开一篇文献', 'warn'); return }
+      // 两个模式都是「拖一个框」，同时开着会互相抢手势，先进先出
+      if (state.annotRegionMode) setAnnotRegionMode(false)
       setRegionMode(!state.regionMode)
     })
+
+    // 框选图片写批注：与上面共用同一道拖拽手势，只是落点不同
+    const startAnnotRegion = () => {
+      if (!state.pdf) { toast('请先打开一篇文献', 'warn'); return }
+      if (state.regionMode) setRegionMode(false)
+      setAnnotRegionMode(!state.annotRegionMode)
+      if (state.annotRegionMode) switchTab('ann')
+    }
+    on(cache('bk-annot-region'), 'click', startAnnotRegion)
+    on(cache('bk-ann-region'), 'click', startAnnotRegion)
   }
 
   const wireTabs = () => {
@@ -2373,7 +3327,14 @@
     on(cache('bk-ann-clear'), 'click', async () => {
       if (!state.annotations.length) return
     if (!window.confirm(`确定删除全部 ${state.annotations.length} 条标注吗？`)) return
-      for (const a of state.annotations) await store.removeAnnotation(a.id)
+      for (const a of state.annotations) {
+        await store.removeAnnotation(a.id)
+        // 图区标注的缩略图 blob 也要一并回收
+        if (isRegionAnn(a)) {
+          releaseThumb(a.id)
+          store.deleteBlob(thumbKey(a.id)).catch(() => {})
+        }
+      }
       state.annotations = []
       repaintAll()
       renderAnnotationList()
@@ -2383,27 +3344,7 @@
     on(cache('bk-cfg-save'), 'click', saveSettings)
     on(cache('bk-cfg-wipe'), 'click', wipeAll)
 
-    // 笔记：输入即存（防抖）
-    const list = cache('bk-note-list')
-    on(list, 'input', e => {
-      const card = e.target.closest('.bk-note')
-      if (!card) return
-      const record = state.notes.find(n => n.id === card.dataset.id)
-      if (!record) return
-      if (e.target.classList.contains('bk-note-title')) record.title = e.target.value
-      if (e.target.classList.contains('bk-note-text')) record.text = e.target.value
-      clearTimeout(list._t)
-      list._t = setTimeout(() => store.saveNote(record).catch(() => {}), 600)
-    })
-    on(list, 'click', async e => {
-      if (!e.target.closest('.bk-note-del')) return
-      const card = e.target.closest('.bk-note')
-      const id = card.dataset.id
-    if (!window.confirm('删除这条笔记？')) return
-      await store.removeNote(id)
-      state.notes = state.notes.filter(n => n.id !== id)
-      renderNotes()
-    })
+    // 笔记列表的输入/删除由 notes.js 统一接管（见 BOOKS_NOTES.init）
 
     // 标注列表：跳页 / 改批注 / 删除
     const annList = cache('bk-ann-list')
@@ -2411,15 +3352,16 @@
       const card = e.target.closest('.bk-ann')
       if (!card) return
       if (e.target.closest('.bk-ann-del')) {
-    if (!window.confirm('删除这条标注？')) return
-        await store.removeAnnotation(card.dataset.id)
-        state.annotations = state.annotations.filter(a => a.id !== card.dataset.id)
-        repaintAll()
-        renderAnnotationList()
+        if (!window.confirm('删除这条标注？')) return
+        await deleteAnnotation(card.dataset.id)
         return
       }
-      if (e.target.closest('.bk-ann-quote') || e.target.closest('.bk-ann-page')) {
-        scrollToPage(Number(card.dataset.page))
+      if (e.target.closest('.bk-ann-quote') || e.target.closest('.bk-ann-page') || e.target.closest('.bk-ann-head')) {
+        // 点卡片 → 跳到该页并就地打开气泡（气泡与这里的批注框是同一份数据）
+        if (!e.target.closest('.bk-ann-del')) {
+          scrollToPage(Number(card.dataset.page))
+          openNotePop(card.dataset.id)
+        }
       }
     })
     on(annList, 'input', e => {
@@ -2524,6 +3466,77 @@
     })
   }
 
+  /* ---------------- 对外接口：给 library.js / notes.js 用 ---------------- */
+
+  const noteSaved = record => {
+    if (!record || !state.doc || record.docId !== state.doc.id) return
+    if (!state.notes.some(n => n.id === record.id)) state.notes.push(record)
+    else state.notes = state.notes.map(n => (n.id === record.id ? record : n))
+    renderNotes()
+  }
+
+  /** 跳转到某页（可选：定位到某条标注并闪烁） */
+  const jump = (page, annId) => {
+    if (state.view !== 'reader') showReader()
+    const n = Number(page) || 0
+    if (!state.pdf || !n) return
+    scrollToPage(n)
+    if (!annId) return
+    const target = state.annotations.find(a => a.id === annId)
+    if (!target) return
+    state.activeAnnotation = annId
+    markActiveNote()
+    // 跳过去就顺手把气泡打开：用户点「定位」的意图就是要看这条批注
+    window.setTimeout(() => {
+      if (state.activePage === Number(target.page)) openNotePop(annId)
+    }, 420)
+    window.setTimeout(() => {
+      const node = document.querySelector(`.bk-ann[data-id="${annId}"], .bk-ann[data-ann="${annId}"]`)
+      if (node) {
+        node.classList.add('is-flash')
+        window.setTimeout(() => node.classList.remove('is-flash'), 1400)
+      }
+    }, 320)
+    renderAnnotationList()
+  }
+
+  window.BOOKS_READER = Object.freeze({
+    toast: (msg, type) => toast(msg, type || 'ok'),
+    jump,
+    activePage: () => state.activePage,
+    /**
+     * 供测试与导出复用：把一组矩形按「同行相邻」合并成连续块。
+     * 纯函数，不依赖 DOM，方便单测。
+     */
+    mergeRects,
+    /** 打开某条标注的随文气泡（供测试 / 外部模块调用） */
+    openNotePop,
+    docId: () => (state.doc ? state.doc.id : null),
+    /** 外部新增标注后同步进阅读器（store 写入 → 内存 → 重绘） */
+    addAnnotation: record => {
+      if (!record) return
+      state.annotations.push(record)
+      state.annotations.sort((a, b) => a.page - b.page || a.createdAt - b.createdAt)
+      paintHighlights(record.page)
+      renderAnnotationList()
+      openNotePop(record.id)
+    },
+    onNoteSaved: noteSaved,
+    open: id => openFromLibrary(id),
+    /** 库里的数据变了（删除 / 打标签 / 阅读状态）：重算抽屉与空态 */
+    notifyLibraryChange: () => {
+      renderLibrary().catch(() => {})
+      if (!state.pdf) renderRecent().catch(() => {})
+      const shelf = lib()
+      if (shelf && typeof shelf.refresh === 'function' && typeof shelf.isOpen === 'function' && shelf.isOpen()) {
+        shelf.refresh().catch(() => {})
+      }
+    },
+    showShelf,
+    showReader,
+    currentDoc: () => state.doc
+  })
+
   /* ---------------- 初始化 ---------------- */
 
   const init = async () => {
@@ -2542,6 +3555,19 @@
     wireKeys()
     wireRegion()
     wireRegionOverlay()
+    wireNotePop()
+
+    // 书架 / 笔记模块（各自负责自己的 DOM，失败不影响阅读）
+    try {
+      if (window.BOOKS_LIBRARY && typeof window.BOOKS_LIBRARY.init === 'function') {
+        await window.BOOKS_LIBRARY.init()
+      }
+    } catch (_) { /* 书架不可用时仍可阅读 */ }
+    try {
+      if (window.BOOKS_NOTES && typeof window.BOOKS_NOTES.init === 'function') {
+        await window.BOOKS_NOTES.init()
+      }
+    } catch (_) { /* 同上 */ }
 
     await fillSettings()
     await renderLibrary()
@@ -2586,6 +3612,9 @@
       const input = cache('bk-source')
       if (input) input.value = direct
       openFromInput(direct)
+    } else if (String(window.location.hash || '').replace('#', '') === 'shelf') {
+      // /books/#shelf 直达书架
+      showShelf()
     }
   }
 

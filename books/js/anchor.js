@@ -15,7 +15,14 @@
   /** 归一化：折叠空白，让跨行选区能稳定匹配 */
   const norm = text => String(text || '').replace(/\s+/g, ' ').trim()
 
-  /** 把一页文本层里的文本节点按顺序拼成完整字符串，并记录每段偏移 */
+  /**
+   * 把一页文本层里的文本节点按顺序拼成完整字符串，并记录每段偏移。
+   * 
+   * 相邻 span 之间要补一个空格：PDF.js 文本层是按位置绝对定位的 span，
+   * DOM 里没有空白文本节点，直接拼接会得到 "Nanoparticlesfor Magnetic"
+   * 这种粘连词，导致 quote 与重新定位时的文本对不上。
+   * 不插入的情况：本段以空白结尾、下一段以空白开头、或跨行（PDF.js 已标注 hasEOL）。
+   */
   const flatten = root => {
     if (!root) return { text: '', nodes: [] }
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
@@ -31,15 +38,24 @@
     })
     let text = ''
     const nodes = []
+    /** 虚拟空格在 text 中的下标（DOM 里并不存在，反向定位时要跳过） */
+    const gaps = new Set()
     let node
+    let prevChar = ''
     while ((node = walker.nextNode())) {
       const raw = node.nodeValue || ''
       if (!raw) continue
+      // 只在「视觉上相邻但 DOM 里没有空白」时补空格
+      if (text && prevChar && !/\s/.test(prevChar) && !/^\s/.test(raw)) {
+        gaps.add(text.length)
+        text += ' '
+      }
       const start = text.length
       text += raw
       nodes.push({ node, start, end: text.length })
+      prevChar = raw[raw.length - 1]
     }
-    return { text, nodes }
+    return { text, nodes, gaps }
   }
 
   /** 归一化文本 + 到原文下标的映射表，用于容错空白差异的匹配 */
@@ -73,10 +89,14 @@
   }
 
   /** 把 [start,end) 原文区间切成若干 Range（跨文本节点时要拆开） */
-  const buildRanges = (nodes, start, end, root) => {
+  const buildRanges = (nodes, start, end, root, gaps) => {
     const ranges = []
     let cursor = start
-    while (cursor < end) {
+    let guard = 0
+    while (cursor < end && guard < 10000) {
+      guard += 1
+      // 游标停在虚拟空格上（该字符不属于任何文本节点）→ 跳过一格继续
+      if (gaps && gaps.has(cursor)) { cursor += 1; continue }
       const entry = nodes.find(n => cursor >= n.start && cursor < n.end)
       if (!entry) break
       const segEnd = Math.min(end, entry.end)
@@ -101,16 +121,29 @@
     if (!text) return null
 
     // 把 Range 端点的 (container, offset) 换算成整页文本下标
+    const startOfNode = node => {
+      const found = nodes.find(entry => entry.node === node)
+      return found ? found.start : -1
+    }
     const offsetOf = (container, offset) => {
       if (container.nodeType === Node.TEXT_NODE) {
         const found = nodes.find(entry => entry.node === container)
         return found ? found.start + offset : -1
       }
-      // 容器是元素：offset 表示"第 offset 个子节点之前"
+      // 容器是元素：offset 表示「第 offset 个子节点之前」
+      if (!root.contains(container)) return -1
       const child = container.childNodes[offset]
-      if (!child) return text.length
+      if (!child) {
+        // 落在子节点末尾 → 取该容器内最后一个文本节点的结束位置
+        const inner = flatten(container)
+        const last = inner.nodes[inner.nodes.length - 1]
+        return last ? startOfNode(last.node) + (last.end - last.start) : -1
+      }
+      // 关键：flatten(child) 给出的是「相对于 child」的偏移，
+      // 必须换回整页文本里的绝对位置，否则锚点会从第 0 个字开始（整页被误选）。
       const inner = flatten(child)
-      return inner.nodes.length ? inner.nodes[0].start : -1
+      const first = inner.nodes[0]
+      return first ? startOfNode(first.node) : -1
     }
 
     const start = offsetOf(range.startContainer, range.startOffset)
@@ -144,7 +177,7 @@
    */
   const toRanges = (anchor, root) => {
     if (!anchor || !anchor.quote) return []
-    const { text, nodes } = flatten(root)
+    const { text, nodes, gaps } = flatten(root)
     if (!text) return []
 
     const want = norm(anchor.quote)
@@ -186,7 +219,7 @@
     const endRaw = map[pick + want.length - 1]
     if (startRaw == null || endRaw == null) return []
 
-    return buildRanges(nodes, startRaw, endRaw + 1, root)
+    return buildRanges(nodes, startRaw, endRaw + 1, root, gaps)
   }
 
   /**

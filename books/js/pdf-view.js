@@ -39,10 +39,17 @@
    */
   const open = async source => {
     const lib = await loadLib()
+    // standardFontDataUrl 必须显式给：很多期刊 PDF 用的是「未嵌入的标准 14 字体」，
+    // 不提供这个地址时 PDF.js 只能拿系统字体兜底，度量（宽度/基线）会漂移，
+    // 表现为文字重叠、位置错位。cMapUrl 同理，用于中日韩字符。
+    const common = {
+      cMapUrl: `${PDFJS_BASE}/cmaps/`,
+      cMapPacked: true,
+      standardFontDataUrl: `${PDFJS_BASE}/standard_fonts/`,
+      useSystemFonts: true
+    }
     const task = lib.getDocument(
-      source instanceof ArrayBuffer
-        ? { data: source, cMapUrl: `${PDFJS_BASE}/cmaps/`, cMapPacked: true }
-        : { url: source.url, cMapUrl: `${PDFJS_BASE}/cmaps/`, cMapPacked: true }
+      source instanceof ArrayBuffer ? { ...common, data: source } : { ...common, url: source.url }
     )
     const pdf = await task.promise
     let meta = {}

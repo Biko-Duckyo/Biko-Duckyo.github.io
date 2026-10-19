@@ -192,7 +192,7 @@
   // 代理可用性探测（只在 GitHub Pages 上发生一次）
   // 为什么需要：functions/ 目录是 Cloudflare Pages Functions 专属约定，
   //   GitHub Pages 不会执行它，/api/weather/* 会直接返回 404。
-  //   本站按 cloudflare-deploy-guide.md 的流程可能部署在 Cloudflare Pages，
+  //   本站按 docs/deploy/cloudflare-pages.md 的流程可能部署在 Cloudflare Pages，
   //   也可能回落到 GitHub Pages 裸托管——两种环境下脚本行为必须都是对的：
   //     · 可用   → 正常渲染天气
   //     · 不可用 → 首屏探测一次失败后就不再重试，避免每次 pjax 换页

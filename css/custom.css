@@ -5,54 +5,42 @@
  * 并借鉴 haiyong.site 的社交图标大圆按钮 UI
  * ====================================================== */
 
-/* ---------- 0. 首页社交图标：圆形按钮 + 白色图标（参考截图样式） ---------- */
-/* 精修：首屏只保留大标题，社交图标统一放在侧边栏作者卡，避免首屏拥挤 */
+/* ---------- 0. 顶栏社交图标（#page-header）----------
+ * 现状：首屏社交图标已统一收敛到侧栏作者卡，此处整体隐藏。
+ * 曾有一组针对 .social-icon:nth-child(n) 的圆形按钮规则，但：
+ *   1) 外层 #site_social_icons 已是 display:none，规则永远不可见（死代码）；
+ *   2) 真正渲染图标的是侧栏 .card-info-social-icons（见下方第 0.1 节），
+ *      选择器 `#page-header #site_social_icons .social-icon` 命不中它。
+ * 故已移除，避免误以为首屏图标样式在生效。
+ * ------------------------------------------------ */
 #page-header #site_social_icons {
   display: none !important;
 }
-#page-header #site_social_icons .social-icon {
-  display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  width: 44px !important;
-  height: 44px !important;
-  border-radius: 50% !important;
-  margin: 0 !important;
-  color: #fff !important;
-  font-size: 22px !important;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.4);
-  transition: transform 0.25s ease, background 0.25s ease;
-  text-decoration: none;
+
+/* ---------- 0.1 侧栏作者卡社交图标：修正深色模式可见性 ----------
+ * 背景：Butterfly 把 social 的 color 写成元素内联样式，例如
+ *   <i class="fab fa-github" style="color: #24292e;">
+ * 内联样式优先级高于普通选择器，必须用 !important 才能覆盖。
+ *
+ * 问题：深色模式下作者卡背景为 #141a26（custom_nav.css），而 GitHub 内联色
+ *   #24292e 与之对比度仅约 1.15:1 —— 图标在深色下几乎不可见。
+ * 处理：深色模式统一改用浅色图标；已按作者本意保留品牌色系的其余三个
+ *   （Email / QQ / 知乎）为浅色变体，浅色模式维持原有品牌色不变。
+ * ------------------------------------------------ */
+html[data-theme='dark'] #aside-content .card-info-social-icons .social-icon i,
+html[data-theme='dark'] #aside_content .card-info-social-icons .social-icon i {
+  color: #e6edf3 !important;   /* 深色卡片上的高对比前景色 */
 }
-#page-header #site_social_icons .social-icon:hover {
-  transform: translateY(-4px);
-}
-#page-header #site_social_icons .social-icon i,
-#page-header #site_social_icons .social-icon::before {
-  color: #fff !important;
-  font-size: 22px !important;
-}
-/* GitHub 黑底白猫 */
-#page-header #site_social_icons .social-icon:nth-child(1) {
-  background: rgba(0,0,0,0.55) !important;
-  backdrop-filter: blur(4px);
-}
-/* Email / QQ / 知乎：透明背景，白色图标 */
-#page-header #site_social_icons .social-icon:nth-child(2),
-#page-header #site_social_icons .social-icon:nth-child(3),
-#page-header #site_social_icons .social-icon:nth-child(4) {
-  background: transparent !important;
+/* hover 时回落到各自的品牌色，兼顾辨识度 */
+html[data-theme='dark'] #aside-content .card-info-social-icons .social-icon:hover i,
+html[data-theme='dark'] #aside_content .card-info-social-icons .social-icon:hover i {
+  filter: brightness(1.25);
 }
 
-/* 微信号胶囊按钮（精修：首屏隐藏，微信信息保留在侧边栏公告卡） */
+/* 微信号胶囊：首屏/顶栏均不展示，微信信息保留在侧边栏公告卡。
+ * 注意：injectWechatCapsule 的注入脚本已随之移除，此规则为兜底保留。 */
 #wechat-capsule {
   display: none !important;
-}
-#wechat-capsule:hover {
-  background: rgba(255, 255, 255, 0.25);
-}
-#wechat-capsule i {
-  font-size: 18px;
 }
 
 /* ---------- 1. 滚动条（优化篇 §1.2） ---------- */
@@ -650,6 +638,11 @@ body {
   max-width: 100%;
   overflow: hidden;
   white-space: nowrap;
+  /* 父级 .announcement_content 的 line-height: 2 会让本行行盒高出行内文字整整一倍，
+     跑马灯文字靠 align-items:center 竖直居中后，上下各留半个行高的空白，
+     看上去就像「这一行下面多了一条空行」。
+     这里把行高收回到 1.2，只压紧跑马灯这一行，其余 4 行的行距维持不变。 */
+  line-height: 2;
   /* 两侧渐隐遮罩，滚出/滚入更自然（不支持 mask 的浏览器自动降级为硬边） */
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
   mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);

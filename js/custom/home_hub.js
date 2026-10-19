@@ -215,8 +215,11 @@
       var last = boxes[2].getBoundingClientRect()
       // 耳朵中心对准第 1 / 第 3 个时间盒的约 1/4 与 3/4 处
       var earW = parseFloat(getComputedStyle(clockEl).fontSize) * 0.27 || 12
-      var l = (first.left - clockRect.left) + first.width * 0.25 - earW
-      var r = (last.left - clockRect.left) + last.width * 0.75 - earW
+      // 整体左移 10px：左耳、右耳都减同一个量，两只耳朵一起平移、间距不变。
+      // 若只改其中一只，间距就会变（会看出左右不对称），所以务必用同一个 EAR_SHIFT。
+      var EAR_SHIFT = 10
+      var l = (first.left - clockRect.left) + first.width * 0.25 - earW - EAR_SHIFT
+      var r = (last.left - clockRect.left) + last.width * 0.75 - earW - EAR_SHIFT
       clockEl.style.setProperty('--bh-ear-l', Math.round(l) + 'px')
       clockEl.style.setProperty('--bh-ear-r', Math.round(r) + 'px')
     }

@@ -43,12 +43,17 @@
   outline-offset: 2px;
 }
 
-/* 图标随主题切换：浅色显示月亮（点了变暗），深色显示太阳 */
-.biko-theme-toggle .biko-theme-toggle__icon { transition: transform .3s ease; }
+/* 图标随主题切换：浅色显示月亮（点了变暗），深色显示太阳。
+   自 /books/ 起按钮内是 <svg><use>，图形与配色来自主站同款 sprite，
+   所以这里不再用伪元素塞字形；旧的 \f186 / \f185 规则若保留，
+   会在 <svg> 上生成一个 ::before 字符，反而多出一坨单色图标。 */
+.biko-theme-toggle .biko-theme-toggle__icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+  transition: transform .3s ease;
+}
 .biko-theme-toggle:hover .biko-theme-toggle__icon { transform: rotate(-18deg); }
-
-html[data-theme='light'] .biko-theme-toggle__icon::before { content: '\f186'; }  /* fa-moon */
-html[data-theme='dark']  .biko-theme-toggle__icon::before { content: '\f185'; }  /* fa-sun  */
 
 /* 窄屏：与顶栏返回按钮同行，不遮挡内容 */
 @media (max-width: 560px) {
@@ -117,3 +122,16 @@ html[data-theme='dark']  .biko-theme-toggle__icon::before { content: '\f185'; } 
 @media (prefers-reduced-motion: reduce) {
   .Cuteen_DarkPlanet { animation: none; }
 }
+
+/* ============================================================
+ * 工作计划历（/calendar/）曾用的包裹层 —— 现已删除
+ * ------------------------------------------------------------
+ * 本页迁移到主题渲染管线后，一度保留了迁移前那枚独立悬浮圆钮，
+ * 用 .biko-worklog-toggle 作包裹层。但主题自带两个明暗入口
+ * （顶栏按钮 + 齿轮面板 #darkmode），第三枚属重复且突兀，
+ * 已在 source/calendar/index.md 里整块删除，这里对应移除。
+ *
+ * 保留本注释只为后来者能看懂历史：若将来某页真的需要一枚
+ * 独立悬浮按钮，直接给 <button class="biko-theme-toggle"> 即可
+ * （上面那套规则是通用的，不依赖任何包裹层）。
+ * ============================================================ */

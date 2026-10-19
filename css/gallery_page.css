@@ -1,0 +1,703 @@
+/* ============================================================
+ * Biko · 照片墙（/galleryGroup/ 的「墙」这一幕）
+ * ------------------------------------------------------------
+ * 只画墙：相纸叠放观感（参考 xinghuisama /photowall）。
+ * 门的样式在 gallery_gate.css —— 两个文件互不引用，改门绝不牵动墙。
+ *
+ * 宿主是主题页面（source/galleryGroup/index.md，type: gallery），
+ * 与 /music/、/calendar/ 同一套骨架 —— 背景、顶栏 .biko-nav、左下角
+ * #rightside 全由主题给出，本文件只画墙。样式按顺序引入：
+ *   biko_subpage.css 提供 --fg* / --card* / --line* / --accent* / --r-* / --shadow*
+ *   这些令牌明暗两套都挂在 [data-theme] 上，与全站同构（主题自带变量名不同，
+ *   覆盖不到这些自定义名，所以它仍要引）。
+ *   本文件另有 4 个页内专用色（--gal-sheet / --gal-ink-soft / --gal-desk / --gal-photo），
+ *   只在明暗各写一份，别处不引用。
+ *
+ * 版心对齐 /calendar/、/music/：顶层 .gal 用 font-size:140% 放大整页字号，
+ * 底下的 em 尺寸随之等比放大（不用 zoom，理由同 worklog_calendar.css）。
+ *
+ * ⚠️ 数据（相册清单、照片地址）一律不进本文件 —— 它在明文 JS 旁边躺着。
+ *    加密载荷在 /galleryGroup/album.html，由 gallery_page.js 解密后渲染。
+ * ============================================================ */
+
+/* ------------------------------------------------------------
+ * 1. 版心 + 页内专用色
+ * ---------------------------------------------------------- */
+.gal {
+  max-width: none;
+  margin: 0 auto;
+  padding: 12px clamp(14px, 3vw, 28px) 40px;
+  font-size: 140%;
+
+  /* 相纸：明处是米白泛暖，暗处是石墨灰 —— 纯白在深色背景上会刺眼 */
+  --gal-sheet: #fbf7f0;
+  --gal-photo: #dfe5ec;
+  /* 相册说明文字的次级色 */
+  --gal-ink-soft: rgba(34, 48, 63, 0.62);
+  /* 照片墙桌面：比页面底色再沉一点，相纸才「浮」得起来 */
+  --gal-desk: rgba(126, 150, 184, 0.10);
+}
+
+html[data-theme='dark'] .gal {
+  --gal-sheet: #2a3141;
+  --gal-photo: #1b2130;
+  --gal-ink-soft: rgba(233, 237, 243, 0.62);
+  --gal-desk: rgba(157, 180, 211, 0.06);
+}
+
+/* 门在时，墙的一切都不该出现：
+   门已是不透明的整屏遮罩（z-index 压过顶栏与左下按钮列），
+   但墙若照常参与布局，页面会多出一整屏的可滚动高度 ——
+   解锁后滚动位置就停在半空了。visibility 保留布局，这里要的是彻底不占位。
+
+   ⚠️ 默认就是「未解锁」：主题页面没法像独立页那样在 <body> 上预写
+      class（body 由 layout.pug 输出），所以这里反过来写 ——
+      页面一渲染墙就是不占位的；gallery_page.js 解锁时给 body 加上
+      is-open，这里就放开。 */
+#gal-root { display: none; }
+body.is-open #gal-root { display: block; }
+
+/* ------------------------------------------------------------
+ * 3. 照片墙
+ * ---------------------------------------------------------- */
+.gal-wall {
+  --gal-gap-x: clamp(20px, 3vw, 38px);
+  --gal-gap-y: clamp(36px, 4.6vw, 58px);
+  padding: clamp(22px, 3.4vw, 34px) clamp(12px, 2.6vw, 30px) clamp(24px, 3.6vw, 36px);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  background:
+    radial-gradient(120% 90% at 12% 0%, var(--gal-desk), transparent 62%),
+    radial-gradient(100% 80% at 88% 100%, var(--gal-desk), transparent 60%),
+    var(--card-2);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.gal-wall-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px 24px;
+  margin-bottom: clamp(26px, 3.2vw, 38px);
+  padding: 0 clamp(4px, 1vw, 12px);
+}
+
+.gal-wall-title { min-width: 0; }
+
+.gal-wall-title p {
+  margin: 0 0 8px;
+  letter-spacing: 0.22em;
+  font-size: 0.72rem;
+  font-weight: 750;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.gal-wall-title h2 {
+  margin: 0;
+  color: var(--fg-strong);
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  line-height: 1.25;
+}
+
+.gal-wall-title span {
+  display: block;
+  margin-top: 8px;
+  color: var(--fg-dim);
+  font-size: 0.9rem;
+  letter-spacing: 0.04em;
+}
+
+/* 搜索框：胶囊 + 左侧放大镜，聚焦时描边取强调色 */
+.gal-search {
+  position: relative;
+  flex: 0 1 320px;
+  min-width: 220px;
+}
+
+.gal-search > i {
+  position: absolute;
+  left: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--fg-mute);
+  font-size: 0.88rem;
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.gal-search input {
+  width: 100%;
+  height: 46px;
+  padding: 0 42px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  outline: none;
+  background: var(--card);
+  color: var(--fg-strong);
+  font: inherit;
+  font-size: 0.9rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.gal-search input::placeholder { color: var(--fg-mute); }
+.gal-search input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--card-hover); }
+.gal-search:focus-within > i { color: var(--accent); }
+
+.gal-search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: none;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--card-3);
+  color: var(--fg-dim);
+  font-size: 0.76rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.gal-search-clear:hover { background: var(--card-hover); color: var(--fg-strong); }
+.gal-search.has-value .gal-search-clear { display: block; }
+
+/* 相册网格 */
+/* auto-fill（不是 auto-fit）而不是固定列数：
+   auto-fit 会把空轨道收掉 —— 只有 2 本时卡片被拉到 587px 宽，一个相册顶半屏；
+   auto-fill 保留空轨道，2 本也是一行 4 个格子的大小，靠左排列，密度稳定。
+
+   下限取 250px（不是 210px）：1212px 的 grid 宽下，
+   210px 能塞 5 列（每列只剩 212px，相纸小得看不清），
+   250px 只够 4 列 —— 每列 274px，正好是 4:3 相纸舒服的尺寸。
+   1024 屏内容区约 880px → 3 列；手机上单列由下面的断点兜住。 */
+.gal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  column-gap: var(--gal-gap-x);
+  row-gap: var(--gal-gap-y);
+  /* 最多 4 列宽（4×250 + 3×gap 的上限用 max-width 兜住）：
+     相册只有 2～3 本时整块居中，不会贴着左边、右边空一大片。 */
+  max-width: 1180px;
+  margin: 0 auto;
+}
+
+/* ------------------------------------------------------------
+ * 4. 相册卡（一摞相纸）
+ * ------------------------------------------------------------
+ * 三个坑，改之前先看：
+ *   1. 相纸是【绝对定位 + 旋转】的，旋转会撑大外接矩形。
+ *      所以 .gal-stack 必须限宽（82%）给 rotate 留余量，
+ *      否则相邻两列的相纸会互相压住，连标题都盖掉（实测 100% 时外接宽 ≈109%）。
+ *   2. 背面两张用「相纸底色 + 降饱和 + 模糊」，比纯色块更像相片。
+ *   3. hover 只动 transform / opacity / filter，不动宽高：不触发重排。
+ * ---------------------------------------------------------- */
+.gal-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gal-stack {
+  position: relative;
+  width: 82%;
+  aspect-ratio: 4 / 3;
+  margin: 0 0 clamp(20px, 2.2vw, 28px);
+  isolation: isolate;
+}
+
+.gal-sheet {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border: 6px solid var(--gal-sheet);
+  border-radius: 4px;
+  background: var(--gal-photo);
+  box-shadow: 0 10px 24px rgba(24, 34, 52, 0.18);
+  transition: transform 0.55s cubic-bezier(0.2, 0.8, 0.3, 1),
+              opacity 0.4s ease,
+              filter 0.4s ease,
+              box-shadow 0.4s ease;
+}
+
+.gal-sheet img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s ease;
+}
+
+/* 背面两张：错开方向不同（一张往左上、一张往右下），
+   这样即使正面把中间全盖住，两侧仍能看到两张纸的边，
+   一眼就是「一叠照片」而不是「一张照片加了点影子」。 */
+.gal-sheet--b2 {
+  z-index: 1;
+  transform: rotate(6deg) translate(9%, 5%);
+  opacity: 0.55;
+  filter: saturate(0.35) blur(2px);
+}
+
+.gal-sheet--b1 {
+  z-index: 2;
+  transform: rotate(-4.5deg) translate(-8%, -4%);
+  opacity: 0.8;
+  filter: saturate(0.6);
+}
+
+/* 正面 */
+.gal-sheet--front {
+  z-index: 3;
+  box-shadow: 0 18px 38px rgba(24, 34, 52, 0.26);
+}
+
+/* 没有照片可当背面时：留一张「空白相纸」。
+   别用斜条纹 —— 那是「图片加载失败」的视觉语言，容易被误读成坏图。
+   改成极淡的同心晕光，看起来像还没显影的相纸。
+   内层再加一圈 1px 描边：深色主题下相纸和背景太接近，
+   不加描边背面两张会糊成"灰色方块"，看不出是纸。 */
+.gal-sheet--blank {
+  background:
+    radial-gradient(120% 90% at 30% 20%, rgba(126, 150, 184, 0.18), transparent 68%),
+    radial-gradient(90% 80% at 78% 88%, rgba(126, 150, 184, 0.12), transparent 62%),
+    var(--gal-sheet);
+  box-shadow:
+    inset 0 0 0 1px rgba(126, 150, 184, 0.22),
+    0 10px 24px rgba(24, 34, 52, 0.18);
+}
+
+/* 整本都是空的（没照片）：相纸上放一个淡图标，比三张白纸直白 */
+.gal-sheet--blank.gal-sheet--front {
+  display: grid;
+  place-items: center;
+}
+
+.gal-sheet--blank.gal-sheet--front::before {
+  content: '\f083';           /* fa-camera-retro 的码位，字体由主题引入 */
+  font-family: 'Font Awesome 6 Free', 'Font Awesome 5 Free', sans-serif;
+  font-weight: 900;
+  font-size: 1.5rem;
+  color: var(--fg-mute);
+  opacity: 0.5;
+}
+
+/* 正面底部压光：张数 + 提示，默认不显示，hover / 聚焦时浮起 */
+.gal-sheet-cap {
+  position: absolute;
+  inset: auto 0 0 0;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 2px;
+  padding: 34px 14px 12px;
+  background: linear-gradient(to top, rgba(10, 14, 22, 0.82), rgba(10, 14, 22, 0));
+  color: #fff;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 0.4s ease, transform 0.45s ease;
+  pointer-events: none;
+}
+
+.gal-sheet-cap b { font-size: 0.95rem; font-weight: 800; }
+.gal-sheet-cap span { font-size: 0.7rem; color: var(--accent-2); letter-spacing: 0.06em; }
+
+/* 键盘聚焦：外圈光晕，不依赖 hover */
+.gal-card:focus-visible { outline: none; }
+.gal-card:focus-visible .gal-stack {
+  border-radius: 12px;
+  box-shadow: 0 0 0 3px var(--accent-2);
+}
+
+@media (hover: hover) {
+  .gal-card:hover .gal-sheet--b2 {
+    transform: rotate(12deg) translate(13%, 6%);
+    opacity: 0.62;
+    filter: saturate(0.45) blur(1.5px);
+  }
+  .gal-card:hover .gal-sheet--b1 {
+    transform: rotate(-8deg) translate(-11%, -5%);
+    opacity: 0.92;
+    filter: saturate(0.8);
+  }
+  .gal-card:hover .gal-sheet--front {
+    transform: translateY(-8px) scale(1.025) rotate(-0.6deg);
+    box-shadow: 0 26px 52px rgba(24, 34, 52, 0.34);
+  }
+  .gal-card:hover .gal-sheet--front img { transform: scale(1.05); }
+  .gal-card:hover .gal-sheet-cap { opacity: 1; transform: translateY(0); }
+  .gal-card:hover .gal-name { color: var(--accent); }
+}
+
+/* 触屏没有 hover：说明条常显。
+   但「空白相纸」上压一条深色渐变会很脏（预览里表现为一块硬边黑块），
+   所以空相册不显示说明条 —— 它的状态已经由纸面图标 + 下方描述讲清楚了。 */
+@media (hover: none) {
+  .gal-sheet-cap { opacity: 1; transform: none; }
+  .gal-sheet--blank .gal-sheet-cap {
+    background: none;
+    color: var(--fg-dim);
+  }
+  .gal-sheet--blank .gal-sheet-cap b { color: var(--fg-strong); }
+  .gal-sheet--blank .gal-sheet-cap span { color: var(--fg-mute); }
+}
+
+/* 文字区 */
+.gal-meta {
+  width: 100%;
+  min-width: 0;
+  padding: 0 6px;
+}
+
+.gal-meta-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.gal-name {
+  color: var(--fg-strong);
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.4;
+  transition: color 0.3s ease;
+  overflow-wrap: anywhere;
+}
+
+.gal-date {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: var(--card-3);
+  color: var(--fg-dim);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  font-variant-numeric: tabular-nums;
+}
+
+.gal-desc {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  margin: 0;
+  color: var(--gal-ink-soft);
+  font-size: 0.86rem;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+/* 空结果 / 空相册 */
+.gal-empty {
+  grid-column: 1 / -1;
+  padding: 56px 16px;
+  text-align: center;
+  color: var(--fg-dim);
+  font-size: 0.9rem;
+}
+
+.gal-empty i {
+  display: block;
+  margin-bottom: 12px;
+  font-size: 1.8rem;
+  color: var(--fg-mute);
+}
+
+/* 解密后逐个浮起 */
+@keyframes galRise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+
+.gal-card.is-in {
+  animation: galRise 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gal-card.is-in { animation: none; }
+  .gal-sheet,
+  .gal-sheet img,
+  .gal-sheet-cap,
+  .gal-card.is-in { transition: none; }
+}
+
+/* ------------------------------------------------------------
+ * 5. 灯箱（自绘，不用 fancybox）
+ * ------------------------------------------------------------
+ * fancybox 靠 HTML 上的 data-fancybox 收集图片，而本页图片地址
+ * 是解密后由 JS 插入的，收集时机对不上；自己画一个更稳，也能
+ * 明确拿到「第 n / N 张」与前后切换。
+ * 层级 10050：高于 #rightMenu 与主题 rightside，低于「小黑」面板。
+ * ---------------------------------------------------------- */
+.gal-lb {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  background: rgba(8, 11, 18, 0.93);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.gal-lb.is-open { opacity: 1; visibility: visible; }
+
+.gal-lb-top,
+.gal-lb-bot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px clamp(14px, 3vw, 28px);
+  color: #eef2f8;
+}
+
+.gal-lb-top { justify-content: space-between; }
+.gal-lb-bot { justify-content: space-between; }
+
+.gal-lb-title {
+  min-width: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gal-lb-count {
+  flex: none;
+  color: rgba(238, 242, 248, 0.66);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.gal-lb-btn {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(238, 242, 248, 0.22);
+  border-radius: 50%;
+  background: rgba(238, 242, 248, 0.08);
+  color: #eef2f8;
+  font-size: 0.94rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.gal-lb-btn:hover { background: rgba(238, 242, 248, 0.2); }
+
+.gal-lb-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  padding: 0 clamp(12px, 4vw, 64px);
+}
+
+.gal-lb-stage img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 6px;
+  background: #0d1119;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  transition: opacity 0.25s ease;
+}
+
+/* 加载下一张时先淡一点，避免旧图残影 */
+.gal-lb-stage img.is-loading { opacity: 0.35; }
+
+.gal-lb-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 46px;
+  height: 46px;
+  border: 1px solid rgba(238, 242, 248, 0.22);
+  border-radius: 50%;
+  background: rgba(238, 242, 248, 0.1);
+  color: #eef2f8;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.gal-lb-nav:hover { background: rgba(238, 242, 248, 0.24); }
+.gal-lb-nav--prev { left: clamp(4px, 1.4vw, 16px); }
+.gal-lb-nav--next { right: clamp(4px, 1.4vw, 16px); }
+.gal-lb-nav[disabled] { opacity: 0.25; cursor: default; }
+
+.gal-lb-caption {
+  max-width: 62%;
+  margin: 0;
+  color: rgba(238, 242, 248, 0.76);
+  font-size: 0.82rem;
+  line-height: 1.6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gal-lb-open {
+  flex: none;
+  padding: 8px 16px;
+  border: 1px solid rgba(238, 242, 248, 0.24);
+  border-radius: var(--r-pill);
+  color: #eef2f8;
+  font-size: 0.78rem;
+  text-decoration: none;
+  transition: background 0.2s ease;
+}
+
+.gal-lb-open:hover { background: rgba(238, 242, 248, 0.16); }
+
+/* 打开灯箱时锁滚动（body 由 JS 加类，见 gallery_page.js） */
+body.gal-lb-lock { overflow: hidden; }
+
+/* ------------------------------------------------------------
+ * 6. 响应式
+ * ------------------------------------------------------------
+ * 列数交给 auto-fit + minmax(210px, 1fr) 自己算：
+ * 1440 屏下内容区约 1360px，一行 4 本；1024 屏 2 本；手机上 1 本。
+ * 只有手机上需要额外收紧——两本并排时 210px 的下限会撑出横向滚动。
+ */
+/* ============================================================
+ * 7. 主题骨架覆盖 —— 顶栏下方「零残留」
+ * ------------------------------------------------------------
+ * 本页已从 layout:false 独立页改成主题页面（type: gallery），
+ * 于是顶栏之下多了主题给「内容页」预留的几层高度/底色。
+ * 目标是：顶栏（fixed，高 61px）下面【直接】就是墙或门，中间不留空档。
+ *
+ * ⚠️ 每条都带 .page.type-gallery 前缀：layout.pug 把它放在
+ *    #body-wrap 上；不带前缀会把首页、文章页的 banner 一起压掉。
+ * ⚠️ 与 /calendar/ 的差别只在「高度算不算」：
+ *    日历页把 #page-header 压到 61px 来给 fixed 顶栏占位，
+ *    本页压到 0、改由 .gal 自己的 padding-top 占位 —— 因为本页
+ *    未解锁时墙是 display:none，占位若挂在 header 上，门那一幕
+ *    就等于「header + 门」两段高度，竖向居中的面板会整体下移。
+ * ============================================================ */
+
+/* 1) banner 本体：压到 0 并清掉底色 / 图片 / 投影。
+   实测成因（同 /calendar/ 文件末尾那段注释）：front-matter 的 top_img: ''
+   只让 inline style 不写背景图，主题仍 fallback 到 default_top_img，
+   于是 .not-home-page 的 400px #page-header 照样带图渲染。
+       index.css:4516  #page-header.not-home-page { height: 400px }
+       index.css:4563  #page-header.not-top-img  { height: 60px; margin-bottom: 10px }
+       index.css:4431  #page-header { background-color: #7e96b8 } */
+.page.type-gallery #page-header {
+  height: 0;
+  min-height: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  transition: none !important;
+}
+
+/* 2) 不要 banner 里那个 absolute 居中的大标题（top:200px，
+   包含块是 #page-header —— header 高度为 0 后它会悬在正文上方）。
+   本站顶栏由 custom_nav.css 完全接管（#nav 已 display:none）。 */
+.page.type-gallery #page-header #page-site-info { display: none !important; }
+
+/* 3) 顶栏占位：唯一的一份。
+   fixed 顶栏高 61px（60 + 1 下边框），这里直接把它垫在 #content-inner 上，
+   然后 7) 段把 .gal 的占位清零 —— 两处都垫就会垫成 122px。
+   左右 15px 也一并清掉（主题 .layout 的 padding: 40px 15px）：
+   它会让墙整体缩进 15px、右边缘切在屏幕里；墙的左右留白由 .gal 自己
+   的 clamp(14px, 3vw, 28px) 负责，只留一份。
+   两边都是 !important，胜负由特异度决定：
+      .page.type-gallery #content-inner（2,1,0）> #content-inner.layout（1,1,0）。 */
+.page.type-gallery #content-inner {
+  padding-top: 61px !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+
+/* 4) 不要「内容卡片」。
+    主题把卡片挂在版心第一个子元素上：
+      _page/common.styl:23-26  .layout > div:first-child:not(.nc) { @extend .cardHover; padding: 50px 40px; }
+    scripts/theme-patch.js 已给 type: gallery 补进 noCardLayout（会带上 .nc），
+    这里再兜一层：主题升级把补丁冲掉时，页面最多是「没有卡片」，而不是多出一张白卡。 */
+.page.type-gallery .layout > div:first-child:not(.nc) {
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.page.type-gallery .layout > div:first-child:not(.nc):hover { box-shadow: none; }
+.page.type-gallery #article-container { padding: 0; }
+
+/* 5) 版心宽度：主题 .layout.hide-aside 锁 1000px（_page/common.styl:44），
+   墙要铺满到 1180px 以上。只在桌面断点里放开，不给 pjax 的替换容器造成宽度跳变。 */
+@media screen and (min-width: 900px) {
+  .page.type-gallery > main.layout.hide-aside { max-width: 1440px; }
+}
+
+/* 6) 主题只在 >=900px 的断点里隐藏侧栏（aside.styl:396）。
+   窄屏时那个空的 .aside-content 仍由 flex 参与排布，会在右边留一段空隙。 */
+.page.type-gallery > main.layout.hide-aside > .aside-content { display: none; }
+
+/* 7) .gal 不再额外垫顶栏高度 —— 已在 3) 段由 #content-inner 垫过一份。
+   同时清掉 #page 的左右内边距（主题给版心首个子元素的是 padding: 50px 40px），
+   让墙的左右留白只由 .gal 自己的 clamp(14px, 3vw, 28px) 决定，
+   否则 40px + 28px 会让墙缩进、右侧空出一条。
+   ⚠️ 必须带 .nc：主题那条规则是 .layout > div:first-child:not(.nc)，
+      这里是 .layout > div:first-child.nc，两条特异性同为 (0,3,1)/(0,3,0) 量级，
+      用 #page 的 id 权重（.page.type-gallery #page = 1,2,1）稳压它。
+   （改之前 #content-inner 的 padding-top 是 0、占位挂在 .gal 上，
+     与现在的 3) 段叠加时，门顶上会漏出整整 61px 的墙。） */
+.page.type-gallery #page {
+  padding-left: 0;
+  padding-right: 0;
+}
+.page.type-gallery .gal { padding-top: 0; }
+
+/* ------------------------------------------------------------
+ * 8. 响应式
+ * ------------------------------------------------------------
+ * 列数交给 auto-fit + minmax(210px, 1fr) 自己算：
+ * 1440 屏下内容区约 1360px，一行 4 本；1024 屏 2 本；手机上 1 本。
+ * 只有手机上需要额外收紧——两本并排时 210px 的下限会撑出横向滚动。
+ * ⚠️ 这里不要写 .gal 的 padding 简写：会连第 7 段算好的 padding-top
+ *    一起覆盖掉，顶栏就会压在墙头上。
+ * ---------------------------------------------------------- */
+@media (max-width: 640px) {
+  .gal { font-size: 112%; padding-bottom: 48px; }
+  .gal-grid { grid-template-columns: minmax(0, 1fr); row-gap: 38px; }
+  .gal-stack { width: 82%; }
+  .gal-wall { padding: 22px 14px 30px; }
+  .gal-wall-head { flex-direction: column; align-items: stretch; }
+  .gal-search { flex: 1 1 auto; }
+  .gal-lb-caption { max-width: 46%; }
+  .gal-lb-nav { width: 38px; height: 38px; }
+  .gal-lb-btn { width: 36px; height: 36px; }
+}
+

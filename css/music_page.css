@@ -1,115 +1,261 @@
 /* ============================================================
- * Biko · 独立音乐页 /music/
- * 与左下角圆角小面板共用同一个 APlayer 实例（window.__BIKO_AP__）。
- * 这里只做「大屏演出视图」，音频引擎仍由音乐按钮统一管理。
+ * Biko · 音乐页 /music/  （「云端乐律」）
+ * ------------------------------------------------------------
+ * 版式：顶栏下方是标题区，往下是双卡（左唱机 / 右歌词·歌单）。
+ * 与左下角圆角小面板共用同一个 APlayer 实例（window.__BIKO_AP__），
+ * 这里只做「大屏演出视图」，音频引擎与全站状态仍由音乐按钮统一管理。
+ *
+ * ⚠️ 两条老约定，改之前先记住：
+ *   1) 不要在这里写 :root。注入的 CSS 出现在主题 <style> 之后，
+ *      同优先级下会盖掉主题的 --card-bg / --font-color，影响全站。
+ *      本页用到的令牌一律收在 .page.type-music 作用域里。
+ *   2) 颜色尽量走令牌 + color-mix，深浅色只改令牌，不写两套规则。
  * ============================================================ */
-body.biko-music-page {
-  background:
-    radial-gradient(1200px 700px at 15% -10%, rgba(126, 150, 184, .16), transparent 62%),
-    radial-gradient(900px 620px at 108% 6%, rgba(157, 180, 211, .12), transparent 58%);
+
+/* ---------- 作用域令牌 ---------- */
+.page.type-music {
+  /* 强调色沿用全站蓝灰，避免音乐页与其它页面割裂 */
+  --bmpg-accent: #7e96b8;
+  --bmpg-accent-2: #9db4d3;
+  --bmpg-strong: #22303f;
+  --bmpg-mute: #6b7888;
+
+  /* 卡片：浅色是半透明白 + 毛玻璃，深色是深蓝灰 + 毛玻璃 */
+  --bmpg-card: rgba(255, 255, 255, .58);
+  --bmpg-card-solid: #ffffff;
+  --bmpg-line: rgba(126, 150, 184, .26);
+  --bmpg-line-soft: rgba(126, 150, 184, .14);
+  --bmpg-raise: rgba(126, 150, 184, .12);
+  --bmpg-shadow: 0 24px 70px rgba(38, 54, 80, .16);
+
+  /* 顶栏实际占位：custom_nav.css 里 .biko-nav 是 60px + 1px 下边框 */
+  --bmpg-nav: 61px;
+
+  /* 注意：这里不设背景。整页的底与遮罩交给下面的
+     .page.type-music::before —— 背景图是全站的 banner.jpg，
+     只用 background 铺 #body-wrap 的话，内容短时下方会露出原图。 */
+}
+
+html[data-theme='dark'] .page.type-music {
+  --bmpg-strong: #e8eef7;
+  --bmpg-mute: #93a2b5;
+  --bmpg-card: rgba(23, 31, 43, .56);
+  --bmpg-card-solid: #1a2331;
+  --bmpg-line: rgba(150, 173, 205, .2);
+  --bmpg-line-soft: rgba(150, 173, 205, .1);
+  --bmpg-raise: rgba(150, 173, 205, .12);
+  --bmpg-shadow: 0 24px 70px rgba(3, 7, 13, .6);
+  --bmpg-veil: linear-gradient(180deg, rgba(10, 16, 26, .34), rgba(10, 16, 26, .5));
+  --bmpg-glow:
+    radial-gradient(1200px 700px at 15% -10%, rgba(84, 110, 148, .3), transparent 62%),
+    radial-gradient(900px 620px at 108% 6%, rgba(60, 84, 118, .24), transparent 58%);
+}
+
+html[data-theme='light'] .page.type-music {
+  --bmpg-veil: linear-gradient(180deg, rgba(255, 255, 255, .55), rgba(255, 255, 255, .66));
+  --bmpg-glow:
+    radial-gradient(1200px 700px at 15% -10%, rgba(126, 150, 184, .18), transparent 62%),
+    radial-gradient(900px 620px at 108% 6%, rgba(157, 180, 211, .14), transparent 58%);
+}
+
+/* 页面底：固定铺满视口，内容再长也不会露出背景原图。
+   z-index:-1 让它落在所有内容之后（本站没有负数层级的元素）。 */
+.page.type-music::before {
+  content: '';
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  background-image: var(--bmpg-veil), var(--bmpg-glow);
+  background-repeat: no-repeat;
+  pointer-events: none;
 }
 
 /* 进页面时把小面板藏起来，避免两层控制条打架 */
-body.biko-music-page #biko-music-panel { display: none !important; }
+.page.type-music #biko-music-panel { display: none !important; }
 
+/* 兜底自建实例的容器：不占位、不可见。
+   只在 MetingJS 没建出实例时才出现（见 music_page.js 的 adopt()）。
+   不用 display:none —— APlayer 需要能拿到尺寸才能算进度条。 */
+#bmpg-host {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+/* 兜底实例内部再由 APlayer 自己生成样式，这里只保证它不被主题的
+   .aplayer-fixed（custom_nav.css 里已隐藏）之外的规则干扰。 */
+#bmpg-host .aplayer { display: none; }
+
+/* ============================================================
+ * 版心
+ * ============================================================ */
 .bmpg {
-  --bmpg-accent: #7e96b8;
-  --bmpg-accent2: #9db4d3;
-  max-width: 1120px;
+  --bmpg-max: 1180px;
+  max-width: var(--bmpg-max);
   margin: 0 auto;
-  padding: 6px clamp(14px, 3vw, 26px) 60px;
-  color: var(--fg, #22303f);
+  padding: 0 clamp(14px, 3vw, 26px) 64px;
+  color: var(--bmpg-strong);
   font-family: var(--font-ui);
 }
 
-/* ---------- 头部 ---------- */
-.bmpg-head { margin: 8px 0 26px; }
+/* ---------- 标题区（顶栏下方第一屏） ---------- */
+.bmpg-head {
+  padding: calc(var(--bmpg-nav) + 30px) 4px 26px;
+}
 .bmpg-eyebrow {
   margin: 0 0 10px;
   color: var(--bmpg-accent);
   font-size: .72rem;
   font-weight: 750;
-  letter-spacing: .24em;
+  letter-spacing: .26em;
   text-transform: uppercase;
 }
-.bmpg-head h1 {
+.bmpg-title {
   margin: 0;
-  color: var(--fg-strong, #22303f);
-  font-size: clamp(1.7rem, 4.4vw, 2.5rem);
-  line-height: 1.2;
+  color: var(--bmpg-strong);
+  font-size: clamp(2rem, 5vw, 2.9rem);
+  font-weight: 800;
+  line-height: 1.16;
+  letter-spacing: .02em;
 }
-.bmpg-head .bmpg-sub {
+.bmpg-sub {
   margin: 12px 0 0;
-  max-width: 640px;
-  color: var(--fg-mute, #6b7888);
-  font-size: .93rem;
+  max-width: 720px;
+  color: var(--bmpg-mute);
+  font-size: .98rem;
 }
 
-/* ---------- 播放器卡片 ---------- */
-.bmpg-player {
+/* ============================================================
+ * 双卡布局
+ * ============================================================ */
+.bmpg-main {
   display: grid;
-  grid-template-columns: minmax(200px, 300px) minmax(0, 1fr);
-  gap: clamp(20px, 3.4vw, 40px);
-  align-items: center;
-  padding: clamp(20px, 3vw, 32px);
-  border: 1px solid rgba(126, 150, 184, .28);
-  border-radius: var(--r-panel, 18px);
-  background: color-mix(in srgb, var(--card, #fff) 92%, transparent);
-  box-shadow: 0 20px 60px rgba(40, 55, 80, .14);
-  -webkit-backdrop-filter: blur(18px) saturate(125%);
-  backdrop-filter: blur(18px) saturate(125%);
-}
-html[data-theme='dark'] .bmpg-player {
-  box-shadow: 0 20px 60px rgba(4, 8, 14, .55);
+  grid-template-columns: minmax(300px, 400px) minmax(0, 1fr);
+  gap: clamp(16px, 2vw, 24px);
+  align-items: stretch;
 }
 
-/* 唱片 */
-.bmpg-art {
+.bmpg-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border: 1px solid var(--bmpg-line);
+  border-radius: 26px;
+  background: var(--bmpg-card);
+  box-shadow: var(--bmpg-shadow);
+  -webkit-backdrop-filter: blur(20px) saturate(130%);
+  backdrop-filter: blur(20px) saturate(130%);
+}
+
+/* ---------- 左：唱机 ---------- */
+.bmpg-player {
+  align-items: center;
+  gap: 18px;
+  padding: clamp(20px, 2.4vw, 30px) clamp(18px, 2.2vw, 26px);
+}
+
+.bmpg-disc-wrap {
+  display: grid;
+  width: min(230px, 72%);
+  place-items: center;
+  padding: 6px;
+}
+.bmpg-disc {
   position: relative;
   width: 100%;
   aspect-ratio: 1 / 1;
-  border-radius: 18px;
-  background: #2a2f3a center / cover no-repeat;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1), 0 20px 46px rgba(10, 16, 26, .34);
+  border-radius: 50%;
+  /* 黑胶：外圈深色盘面 + 细密纹路，内圈留给封面 */
+  background:
+    radial-gradient(circle at 50% 50%, #0d1117 0 26%, transparent 26.5%),
+    repeating-radial-gradient(circle at 50% 50%, rgba(255, 255, 255, .045) 0 1px, transparent 1px 4px),
+    radial-gradient(circle at 32% 28%, #4a5567 0, #20262f 46%, #14181f 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, .08),
+    0 22px 48px rgba(10, 16, 26, .4),
+    inset 0 0 40px rgba(0, 0, 0, .6);
+}
+.bmpg-disc.spinning { animation: bmpgSpin 18s linear infinite; }
+@keyframes bmpgSpin { to { transform: rotate(360deg); } }
+
+/* 封面圆：没有封面时是一圈渐变占位，不会露出黑洞 */
+.bmpg-disc-face {
+  position: absolute;
+  inset: 26.5%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #7e96b8, #b9cbe2) center / cover no-repeat;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .18);
   overflow: hidden;
 }
-.bmpg-art::after {
-  content: '';
+/* 中心孔 */
+.bmpg-disc-hole {
   position: absolute;
-  inset: 0;
-  background: linear-gradient(160deg, rgba(255, 255, 255, .1), transparent 46%);
-}
-.bmpg-player.playing .bmpg-art { animation: bmpgBreath 6s ease-in-out infinite; }
-@keyframes bmpgBreath {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.015); }
+  top: 50%;
+  left: 50%;
+  width: 5.5%;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  background: var(--bmpg-card-solid);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, .45);
+  transform: translate(-50%, -50%);
 }
 
-/* 右侧信息 + 控制 */
-.bmpg-side { display: flex; min-width: 0; flex-direction: column; gap: 14px; }
-.bmpg-kicker {
-  color: var(--bmpg-accent);
-  font-size: .66rem;
-  font-weight: 750;
-  letter-spacing: .18em;
-  text-transform: uppercase;
+.bmpg-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  text-align: center;
 }
 .bmpg-name {
   margin: 0;
-  color: var(--fg-strong, #22303f);
-  font-size: clamp(1.3rem, 3vw, 1.85rem);
-  line-height: 1.3;
+  color: var(--bmpg-strong);
+  font-size: clamp(1.15rem, 2.2vw, 1.45rem);
+  font-weight: 700;
+  line-height: 1.32;
   word-break: break-word;
 }
-.bmpg-artist { margin: 0; color: var(--fg-mute, #6b7888); font-size: .9rem; }
+.bmpg-artist {
+  margin: 0;
+  color: var(--bmpg-mute);
+  font-size: .88rem;
+}
 
-/* 进度 */
-.bmpg-bar { display: grid; grid-template-columns: 42px 1fr 42px; gap: 10px; align-items: center;
-  color: var(--fg-mute, #6b7888); font-size: .72rem; font-variant-numeric: tabular-nums; }
-.bmpg-bar input[type='range'] { width: 100%; height: 4px; accent-color: var(--bmpg-accent); cursor: pointer; }
+/* 进度条 */
+.bmpg-bar {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) 40px;
+  gap: 10px;
+  align-items: center;
+  width: 100%;
+  color: var(--bmpg-mute);
+  font-size: .72rem;
+  font-variant-numeric: tabular-nums;
+}
+.bmpg-t:last-of-type { text-align: right; }
+.bmpg-bar input[type='range'],
+.bmpg-vol input[type='range'] {
+  width: 100%;
+  height: 4px;
+  margin: 0;
+  border-radius: 999px;
+  accent-color: var(--bmpg-accent);
+  cursor: pointer;
+}
+
 
 /* 控制按钮 */
-.bmpg-ctrl { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.bmpg-ctrl {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(6px, 1.6vw, 14px);
+  width: 100%;
+}
 .bmpg-ctrl button {
   display: grid;
   width: 42px;
@@ -118,152 +264,505 @@ html[data-theme='dark'] .bmpg-player {
   border: 1px solid transparent;
   border-radius: 50%;
   background: transparent;
-  color: var(--fg, #22303f);
+  color: var(--bmpg-strong);
+  font-size: .95rem;
   cursor: pointer;
   transition: background .2s ease, color .2s ease, transform .2s ease;
 }
-.bmpg-ctrl button:hover { background: rgba(126, 150, 184, .14); color: var(--bmpg-accent); }
+.bmpg-ctrl button:hover { background: var(--bmpg-raise); color: var(--bmpg-accent); }
 .bmpg-ctrl button:active { transform: scale(.92); }
-.bmpg-ctrl button.is-active { color: var(--bmpg-accent); border-color: rgba(126, 150, 184, .5); }
+.bmpg-ctrl button.is-active {
+  color: var(--bmpg-accent);
+  border-color: color-mix(in srgb, var(--bmpg-accent) 55%, transparent);
+}
 .bmpg-play {
-  width: 56px !important;
-  height: 56px !important;
-  background: linear-gradient(135deg, #7e96b8, #9db4d3) !important;
+  width: 58px !important;
+  height: 58px !important;
+  background: linear-gradient(135deg, #8aa3c6, #a9bfda) !important;
   color: #fff !important;
-  font-size: 1.15rem;
-  box-shadow: 0 12px 26px rgba(126, 150, 184, .34);
+  font-size: 1.16rem;
+  box-shadow: 0 12px 26px rgba(126, 150, 184, .38);
+}
+html[data-theme='dark'] .bmpg-play {
+  background: linear-gradient(135deg, #5a718f, #7e96b8) !important;
 }
 .bmpg-play:hover { filter: brightness(1.07); color: #fff !important; }
 
-.bmpg-vol { display: flex; min-width: 130px; flex: 1; align-items: center; gap: 8px;
-  color: var(--fg-mute, #6b7888); }
-.bmpg-vol input { width: 100%; height: 4px; accent-color: var(--bmpg-accent); cursor: pointer; }
+/* 音量 */
+.bmpg-vol {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: min(230px, 100%);
+  color: var(--bmpg-mute);
+  font-size: .74rem;
+}
+.bmpg-vol input { flex: 1 1 auto; min-width: 0; }
 
-.bmpg-status { margin: 0; min-height: 1.2em; color: var(--fg-mute, #6b7888); font-size: .74rem; }
-/* ---------- 歌单列表 ---------- */
-.bmpg-listwrap {
-  margin-top: 30px;
-  border: 1px solid rgba(126, 150, 184, .22);
-  border-radius: var(--r-panel, 18px);
-  background: color-mix(in srgb, var(--card, #fff) 94%, transparent);
+.bmpg-status {
+  margin: 0;
+  min-height: 1.2em;
+  color: var(--bmpg-mute);
+  font-size: .74rem;
+  text-align: center;
+}
+
+/* ============================================================
+ * 右：歌词 / 歌单
+ * ============================================================ */
+.bmpg-side {
+  min-height: 520px;
+  padding: clamp(14px, 1.8vw, 20px) clamp(14px, 1.8vw, 20px) clamp(12px, 1.6vw, 18px);
   overflow: hidden;
 }
+
+/* 分段切换（胶囊式） */
+.bmpg-tabs {
+  display: inline-flex;
+  align-self: center;
+  padding: 4px;
+  border: 1px solid var(--bmpg-line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bmpg-card-solid) 45%, transparent);
+}
+.bmpg-tab {
+  min-width: 92px;
+  padding: 8px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--bmpg-mute);
+  font: inherit;
+  font-size: .86rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .22s ease, color .22s ease, box-shadow .22s ease;
+}
+.bmpg-tab:hover { color: var(--bmpg-strong); }
+.bmpg-tab.is-on {
+  background: linear-gradient(135deg, #8aa3c6, #a9bfda);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(126, 150, 184, .34);
+}
+html[data-theme='dark'] .bmpg-tab.is-on {
+  background: linear-gradient(135deg, #5a718f, #7e96b8);
+}
+
+/* 面板：两个都在 DOM 里，只切显隐（pjax 换页后不用重建） */
+.bmpg-panel {
+  display: none;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 14px;
+}
+.bmpg-panel.is-on { display: flex; flex-direction: column; }
+
+/* ---------- 歌词 ---------- */
+.bmpg-lrc-box {
+  position: relative;
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  /* 上下边缘渐隐：滚到中间时首尾行不会硬切 */
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 9%, #000 91%, transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 9%, #000 91%, transparent 100%);
+}
+.bmpg-lrc {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  /* 上下留白 = 半个容器高：让首末行也能滚到正中，
+     没有歌词时整段内容正好垂直居中（配合上面的 align-items: center）。 */
+  padding: 20% 6px;
+}
+.bmpg-lrc-line,
+.bmpg-lrc-plain {
+  margin: 0;
+  padding: 7px 10px;
+  color: var(--bmpg-mute);
+  font-size: .94rem;
+  line-height: 1.55;
+  text-align: center;
+  transition: color .25s ease, transform .25s ease, opacity .25s ease;
+}
+.bmpg-lrc-line { opacity: .5; cursor: pointer; }
+.bmpg-lrc-line:hover { opacity: .85; }
+.bmpg-lrc-line.is-on {
+  color: var(--bmpg-accent);
+  font-size: 1.04rem;
+  font-weight: 700;
+  opacity: 1;
+  transform: scale(1.02);
+  text-shadow: 0 0 18px color-mix(in srgb, var(--bmpg-accent) 45%, transparent);
+}
+.bmpg-lrc-dash { opacity: .4; }
+.bmpg-lrc-hint {
+  margin: 0;
+  padding: 40px 12px;
+  color: var(--bmpg-mute);
+  font-size: .88rem;
+  line-height: 1.9;
+  text-align: center;
+  white-space: pre-line;
+}
+
+
+/* ---------- 歌单：头部（切换歌单 + 数量） ---------- */
 .bmpg-listhead {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px clamp(14px, 2.4vw, 22px);
-  border-bottom: 1px solid rgba(126, 150, 184, .18);
+  gap: 10px;
 }
-.bmpg-listhead h2 { margin: 0; font-size: 1.02rem; color: var(--fg-strong, #22303f); }
-.bmpg-listhead .bmpg-n { margin-left: auto; color: var(--fg-mute, #6b7888); font-size: .78rem; }
+.bmpg-n {
+  margin-left: auto;
+  color: var(--bmpg-mute);
+  font-size: .8rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* 切换歌单按钮 + 下拉菜单 */
+.bmpg-picker { position: relative; min-width: 0; }
+.bmpg-pickbtn {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border: 1px solid var(--bmpg-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--bmpg-strong);
+  font: inherit;
+  font-size: .84rem;
+  cursor: pointer;
+  transition: border-color .2s ease, background .2s ease;
+}
+.bmpg-pickbtn:hover { border-color: var(--bmpg-accent); background: var(--bmpg-raise); }
+.bmpg-pickbtn:disabled { opacity: .5; cursor: default; }
+.bmpg-pickname {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bmpg-pickcaret { font-size: .66rem; opacity: .7; transition: transform .2s ease; }
+.bmpg-pickbtn[aria-expanded='true'] .bmpg-pickcaret { transform: rotate(180deg); }
+
+.bmpg-pickmenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 30;
+  min-width: 190px;
+  max-width: 280px;
+  max-height: 260px;
+  padding: 6px;
+  overflow-y: auto;
+  border: 1px solid var(--bmpg-line);
+  border-radius: 14px;
+  background: var(--bmpg-card-solid);
+  box-shadow: 0 18px 44px rgba(20, 30, 46, .22);
+}
+html[data-theme='dark'] .bmpg-pickmenu { box-shadow: 0 18px 44px rgba(0, 0, 0, .6); }
+.bmpg-pickitem {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--bmpg-strong);
+  font: inherit;
+  font-size: .86rem;
+  text-align: left;
+  cursor: pointer;
+  transition: background .16s ease, color .16s ease;
+}
+.bmpg-pickitem i { font-size: .72rem; color: var(--bmpg-mute); }
+.bmpg-pickitem .gl-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bmpg-pickitem:hover { background: var(--bmpg-raise); }
+.bmpg-pickitem.is-on { color: var(--bmpg-accent); font-weight: 700; }
+.bmpg-pickitem.is-on i { color: var(--bmpg-accent); }
+.bmpg-pickempty {
+  margin: 0;
+  padding: 10px 12px;
+  color: var(--bmpg-mute);
+  font-size: .82rem;
+}
+
+/* 搜索框 */
+.bmpg-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 12px 0 10px;
+  padding: 0 14px;
+  border: 1px solid var(--bmpg-line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bmpg-card-solid) 40%, transparent);
+  color: var(--bmpg-mute);
+  transition: border-color .2s ease;
+}
+.bmpg-search:focus-within { border-color: var(--bmpg-accent); }
+.bmpg-search i { font-size: .78rem; }
 .bmpg-filter {
-  min-height: 30px;
-  padding: 4px 16px;
-  border: 1px solid rgba(126, 150, 184, .35);
-  border-radius: var(--r-pill, 999px);
+  width: 100%;
+  min-height: 38px;
+  padding: 0;
+  border: 0;
   outline: none;
   background: transparent;
-  color: inherit;
+  color: var(--bmpg-strong);
   font: inherit;
-  font-size: .8rem;
+  font-size: .86rem;
 }
-.bmpg-filter:focus { border-color: var(--bmpg-accent); }
+.bmpg-filter::-webkit-search-cancel-button { cursor: pointer; }
 
-.bmpg-list { margin: 0; padding: 0; list-style: none; }
+
+/* ---------- 歌单：曲目列表 ---------- */
+.bmpg-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  padding: 2px 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  list-style: none;
+  scrollbar-width: thin;
+}
 .bmpg-item {
   display: grid;
-  grid-template-columns: 40px 52px minmax(0, 1fr) auto;
-  gap: 14px;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  gap: 12px;
   align-items: center;
-  padding: 11px clamp(14px, 2.4vw, 22px);
-  cursor: pointer;
-  border: 0;
-  border-bottom: 1px solid rgba(126, 150, 184, .12);
-  background: transparent;
   width: 100%;
-  text-align: left;
+  padding: 9px 10px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background: transparent;
   color: inherit;
   font: inherit;
-  transition: background .18s ease;
+  text-align: left;
+  cursor: pointer;
+  transition: background .18s ease, border-color .18s ease;
 }
-.bmpg-list li:last-child .bmpg-item { border-bottom: 0; }
-.bmpg-item:hover { background: rgba(126, 150, 184, .1); }
-.bmpg-item.on { background: rgba(126, 150, 184, .16); }
-.bmpg-item .idx {
-  color: var(--fg-mute, #6b7888);
-  font-size: .8rem;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
+.bmpg-item:hover { background: var(--bmpg-raise); }
+.bmpg-item:focus-visible { outline: none; border-color: var(--bmpg-accent); }
+.bmpg-item.on {
+  border-color: color-mix(in srgb, var(--bmpg-accent) 42%, transparent);
+  background: color-mix(in srgb, var(--bmpg-accent) 14%, transparent);
 }
 .bmpg-item .cover {
-  width: 52px; height: 52px; border-radius: 8px; object-fit: cover;
+  width: 46px;
+  height: 46px;
+  border-radius: 10px;
   background: #2a2f3a center / cover no-repeat;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08);
 }
 .bmpg-item .txt { min-width: 0; }
 .bmpg-item .nm {
-  display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  color: var(--fg-strong, #22303f); font-size: .92rem; font-weight: 600;
-}
-.bmpg-item .ar {
-  display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  color: var(--fg-mute, #6b7888); font-size: .76rem;
-}
-.bmpg-item .dur {
-  color: var(--fg-mute, #6b7888); font-size: .76rem;
-  font-variant-numeric: tabular-nums;
+  display: block;
+  overflow: hidden;
+  color: var(--bmpg-strong);
+  font-size: .92rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .bmpg-item.on .nm { color: var(--bmpg-accent); }
-.bmpg-item.on .idx::before {
-  content: '';
-  display: inline-block;
-  width: 5px; height: 5px; margin-right: 6px;
-  border-radius: 50%;
+.bmpg-item .ar {
+  display: block;
+  overflow: hidden;
+  color: var(--bmpg-mute);
+  font-size: .78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bmpg-item .dur {
+  color: var(--bmpg-mute);
+  font-size: .76rem;
+  font-variant-numeric: tabular-nums;
+}
+.bmpg-empty {
+  margin: 0;
+  padding: 46px 16px;
+  color: var(--bmpg-mute);
+  font-size: .86rem;
+  line-height: 1.9;
+  text-align: center;
+  white-space: pre-line;
+}
+
+/* ---------- 歌单：分页器 ---------- */
+.bmpg-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding-top: 12px;
+}
+.bmpg-pager[hidden] { display: none; }
+.bmpg-page,
+.bmpg-prevpg,
+.bmpg-nextpg {
+  display: grid;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 8px;
+  place-items: center;
+  border: 1px solid var(--bmpg-line);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--bmpg-strong);
+  font: inherit;
+  font-size: .8rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  cursor: pointer;
+  transition: border-color .18s ease, background .18s ease, color .18s ease;
+}
+.bmpg-page:hover:not(:disabled),
+.bmpg-prevpg:hover:not(:disabled),
+.bmpg-nextpg:hover:not(:disabled) {
+  border-color: var(--bmpg-accent);
+  background: var(--bmpg-raise);
+}
+.bmpg-page.is-current {
+  border-color: var(--bmpg-accent);
   background: var(--bmpg-accent);
-  animation: bmpgPulse 1.3s ease-in-out infinite;
+  color: #fff;
+  font-weight: 600;
+  cursor: default;
 }
-@keyframes bmpgPulse { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
-.bmpg-item.on .idx { color: transparent; font-size: 0; }
-.bmpg-item.on .idx::before { margin-right: 0; }
-
-.bmpg-empty { padding: 26px; text-align: center; color: var(--fg-mute, #6b7888); font-size: .85rem; }
-
-/* ---------- 底部说明 ---------- */
-.bmpg-foot {
-  margin-top: 26px;
-  padding: 18px 20px;
-  border: 1px dashed rgba(126, 150, 184, .45);
-  border-radius: var(--r-panel-sm, 12px);
-  color: var(--fg-mute, #6b7888);
-  font-size: .85rem;
-  line-height: 1.8;
+.bmpg-page:disabled,
+.bmpg-prevpg:disabled,
+.bmpg-nextpg:disabled { opacity: .38; cursor: default; }
+.bmpg-pagegap {
+  min-width: 16px;
+  color: var(--bmpg-mute);
+  font-size: .78rem;
+  text-align: center;
+  user-select: none;
 }
-.bmpg-foot b { color: var(--bmpg-accent); }
 
-/* ---------- 移动端 ---------- */
-@media (max-width: 860px) {
-  .bmpg-player { grid-template-columns: minmax(0, 1fr); justify-items: center; text-align: center; }
-  .bmpg-art { max-width: 260px; }
-  .bmpg-side { width: 100%; align-items: center; }
-  .bmpg-ctrl { justify-content: center; }
-  .bmpg-vol { max-width: 260px; }
+
+/* ============================================================
+ * 响应式
+ * ------------------------------------------------------------
+ * 980px 以下双卡摞成单列：此时左卡不再固定宽度，唱片缩一点、
+ * 控制条居中，右卡给一个够用的最小高度（歌词要能露出几行）。
+ * ============================================================ */
+@media screen and (max-width: 980px) {
+  .bmpg-main { grid-template-columns: minmax(0, 1fr); }
+  .bmpg-side { min-height: 460px; }
+  .bmpg-disc-wrap { width: min(200px, 55%); }
+  .bmpg-head { padding-top: calc(var(--bmpg-nav) + 22px); }
 }
-@media (max-width: 640px) {
-  .bmpg { padding-bottom: 40px; }
-  .bmpg-player { padding: 18px 14px; gap: 18px; }
-  .bmpg-art { max-width: 200px; }
-  .bmpg-play { width: 50px !important; height: 50px !important; }
-  .bmpg-ctrl button { width: 40px; height: 40px; }
-  .bmpg-ctrl { gap: 6px; }
-  .bmpg-vol { width: 100%; max-width: none; flex: 1 1 100%; min-width: 0; }
-  .bmpg-item { grid-template-columns: 32px 44px minmax(0, 1fr) auto; gap: 10px; padding: 10px 12px; }
-  .bmpg-item .cover { width: 44px; height: 44px; }
-  .bmpg-item .ar { font-size: .72rem; }
+
+@media screen and (max-width: 640px) {
+  .bmpg { padding-bottom: 44px; }
+  .bmpg-head { padding: calc(var(--bmpg-nav) + 16px) 2px 18px; }
+  .bmpg-title { font-size: 1.85rem; }
+  .bmpg-card { border-radius: 20px; }
+  .bmpg-player { gap: 14px; padding: 18px 14px; }
+  .bmpg-disc-wrap { width: min(170px, 62%); }
+  .bmpg-play { width: 52px !important; height: 52px !important; }
+  .bmpg-ctrl button { width: 38px; height: 38px; }
+  .bmpg-ctrl { gap: 4px; }
+  .bmpg-side { min-height: 420px; }
+  .bmpg-item { grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; }
+  .bmpg-item .cover { width: 40px; height: 40px; }
   .bmpg-item .dur { display: none; }
-  .bmpg-listhead { flex-wrap: wrap; gap: 8px; }
-  .bmpg-filter { width: 100%; }
+  .bmpg-tab { min-width: 78px; padding: 8px 14px; }
+  .bmpg-pickmenu { min-width: 160px; }
 }
+
 @media (prefers-reduced-motion: reduce) {
-  .bmpg-player.playing .bmpg-art { animation: none; }
-  .bmpg-item.on .idx::before { animation: none; }
+  .bmpg-disc.spinning { animation: none; }
+  .bmpg-lrc-line { transition: none; }
 }
+
+/* ============================================================
+ * 主题骨架覆盖
+ * ------------------------------------------------------------
+ * 本页已从「layout:false 独立页」改成主题页面（type: music），
+ * body 上不再有 .biko-subpage / .biko-music-page（那是独立页标记），
+ * 改为由 layout.pug 输出的 #body-wrap.page.type-music 承载。
+ * 下面这些规则的目的只有一个：把主题给「内容页」预留的那些
+ * 高度/底色/宽度全部清掉，让顶栏下方【直接】就是标题区。
+ *
+ * ⚠️ 每条都要带 .page.type-music 前缀：不带就会把首页/文章页一起压掉。
+ * ============================================================ */
+
+/* banner 关掉（front-matter top_img: ''）后主题仍会给 header 留高度：
+     index.css:4516  #page-header.not-home-page { height: 400px }
+     index.css:4563  #page-header.not-top-img  { height: 60px; margin-bottom: 10px }
+     index.css:4431  #page-header { background-color: #7e96b8 }
+   这里把它压到 0 —— 顶栏是 fixed 的（custom_nav.css），
+   真正的占位由 .bmpg-head 的 padding-top: var(--bmpg-nav) 负责，
+   所以这里不需要再算 61px，算重了反而会多出一条缝。 */
+.page.type-music #page-header {
+  height: 0;
+  min-height: 0;
+  margin: 0 !important;
+  padding: 0 !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  transition: none !important;
+}
+
+/* 不要顶栏里那个「音乐」大标题。
+   top_img: '' 走的是 header/index.pug:49 的 else 分支，主题会渲染
+     #page-site-info > h1#site-title = page.title
+   它是 index.css:4524 的 position:absolute; top:200px，
+   包含块是 #page-header —— 现在 header 高度为 0，标题会悬在正文上方。 */
+.page.type-music #page-header #page-site-info { display: none !important; }
+
+/* 不要「卡片区」。
+   主题的卡片挂在版心第一个子元素上：
+     _page/common.styl:23-26  .layout > div:first-child:not(.nc) { @extend .cardHover; padding: 50px 40px; }
+     common.styl:31-32        .layout > div:first-child      { width: 74%; }
+   给正文容器加 .nc 后这套就不命中。.nc 由 scripts/theme-patch.js
+   打进 layout/page.pug 的 noCardLayout，不要在这里补 class。 */
+.page.type-music .layout > div:first-child:not(.nc) {
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.page.type-music .layout > div:first-child:not(.nc):hover { box-shadow: none; }
+
+/* 主题版心会给正文加内边距，这里交给 .bmpg 自己控制 */
+.page.type-music #article-container { padding: 0; }
+
+/* #content-inner.layout 被 custom_nav.css 预留了 74px 顶栏高度
+   （#content-inner.layout { padding-top: 74px !important }）。
+   本页标题区自己用 --bmpg-nav 占位，这里必须清掉，否则顶部多 74px 空白。
+   ⚠️ 两边都是 !important，胜负由特异度决定：
+      .page.type-music #content-inner（2,1,0）> #content-inner.layout（1,1,0）。 */
+.page.type-music #content-inner { padding-top: 0 !important; }
+
+/* 版心宽度：主题 .layout.hide-aside 把宽度锁在 1000px（_page/common.styl:44），
+   而本页要 1180px。只在「该页面本来就成立」的桌面断点里放开，
+   不给 pjax 的 #content-inner 替换容器造成宽度跳变。 */
+@media screen and (min-width: 900px) {
+  .page.type-music > main.layout.hide-aside { max-width: 1180px; }
+}
+
+/* 主题只在 >=900px 的断点里隐藏侧栏（aside.styl:396 +minWidth900()）。
+   窄屏时那个空的 .aside-content 仍由 flex 参与排布，会在右边留一段空隙。 */
+.page.type-music > main.layout.hide-aside > .aside-content { display: none; }
