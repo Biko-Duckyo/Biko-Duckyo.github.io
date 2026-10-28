@@ -54,9 +54,9 @@
     var a = ap()
     if (!a || !ui.play) return
     var playing = !!(a.audio && !a.audio.paused)
-    /* 幂等：下面有 250ms 心跳反复调用，无变化时不碰 DOM */
-    if (playing === ui.playingState) return
-    ui.playingState = playing
+    /* 幂等：只在状态真的变了才更新 DOM */
+    if (playing === ui._lastPlaying) return
+    ui._lastPlaying = playing
     ui.play.innerHTML = '<i class="fas ' + (playing ? 'fa-pause' : 'fa-play') + '"></i>'
   }
   function renderStatus() {
@@ -164,6 +164,7 @@
     ui.volRange = panel.querySelector('#bmp-vol')
 
     panel.querySelector('#bmp-collapse').addEventListener('click', closePanel)
+    ui._lastPlaying = null      // 上次渲染的状态（用于幂等判断）
     ui.play.addEventListener('click', function () {
       var a = ap()
       if (!a) return
@@ -230,6 +231,8 @@
     launcher.addEventListener('click', function (e) {
       e.preventDefault()
       e.stopPropagation()
+      /* 音乐页面本身就是全页播放器，不展开小面板 */
+      if (/\/music\/?/.test(location.pathname)) return
       var isOpen = panel.classList.contains('open')
       // 「点击音乐按钮才播放」：只有用户点左下角音符按钮时才驱动播放，
       // 且必须由这个真实用户手势同步触发，才能满足浏览器自动播放策略。
@@ -243,6 +246,10 @@
         try {
           var p = a.play()
           if (p && p.catch) p.catch(function () {})
+          /* 乐观翻转：和面板内播放按钮保持同一逻辑 */
+          ui.playingState = true
+          renderPlayBtn()
+          startBeat()
         } catch (err) {}
       }
     })

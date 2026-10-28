@@ -1,0 +1,892 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理后台 - superBrain</title>
+<!-- 复用 L1 公共令牌（强调色 / 语义操作色）；固定深色后台，下方 :root 锁定深色 accent，不引 biko_subpage 明暗色板 -->
+<link rel="stylesheet" href="/css/common_layout.css">
+<style>
+/* 固定深色后台：复用 L1 令牌命名，色值锁定深色档（本页无明暗切换） */
+:root {
+  --accent: #9db4d3;
+  --accent-2: #b9cbe4;
+  --accent-strong: #c9d8ec;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #0f0f1a;
+  color: #e0e0e0;
+  min-height: 100vh;
+}
+
+/* 登录页 */
+.login-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+}
+.login-box {
+  background: #1a1b2e;
+  padding: 40px;
+  border-radius: 16px;
+  width: 320px;
+  text-align: center;
+}
+.login-box h1 { font-size: 1.5rem; margin-bottom: 24px; color: #fff; }
+.login-box input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: #0f0f1a;
+  color: #fff;
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+.login-box button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+.login-error { color: var(--status-danger); font-size: 13px; margin-top: 12px; display: none; }
+
+/* 主界面 */
+.admin-screen { display: none; }
+.admin-header {
+  background: #1a1b2e;
+  padding: 16px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #333;
+}
+.admin-header h1 { font-size: 1.2rem; color: #fff; }
+.admin-header button {
+  padding: 8px 16px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: transparent;
+  color: #999;
+  cursor: pointer;
+}
+
+.admin-body {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px;
+}
+
+/* 标签页 */
+.tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.tab-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  background: #1a1b2e;
+  color: #999;
+  cursor: pointer;
+  font-size: 14px;
+}
+.tab-btn.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+}
+
+/* 表格 */
+.table-container {
+  background: #1a1b2e;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.table-header {
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #333;
+}
+.table-header h2 { font-size: 1.1rem; color: #fff; }
+.add-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background: var(--status-success);
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+th, td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #333;
+  font-size: 14px;
+}
+th { color: #999; font-weight: 500; }
+td { color: #e0e0e0; }
+.action-btns { display: flex; gap: 8px; }
+.edit-btn {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 4px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+}
+.delete-btn {
+  padding: 4px 12px;
+  border: none;
+  border-radius: 4px;
+  background: var(--status-danger);
+  color: #fff;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+/* 弹窗 */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: #1a1b2e;
+  padding: 32px;
+  border-radius: 16px;
+  width: 480px;
+  max-width: 90vw;
+}
+.modal h3 { font-size: 1.2rem; margin-bottom: 20px; color: #fff; }
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 13px; color: #999; margin-bottom: 6px; }
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: #0f0f1a;
+  color: #fff;
+  font-size: 14px;
+}
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+.cancel-btn {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #333;
+  border-radius: 6px;
+  background: transparent;
+  color: #999;
+  cursor: pointer;
+}
+.save-btn {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  cursor: pointer;
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  background: var(--status-success);
+  color: #fff;
+  font-size: 14px;
+  z-index: 2000;
+  display: none;
+}
+</style>
+</head>
+<body>
+
+<!-- 登录页 -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-box">
+    <h1>🔐 管理后台</h1>
+    <input type="password" id="passwordInput" placeholder="请输入密码">
+    <input type="password" id="tokenInput" placeholder="写接口 Token（未配置可留空）" style="margin-bottom:16px">
+    <button onclick="login()">登录</button>
+    <div class="login-error" id="loginError">密码错误</div>
+  </div>
+</div>
+
+<!-- 主界面 -->
+<div class="admin-screen" id="adminScreen">
+  <div class="admin-header">
+    <h1>superBrain 管理后台</h1>
+    <button onclick="logout()">退出登录</button>
+  </div>
+
+  <div class="admin-body">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="anime" onclick="switchTab('anime')">追番库</button>
+      <button class="tab-btn" data-tab="notes" onclick="switchTab('notes')">书斋笔记</button>
+      <button class="tab-btn" data-tab="finance" onclick="switchTab('finance')">理财记录</button>
+    </div>
+
+    <!-- 追番库 -->
+    <div id="tab-anime" class="tab-content">
+      <div class="table-container">
+        <div class="table-header">
+          <h2>追番库列表</h2>
+          <div style="display:flex;gap:8px;">
+            <button class="add-btn" onclick="openAnimeModal()">+ 新增番剧</button>
+            <button class="add-btn" style="background:transparent;border:1px solid #cbd5e1;color:inherit;" onclick="exportAllAnime()">⬇ 导出 JSON</button>
+          </div>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>标题</th>
+              <th>年份</th>
+              <th>类型</th>
+              <th>状态</th>
+              <th>进度</th>
+              <th>评分</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="animeTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 书斋笔记 -->
+    <div id="tab-notes" class="tab-content" style="display:none">
+      <div class="table-container">
+        <div class="table-header">
+          <h2>笔记列表</h2>
+          <button class="add-btn" onclick="openNoteModal()">+ 新增笔记</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>文档</th>
+              <th>页码</th>
+              <th>内容</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="notesTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 理财记录 -->
+    <div id="tab-finance" class="tab-content" style="display:none">
+      <div class="table-container">
+        <div class="table-header">
+          <h2>理财记录</h2>
+          <button class="add-btn" onclick="openFinanceModal()">+ 新增记录</button>
+        </div>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>类型</th>
+              <th>金额</th>
+              <th>分类</th>
+              <th>日期</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="financeTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 番剧编辑弹窗 -->
+<div class="modal-overlay" id="animeModal">
+  <div class="modal" style="width:620px; max-height:90vh; overflow-y:auto;">
+    <h3 id="animeModalTitle">新增番剧</h3>
+    <div class="form-group">
+      <label>标题（中文名）</label>
+      <input type="text" id="animeTitle">
+    </div>
+    <div class="form-group">
+      <label>Bangumi ID（留空可手动填其他字段）</label>
+      <div style="display:flex; gap:8px;">
+        <input type="text" id="animeBangumiId" style="flex:1;">
+        <button type="button" class="edit-btn" style="white-space:nowrap;" onclick="pullBangumiMeta()">拉取元数据</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>封面 URL</label>
+      <input type="text" id="animeCover">
+    </div>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+      <div class="form-group">
+        <label>状态</label>
+        <select id="animeStatus">
+          <option value="plan">想看</option>
+          <option value="watching">在看</option>
+          <option value="completed">看完</option>
+          <option value="dropped">弃番</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>首播年份</label>
+        <input type="number" id="animeYear" placeholder="如 1999">
+      </div>
+      <div class="form-group">
+        <label>评分（0-10）</label>
+        <input type="number" id="animeRating" step="0.1" min="0" max="10">
+      </div>
+      <div class="form-group">
+        <label>季度</label>
+        <select id="animeSeason">
+          <option value="">未知</option>
+          <option value="winter">冬</option>
+          <option value="spring">春</option>
+          <option value="summer">夏</option>
+          <option value="fall">秋</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>已看集数</label>
+        <input type="number" id="animeEpsWatched" min="0">
+      </div>
+      <div class="form-group">
+        <label>总集数</label>
+        <input type="number" id="animeTotalEps" min="0">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>类型标签（英文逗号分隔，如 热血,冒险,童年）</label>
+      <input type="text" id="animeGenres">
+    </div>
+    <div class="form-group">
+      <label>制作公司</label>
+      <input type="text" id="animeStudio">
+    </div>
+    <div class="form-group">
+      <label>B站 SS/MD 号</label>
+      <input type="text" id="animeBilibiliId" placeholder="如 ss12345 / md28238">
+    </div>
+    <div class="form-group">
+      <label>官方站点</label>
+      <input type="text" id="animeOfficialUrl" placeholder="https://...">
+    </div>
+    <div class="form-group">
+      <label>官方 PV 地址</label>
+      <input type="text" id="animePvUrl">
+    </div>
+    <div class="form-group">
+      <label>简介</label>
+      <textarea id="animeSummary" rows="3"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="cancel-btn" onclick="closeModal('animeModal')">取消</button>
+      <button class="save-btn" onclick="saveAnime()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 笔记编辑弹窗 -->
+<div class="modal-overlay" id="noteModal">
+  <div class="modal">
+    <h3 id="noteModalTitle">新增笔记</h3>
+    <div class="form-group">
+      <label>文档 ID</label>
+      <input type="text" id="noteDocId">
+    </div>
+    <div class="form-group">
+      <label>文档标题</label>
+      <input type="text" id="noteDocTitle">
+    </div>
+    <div class="form-group">
+      <label>页码</label>
+      <input type="number" id="notePage">
+    </div>
+    <div class="form-group">
+      <label>内容</label>
+      <textarea id="noteContent" rows="4"></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="cancel-btn" onclick="closeModal('noteModal')">取消</button>
+      <button class="save-btn" onclick="saveNote()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 理财编辑弹窗 -->
+<div class="modal-overlay" id="financeModal">
+  <div class="modal">
+    <h3 id="financeModalTitle">新增记录</h3>
+    <div class="form-group">
+      <label>类型</label>
+      <select id="financeType">
+        <option value="expense">支出</option>
+        <option value="income">收入</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>金额</label>
+      <input type="number" id="financeAmount" step="0.01">
+    </div>
+    <div class="form-group">
+      <label>分类</label>
+      <input type="text" id="financeCategory" placeholder="如：餐饮、交通、工资">
+    </div>
+    <div class="form-group">
+      <label>日期</label>
+      <input type="date" id="financeDate">
+    </div>
+    <div class="form-group">
+      <label>备注</label>
+      <input type="text" id="financeNote">
+    </div>
+    <div class="form-actions">
+      <button class="cancel-btn" onclick="closeModal('financeModal')">取消</button>
+      <button class="save-btn" onclick="saveFinance()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast">操作成功</div>
+
+<script>
+const API_BASE = 'https://superbrain-api.superq-q216.workers.dev';
+const ADMIN_PASSWORD = 'Biko+998314';
+
+const STATUS_TEXT = { plan: '想看', watching: '在看', completed: '看完', dropped: '弃番' };
+
+let editingAnimeId = null;
+let editingNoteId = null;
+let editingFinanceId = null;
+
+// 统一请求封装：写接口自动带 X-Auth-Token；401 提示重新填 token
+async function apiFetch(url, options = {}) {
+  const token = sessionStorage.getItem('anime-write-token') || '';
+  const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+  if (token) headers['X-Auth-Token'] = token;
+  const resp = await fetch(url, Object.assign({}, options, { headers }));
+  if (resp.status === 401) {
+    showToast('401：写接口 Token 无效，请在登录框重新填写');
+    throw new Error('unauthorized');
+  }
+  return resp;
+}
+
+// ===== 登录 =====
+function login() {
+  const pwd = document.getElementById('passwordInput').value;
+  if (pwd === ADMIN_PASSWORD) {
+    document.getElementById('loginError').style.display = 'none';
+    localStorage.setItem('adminLoggedIn:v2', 'true');
+    const token = document.getElementById('tokenInput').value.trim();
+    if (token) sessionStorage.setItem('anime-write-token', token);
+    showAdmin();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+  }
+}
+
+function logout() {
+  localStorage.removeItem('adminLoggedIn:v2');
+  location.reload();
+}
+
+function showAdmin() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('adminScreen').style.display = 'block';
+  loadAnime();
+  loadNotes();
+  loadFinance();
+}
+
+// 检查登录状态
+if (localStorage.getItem('adminLoggedIn:v2') === 'true') {
+  showAdmin();
+}
+
+// 回车登录
+document.getElementById('passwordInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') login();
+});
+
+// ===== 标签页切换 =====
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+  document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
+  document.getElementById(`tab-${tab}`).style.display = 'block';
+}
+
+// ===== 追番库 =====
+// 只读导出 D1 全量记录为 JSON（不依赖写 Token）
+async function exportAllAnime() {
+  try {
+    const resp = await fetch(`${API_BASE}/api/anime`);
+    const data = await resp.json();
+    const items = data.data || [];
+    const payload = {
+      v: 1,
+      exportedAt: new Date().toISOString(),
+      source: 'worker-d1:anime',
+      count: items.length,
+      items
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const d = new Date();
+    a.href = url;
+    a.download = `anime-admin-backup-${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    showToast(`已导出 ${items.length} 条记录`);
+  } catch (e) {
+    showToast('导出失败：' + e.message);
+  }
+}
+
+async function loadAnime() {
+  const resp = await fetch(`${API_BASE}/api/anime`);
+  const data = await resp.json();
+  const tbody = document.getElementById('animeTableBody');
+  tbody.innerHTML = '';
+  (data.data || []).forEach(item => {
+    const watched = item.episodes_watched || 0;
+    const total = item.total_episodes || 0;
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${item.id}</td>
+      <td>${item.title}</td>
+      <td>${item.year || '-'}</td>
+      <td>${(item.genres || '-')}</td>
+      <td>${STATUS_TEXT[item.status] || item.status}</td>
+      <td>${total > 0 ? `${watched}/${total}` : watched || '-'}</td>
+      <td>${item.rating || '-'}</td>
+      <td class="action-btns">
+        <button class="edit-btn" onclick="editAnime(${item.id})">编辑</button>
+        <button class="delete-btn" onclick="deleteAnime(${item.id})">删除</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function clearAnimeForm() {
+  ['animeTitle','animeCover','animeBangumiId','animeYear','animeGenres',
+   'animeStudio','animeBilibiliId','animeOfficialUrl','animePvUrl','animeSummary'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('animeStatus').value = 'plan';
+  document.getElementById('animeSeason').value = '';
+  document.getElementById('animeRating').value = '';
+  document.getElementById('animeEpsWatched').value = '';
+  document.getElementById('animeTotalEps').value = '';
+}
+
+function openAnimeModal() {
+  editingAnimeId = null;
+  document.getElementById('animeModalTitle').textContent = '新增番剧';
+  clearAnimeForm();
+  document.getElementById('animeModal').classList.add('active');
+}
+
+async function editAnime(id) {
+  const resp = await fetch(`${API_BASE}/api/anime/${id}`);
+  const data = await resp.json();
+  const item = data.data;
+  editingAnimeId = id;
+  document.getElementById('animeModalTitle').textContent = '编辑番剧';
+  document.getElementById('animeTitle').value = item.title || '';
+  document.getElementById('animeCover').value = item.cover || '';
+  document.getElementById('animeBangumiId').value = item.bangumi_id || '';
+  document.getElementById('animeStatus').value = item.status || 'plan';
+  document.getElementById('animeYear').value = item.year != null ? item.year : '';
+  document.getElementById('animeSeason').value = item.season || '';
+  document.getElementById('animeRating').value = item.rating != null ? item.rating : '';
+  document.getElementById('animeEpsWatched').value = item.episodes_watched != null ? item.episodes_watched : '';
+  document.getElementById('animeTotalEps').value = item.total_episodes != null ? item.total_episodes : '';
+  document.getElementById('animeGenres').value = item.genres || '';
+  document.getElementById('animeStudio').value = item.studio || '';
+  document.getElementById('animeBilibiliId').value = item.bilibili_id || '';
+  document.getElementById('animeOfficialUrl').value = item.official_url || '';
+  document.getElementById('animePvUrl').value = item.pv_url || '';
+  document.getElementById('animeSummary').value = item.summary || '';
+  document.getElementById('animeModal').classList.add('active');
+}
+
+// 通过 Worker 代理拉取 Bangumi 元数据并回填表单（不写库，确认后点保存）
+async function pullBangumiMeta() {
+  const bid = document.getElementById('animeBangumiId').value.trim();
+  if (!bid) { showToast('请先填写 Bangumi ID'); return; }
+  try {
+    const resp = await fetch(`${API_BASE}/api/anime/meta?bangumi_id=${encodeURIComponent(bid)}`);
+    if (!resp.ok) { showToast('元数据拉取失败（可能限流，稍后再试）'); return; }
+    const data = await resp.json();
+    const m = data.data;
+    if (!m) { showToast('未找到该条目'); return; }
+    if (m.name_cn) document.getElementById('animeTitle').value = m.name_cn;
+    else if (m.name) document.getElementById('animeTitle').value = m.name;
+    if (m.images && (m.images.large || m.images.medium)) {
+      document.getElementById('animeCover').value = m.images.large || m.images.medium;
+    }
+    if (m.date) document.getElementById('animeYear').value = String(m.date).slice(0, 4);
+    if (m.total_episodes) document.getElementById('animeTotalEps').value = m.total_episodes;
+    if (m.summary) document.getElementById('animeSummary').value = m.summary;
+    const ib = m.infobox || {};
+    if (ib['制作公司']) document.getElementById('animeStudio').value = ib['制作公司'];
+    const genreText = ib['类型'] || ib['动画类型'] || '';
+    if (genreText) document.getElementById('animeGenres').value = String(genreText).replace(/\s+/g, '');
+    showToast('元数据已回填，请核对后保存');
+  } catch (e) {
+    showToast('网络错误，元数据拉取失败');
+  }
+}
+
+async function saveAnime() {
+  const body = {
+    title: document.getElementById('animeTitle').value.trim(),
+    cover: document.getElementById('animeCover').value.trim(),
+    bangumi_id: document.getElementById('animeBangumiId').value.trim(),
+    status: document.getElementById('animeStatus').value,
+    rating: parseFloat(document.getElementById('animeRating').value) || 0,
+    episodes_watched: parseInt(document.getElementById('animeEpsWatched').value) || 0,
+    total_episodes: parseInt(document.getElementById('animeTotalEps').value) || 0,
+    year: document.getElementById('animeYear').value,
+    season: document.getElementById('animeSeason').value || null,
+    genres: document.getElementById('animeGenres').value.trim(),
+    studio: document.getElementById('animeStudio').value.trim(),
+    bilibili_id: document.getElementById('animeBilibiliId').value.trim(),
+    official_url: document.getElementById('animeOfficialUrl').value.trim(),
+    pv_url: document.getElementById('animePvUrl').value.trim(),
+    summary: document.getElementById('animeSummary').value.trim(),
+  };
+  if (!body.title) { showToast('标题不能为空'); return; }
+  try {
+    if (editingAnimeId) {
+      await apiFetch(`${API_BASE}/api/anime/${editingAnimeId}`, { method: 'PUT', body: JSON.stringify(body) });
+    } else {
+      await apiFetch(`${API_BASE}/api/anime`, { method: 'POST', body: JSON.stringify(body) });
+    }
+    closeModal('animeModal');
+    loadAnime();
+    showToast('保存成功');
+  } catch (e) { /* 401 已在 apiFetch 提示 */ }
+}
+
+async function deleteAnime(id) {
+  if (!confirm('确定要删除吗？')) return;
+  try {
+    await apiFetch(`${API_BASE}/api/anime/${id}`, { method: 'DELETE' });
+    loadAnime();
+    showToast('删除成功');
+  } catch (e) {}
+}
+
+// ===== 笔记 =====
+async function loadNotes() {
+  const resp = await fetch(`${API_BASE}/api/notes`);
+  const data = await resp.json();
+  const tbody = document.getElementById('notesTableBody');
+  tbody.innerHTML = '';
+  data.data.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${item.id}</td>
+      <td>${item.doc_title || item.doc_id}</td>
+      <td>${item.page}</td>
+      <td>${item.content.substring(0, 30)}...</td>
+      <td class="action-btns">
+        <button class="edit-btn" onclick="editNote(${item.id})">编辑</button>
+        <button class="delete-btn" onclick="deleteNote(${item.id})">删除</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function openNoteModal() {
+  editingNoteId = null;
+  document.getElementById('noteModalTitle').textContent = '新增笔记';
+  document.getElementById('noteDocId').value = '';
+  document.getElementById('noteDocTitle').value = '';
+  document.getElementById('notePage').value = 1;
+  document.getElementById('noteContent').value = '';
+  document.getElementById('noteModal').classList.add('active');
+}
+
+async function editNote(id) {
+  const resp = await fetch(`${API_BASE}/api/notes`);
+  const data = await resp.json();
+  const item = data.data.find(n => n.id === id);
+  editingNoteId = id;
+  document.getElementById('noteModalTitle').textContent = '编辑笔记';
+  document.getElementById('noteDocId').value = item.doc_id;
+  document.getElementById('noteDocTitle').value = item.doc_title || '';
+  document.getElementById('notePage').value = item.page;
+  document.getElementById('noteContent').value = item.content;
+  document.getElementById('noteModal').classList.add('active');
+}
+
+async function saveNote() {
+  const body = {
+    doc_id: document.getElementById('noteDocId').value,
+    doc_title: document.getElementById('noteDocTitle').value,
+    page: parseInt(document.getElementById('notePage').value) || 1,
+    content: document.getElementById('noteContent').value,
+  };
+  if (editingNoteId) {
+    await fetch(`${API_BASE}/api/notes/${editingNoteId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  } else {
+    await fetch(`${API_BASE}/api/notes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  }
+  closeModal('noteModal');
+  loadNotes();
+  showToast('保存成功');
+}
+
+async function deleteNote(id) {
+  if (!confirm('确定要删除吗？')) return;
+  await fetch(`${API_BASE}/api/notes/${id}`, { method: 'DELETE' });
+  loadNotes();
+  showToast('删除成功');
+}
+
+// ===== 理财 =====
+async function loadFinance() {
+  const resp = await fetch(`${API_BASE}/api/finance`);
+  const data = await resp.json();
+  const tbody = document.getElementById('financeTableBody');
+  tbody.innerHTML = '';
+  data.data.forEach(item => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${item.id}</td>
+      <td>${item.type === 'income' ? '收入' : '支出'}</td>
+      <td>${item.amount}</td>
+      <td>${item.category || '-'}</td>
+      <td>${item.date}</td>
+      <td class="action-btns">
+        <button class="edit-btn" onclick="editFinance(${item.id})">编辑</button>
+        <button class="delete-btn" onclick="deleteFinance(${item.id})">删除</button>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+function openFinanceModal() {
+  editingFinanceId = null;
+  document.getElementById('financeModalTitle').textContent = '新增记录';
+  document.getElementById('financeType').value = 'expense';
+  document.getElementById('financeAmount').value = '';
+  document.getElementById('financeCategory').value = '';
+  document.getElementById('financeDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('financeNote').value = '';
+  document.getElementById('financeModal').classList.add('active');
+}
+
+async function editFinance(id) {
+  const resp = await fetch(`${API_BASE}/api/finance`);
+  const data = await resp.json();
+  const item = data.data.find(f => f.id === id);
+  editingFinanceId = id;
+  document.getElementById('financeModalTitle').textContent = '编辑记录';
+  document.getElementById('financeType').value = item.type;
+  document.getElementById('financeAmount').value = item.amount;
+  document.getElementById('financeCategory').value = item.category || '';
+  document.getElementById('financeDate').value = item.date;
+  document.getElementById('financeNote').value = item.note || '';
+  document.getElementById('financeModal').classList.add('active');
+}
+
+async function saveFinance() {
+  const body = {
+    type: document.getElementById('financeType').value,
+    amount: parseFloat(document.getElementById('financeAmount').value),
+    category: document.getElementById('financeCategory').value,
+    date: document.getElementById('financeDate').value,
+    note: document.getElementById('financeNote').value,
+  };
+  if (editingFinanceId) {
+    await fetch(`${API_BASE}/api/finance/${editingFinanceId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  } else {
+    await fetch(`${API_BASE}/api/finance`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+  }
+  closeModal('financeModal');
+  loadFinance();
+  showToast('保存成功');
+}
+
+async function deleteFinance(id) {
+  if (!confirm('确定要删除吗？')) return;
+  await fetch(`${API_BASE}/api/finance/${id}`, { method: 'DELETE' });
+  loadFinance();
+  showToast('删除成功');
+}
+
+// ===== 通用 =====
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.style.display = 'block';
+  setTimeout(() => toast.style.display = 'none', 2000);
+}
+</script>
+
+</body>
+</html>

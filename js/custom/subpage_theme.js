@@ -36,6 +36,10 @@
   function readPref() {
     var v = null
     try { v = localStorage.getItem(KEY) } catch (e) { /* 隐私模式下可能抛错 */ }
+    /* 兼容 Butterfly 主题的 saveToLocal 格式：{"value":"dark"} */
+    if (v && v.startsWith('{')) {
+      try { v = JSON.parse(v).value; } catch (e) { v = null; }
+    }
     if (v === DARK || v === LIGHT) return v
     return prefersDark() ? DARK : LIGHT
   }

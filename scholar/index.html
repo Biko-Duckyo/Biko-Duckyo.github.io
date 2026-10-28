@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>答学 - 学术工作台</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%230F766E' stroke='%230F766E' stroke-width='2'/><circle cx='16' cy='16' r='5' fill='%230F766E'/></svg>">
+  <link rel="stylesheet" href="/css/academic-workbench/style.css">
+  <link rel="stylesheet" href="/css/academic-workbench/reader.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+</head>
+<body>
+
+<!-- ===== 背景层：AI 光场 + 色晕 ===== -->
+<div class="bg-layer" aria-hidden="true">
+  <div class="bg-photo"></div>
+  <div class="bg-orb o1"></div>
+  <div class="bg-orb o2"></div>
+  <div class="bg-orb o3"></div>
+  <div class="bg-key"></div>
+  <div class="bg-fade"></div>
+  <div class="bg-grain"></div>
+</div>
+
+<div class="app">
+
+  <!-- ===== 侧边栏 ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 32 32" fill="none">
+          <circle cx="16" cy="16" r="14" stroke="var(--accent)" stroke-width="1.5"/>
+          <circle cx="16" cy="16" r="5" fill="var(--accent)" opacity="0.8"/>
+          <circle cx="16" cy="16" r="9" stroke="var(--accent)" stroke-width="0.8" opacity="0.4"/>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <div class="brand-title">学术工作台</div>
+        <div class="brand-sub" id="brandSub">你的研究领域</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-group">
+        <div class="nav-group-label">核心工作</div>
+        <button class="nav-item active" data-panel="dashboard">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+          <span>概览</span>
+        </button>
+        <button class="nav-item" data-panel="news">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <span>资讯</span>
+        </button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-label">文献 · 转写</div>
+        <button class="nav-item" data-panel="literature">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h6M9 11h4"/></svg>
+          <span>文献工具</span>
+        </button>
+        <button class="nav-item" data-panel="translations">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M8 7h8M8 11h5"/></svg>
+          <span>译文库</span>
+          <span class="nav-badge" id="navTransBadge" hidden></span>
+        </button>
+        <button class="nav-item" data-panel="readings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          <span>原文精读</span>
+          <span class="nav-badge" id="navReadingBadge" hidden></span>
+        </button>
+        <button class="nav-item" data-panel="wenzhai">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h6M9 11h4M9 15h6"/></svg>
+          <span>文斋开拓</span>
+        </button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-label">情报 · 日报</div>
+        <button class="nav-item" data-panel="frontier">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5" opacity="0.55"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></svg>
+          <span>前沿瞭望</span>
+          <span class="nav-badge" id="navFrontierBadge" style="display:none;">0</span>
+        </button>
+        <button class="nav-item" data-panel="hotspots">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v3H4z"/><path d="M4 9h10v11H4z"/><path d="M16 9h4v11h-4z"/><line x1="7" y1="12.5" x2="11" y2="12.5"/><line x1="7" y1="16" x2="11" y2="16"/></svg>
+          <span>热点日报</span>
+          <span class="nav-badge" id="navHotspotBadge" style="display:none;">0</span>
+        </button>
+        <button class="nav-item" data-panel="weekly">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          <span>科技周报</span>
+          <span class="nav-badge" id="navWeeklyBadge" style="display:none;">0</span>
+        </button>
+      </div>
+      <div class="nav-group">
+        <div class="nav-group-label">资源</div>
+        <button class="nav-item" data-panel="summaries">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <span>摘要卡片</span>
+          <span class="nav-badge" id="navSummaryBadge" style="display:none;">0</span>
+        </button>
+        <button class="nav-item" data-panel="sections">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+          <span>文件夹</span>
+        </button>
+        <button class="nav-item" data-panel="journal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+          <span>研究日志</span>
+        </button>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="phd-mini">
+        <div class="phd-mini-head">
+          <span class="phd-mini-label" id="phdMiniLabel">学业进度</span>
+          <span class="phd-mini-percent"><span id="phdPercentMini">0</span>%</span>
+        </div>
+        <div class="phd-mini-bar"><div class="phd-mini-fill" id="phdBarMini"></div></div>
+        <div class="phd-mini-range" id="phdMiniRange">未设置学制</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 右侧触发区域：鼠标移上去展开侧边栏 -->
+  <div class="sidebar-trigger"></div>
+
+  <!-- ===== 主内容区 ===== -->
+  <main class="main">
+
+    <!-- 顶部状态栏 -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="panel-title" id="panelTitle">概览</h1>
+        <span class="topbar-date" id="panelDate"></span>
+      </div>
+      <div class="topbar-right">
+        <button class="topbar-search" id="cmdkOpen" title="打开命令面板">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <span>搜索 · 跳转</span>
+          <kbd>⌘K</kbd>
+        </button>
+        <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <div class="weather-chip" id="weatherChip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+          <span id="weatherText">加载中…</span>
+        </div>
+        <button class="btn-refresh" id="refreshBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+          <span>更新资讯</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- 面板容器 -->
+    <div class="panels">
+
+      <!-- ===== 面板：概览 ===== -->
+      <section class="panel active" id="panel-dashboard">
+        <div class="today-board" id="todayBoard"></div>
+        <div class="grid-2">
+          <div class="card card-phd">
+            <div class="card-dot"></div>
+            <div class="card-label" id="phdCardLabel">学业进度</div>
+            <div class="phd-big">
+              <span class="phd-num" id="phdPercent">0</span><span class="phd-unit">%</span>
+            </div>
+            <div class="phd-bar"><div class="phd-bar-fill" id="phdBarFill"></div></div>
+            <div class="phd-meta">
+              <span>入学 <span id="phdStartDate">待设置</span></span>
+              <span>预计毕业 <span id="phdEndDate">待设置</span></span>
+            </div>
+            <div class="phd-days" id="phdDays"></div>
+          </div>
+
+          <!-- 毕业条件（紧凑版，放grid-2右边） -->
+          <div class="card card-graduation card-graduation-compact">
+            <div class="card-dot"></div>
+            <div class="card-label">毕业条件</div>
+            <div class="grad-compact-top">
+              <div class="grad-compact-info">
+                <span class="grad-compact-name">C 刊论文</span>
+                <span class="grad-compact-count">
+                  <span class="grad-compact-num" id="gradCJrnlAchieved">0</span>
+                  <span class="grad-compact-sep">/</span>
+                  <span class="grad-compact-total" id="gradCJrnlRequired">2</span>
+                </span>
+              </div>
+              <div class="graduation-bar"><div class="graduation-bar-fill" id="gradCJrnlBar"></div></div>
+              <div class="grad-compact-hint">需发表 2 篇 C 刊</div>
+            </div>
+            <div class="grad-compact-bottom">
+              <button class="graduation-add-btn" id="pubAddBtn">+ 登记论文</button>
+              <div class="pub-list" id="pubList"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 今日待办（占满宽度） -->
+        <div class="card card-todos-dashboard">
+          <div class="card-dot"></div>
+          <div class="card-label">今日待办</div>
+          <div class="todo-mini todo-mini-wide" id="dashboardTodos"></div>
+          <button class="btn-goto" data-goto="todos">查看全部待办</button>
+        </div>
+
+        <div class="grid-3">
+          <div class="card stat-card">
+            <div class="stat-num" id="statFiles">0</div>
+            <div class="stat-label">文件总数</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-num" id="statDirs">0</div>
+            <div class="stat-label">目录数</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-num" id="statNews">0</div>
+            <div class="stat-label">资讯条目</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-dot"></div>
+          <div class="card-label">最新研究日志</div>
+          <div class="journal-mini" id="dashboardJournal"></div>
+        </div>
+      </section>
+
+      <!-- ===== 面板：资讯 ===== -->
+      <section class="panel" id="panel-news">
+        <div class="news-filter-row">
+          <div class="news-tabs" id="newsTabs"></div>
+          <button class="news-rel-toggle" id="newsRelToggle" title="只显示与你的研究领域相关的条目">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+            <span>只看相关</span>
+          </button>
+        </div>
+        <div class="news-list" id="newsList"></div>
+      </section>
+
+      <!-- ===== 面板：文献工具 ===== -->
+      <section class="panel" id="panel-literature">
+        <div class="lit-tabs" id="litTabs">
+          <button class="lit-tab active" data-lit="journals">期刊地图</button>
+          <button class="lit-tab" data-lit="glossary">术语表</button>
+          <button class="lit-tab" data-lit="queries">检索式库</button>
+          <button class="lit-tab" data-lit="arxiv">arXiv 追踪</button>
+        </div>
+
+        <!-- 子面板：期刊地图 -->
+        <div class="lit-subpanel active" id="lit-journals">
+          <div class="journal-filters" id="journalFilters"></div>
+          <div class="journal-grid" id="journalGrid"></div>
+        </div>
+
+        <!-- 子面板：术语表 -->
+        <div class="lit-subpanel" id="lit-glossary">
+          <div class="lit-search-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="glossarySearch" class="lit-search" placeholder="搜索术语、全称、中文译名…">
+          </div>
+          <div class="glossary-list" id="glossaryList"></div>
+        </div>
+
+        <!-- 子面板：检索式库 -->
+        <div class="lit-subpanel" id="lit-queries">
+          <div class="query-list" id="queryList"></div>
+        </div>
+
+        <!-- 子面板：arXiv 追踪 -->
+        <div class="lit-subpanel" id="lit-arxiv">
+          <div class="arxiv-head">
+            <span class="arxiv-hint">领域论文追踪 · 按提交时间倒序 · 30 分钟缓存，<a href="https://arxiv.org/" target="_blank" rel="noopener">前往 arXiv ↗</a></span>
+            <button class="hs-btn" id="arxivRefreshBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              <span>刷新</span>
+            </button>
+          </div>
+          <div class="arxiv-list" id="arxivList"></div>
+        </div>
+      </section>
+
+      <!-- ===== 面板：译文库 ===== -->
+      <section class="panel" id="panel-translations">
+        <div id="translationsListView">
+          <div class="hs-masthead">
+            <div class="hs-masthead-left">
+              <div class="hs-masthead-title">译文库</div>
+              <div class="hs-masthead-sub">存过的全文翻译都在这儿，按保存时间排列 · 点开一篇读译文</div>
+            </div>
+            <div class="hs-masthead-actions">
+              <button class="hs-btn" id="transFolderBtn" title="在 Finder 中打开译文库目录">保存目录</button>
+              <button class="hs-btn hs-btn-primary" id="transRefreshBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                <span>刷新列表</span>
+              </button>
+            </div>
+          </div>
+          <div class="sum-toolbar">
+            <label class="sum-search" for="transSearch">
+              <svg class="ico-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="search" id="transSearch" placeholder="搜索标题 / 来源 / 正文片段…" autocomplete="off" />
+            </label>
+          </div>
+          <div class="trans-list" id="transList"></div>
+          
+          <!-- 译文库管理 -->
+          <div id="transLibStats"></div>
+          <div id="transLibToolbar"></div>
+          <div id="transLibGrid"></div>
+          
+          <div class="sum-empty" id="transEmpty" hidden>
+            <div class="sum-empty-icon"><svg class="ico-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+            <div class="sum-empty-title">译文库还是空的</div>
+            <div class="sum-empty-desc">在 PDF 转写的「译文」标签翻译完全文后，点「存入译文库」，译文就会归档到这里</div>
+          </div>
+        </div>
+        <div id="translationsDetailView" style="display:none;">
+          <div class="hs-detail-head">
+            <button class="hs-btn" id="transBackBtn">← 返回译文列表</button>
+            <div class="hs-detail-title" id="transDetailTitle"></div>
+            <button class="hs-btn" id="transDeleteBtn" title="从译文库移除（不影响转写任务里的原文）">删除</button>
+          </div>
+          <div class="trans-detail-meta" id="transDetailMeta"></div>
+          <div class="xref-bar" id="transXref"></div>
+          <div class="sum-detail-body" id="transDetailContent"></div>
+        </div>
+      </section>
+
+      <!-- ===== 面板：原文精读库 ===== -->
+      <section class="panel" id="panel-readings">
+        <div id="readingsListView">
+          <div class="hs-masthead">
+            <div class="hs-masthead-left">
+              <div class="hs-masthead-title">原文精读</div>
+              <div class="hs-masthead-sub">逐段对照的精读长文 · 原文一段、译文一段、重点处附解读 · 按生成时间排列</div>
+            </div>
+            <div class="hs-masthead-actions">
+              <button class="hs-btn" id="readFolderBtn" title="在 Finder 中打开精读库目录">保存目录</button>
+              <button class="hs-btn hs-btn-primary" id="readRefreshBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                <span>刷新列表</span>
+              </button>
+            </div>
+          </div>
+          <div class="sum-toolbar">
+            <label class="sum-search" for="readSearch">
+              <svg class="ico-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="search" id="readSearch" placeholder="搜索标题 / 来源 / 正文片段…" autocomplete="off" />
+            </label>
+          </div>
+          <div class="trans-list" id="readList"></div>
+          
+          <!-- 文献库管理 -->
+          <div id="readingLibStats"></div>
+          <div id="readingLibFilters" style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;"></div>
+          <div id="readingLibToolbar"></div>
+          <div id="readingLibGrid"></div>
+          
+          <div class="sum-empty" id="readEmpty" hidden>
+            <div class="sum-empty-icon"><svg class="ico-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+            <div class="sum-empty-title">精读库还是空的</div>
+            <div class="sum-empty-desc">在 PDF 转写的「精读」标签生成精读长文，生成完会自动归档到这里</div>
+          </div>
+        </div>
+        <div id="readingsDetailView" style="display:none;">
+          <div class="hs-detail-head">
+            <button class="hs-btn" id="readBackBtn">← 返回精读列表</button>
+            <div class="hs-detail-title" id="readDetailTitle"></div>
+            <button class="hs-btn" id="readDeleteBtn" title="从精读库移除（不影响转写任务里的原文件）">删除</button>
+          </div>
+          <div class="trans-detail-meta" id="readDetailMeta"></div>
+          <div class="xref-bar" id="readXref"></div>
+          <div class="sum-detail-body reading-body" id="readDetailContent"></div>
+        </div>
+      </section>
+
+      <!-- ===== 面板：文斋开拓（文献阅读工作台） ===== -->
+      <section class="panel" id="panel-wenzhai">
+        <div class="wenzhai-workspace">
+          
+          <!-- 顶栏 -->
+          <div class="wenzhai-topbar">
+            <div class="wenzhai-topbar-left">
+              <label class="wenzhai-file-btn" for="wenzhai-file" tabindex="0">
+                <i class="fas fa-folder-open"></i><span>本地 PDF</span>
+              </label>
+              <input id="wenzhai-file" type="file" accept="application/pdf,.pdf" hidden>
+              <div class="wenzhai-input-wrap">
+                <input type="text" id="wenzhai-source" placeholder="粘贴 DOI 或 PDF 链接…">
+              </div>
+              <button class="wenzhai-open-btn" id="wenzhai-open" title="打开">
+                <i class="fas fa-arrow-right"></i>
+              </button>
+              
+              <span class="wenzhai-sep"></span>
+              
+              <button class="wenzhai-tool-btn" id="wenzhaiExportMd" title="导出 Markdown">
+                <i class="fas fa-file-download"></i>
+              </button>
+              <button class="wenzhai-tool-btn" id="wenzhaiExportImg" title="导出长图">
+                <i class="fas fa-image"></i>
+              </button>
+              <button class="wenzhai-tool-btn" id="wenzhaiHelp" title="使用说明">
+                <i class="fas fa-question"></i>
+              </button>
+            </div>
+            <div class="wenzhai-topbar-right">
+              <button class="wenzhai-mode-btn" id="wenzhaiModeBtn" title="切换对照模式">
+                <i class="fas fa-columns"></i><span>对照模式</span>
+              </button>
+              
+              <span class="wenzhai-sep"></span>
+              
+              <!-- 翻页功能 -->
+              <button class="wenzhai-tool-btn" id="wenzhaiPrevPage" title="上一页">
+                <i class="fas fa-chevron-up"></i>
+              </button>
+              <span class="wenzhai-page-label" id="wenzhaiPageLabel">— / —</span>
+              <button class="wenzhai-tool-btn" id="wenzhaiNextPage" title="下一页">
+                <i class="fas fa-chevron-down"></i>
+              </button>
+              
+              <span class="wenzhai-sep"></span>
+              
+              <!-- 缩放功能 -->
+              <button class="wenzhai-tool-btn" id="wenzhaiZoomOut" title="缩小">
+                <i class="fas fa-magnifying-glass-minus"></i>
+              </button>
+              <span class="wenzhai-zoom-label" id="wenzhaiZoomLabel">100%</span>
+              <button class="wenzhai-tool-btn" id="wenzhaiZoomIn" title="放大">
+                <i class="fas fa-magnifying-glass-plus"></i>
+              </button>
+              <button class="wenzhai-tool-btn" id="wenzhaiFitWidth" title="适宽">
+                <i class="fas fa-arrows-left-right"></i>
+              </button>
+              <button class="wenzhai-tool-btn" id="wenzhaiFitPage" title="整页">
+                <i class="fas fa-expand"></i>
+              </button>
+              
+              <span class="wenzhai-sep"></span>
+              
+              <!-- 面板功能 -->
+              <button class="wenzhai-tool-btn" id="wenzhaiOutline" title="目录">
+                <i class="fas fa-list-ul"></i>
+              </button>
+              <button class="wenzhai-tool-btn" id="wenzhaiSearch" title="全文搜索">
+                <i class="fas fa-magnifying-glass"></i>
+              </button>
+              <button class="wenzhai-tool-btn" id="wenzhaiRegionZoom" title="图区放大">
+                <i class="fas fa-magnifying-glass-chart"></i>
+              </button>
+              <button class="wenzhai-tool-btn" id="wenzhaiAnnotRegion" title="图区批注">
+                <i class="fas fa-object-group"></i>
+              </button>
+              
+              <span class="wenzhai-sep"></span>
+              
+              <button class="wenzhai-tool-btn" id="wenzhaiHighlight" title="高亮">
+                <i class="fas fa-highlighter"></i>
+              </button>
+              <button class="wenzhai-tool-btn" id="wenzhaiUnderline" title="划线">
+                <i class="fas fa-underline"></i>
+              </button>
+              <button class="wenzhai-tool-btn" id="wenzhaiAnnot" title="批注">
+                <i class="fas fa-sticky-note"></i>
+              </button>
+              
+              <span class="wenzhai-sep"></span>
+              
+              <button class="wenzhai-tool-btn" id="wenzhaiSummary" title="生成摘要">
+                <i class="fas fa-clipboard-list"></i>
+              </button>
+              <button class="wenzhai-tool-btn" id="wenzhaiTranslate" title="生成中文翻译">
+                <i class="fas fa-language"></i>
+              </button>
+              <button class="wenzhai-tool-btn" id="wenzhaiNotePanel" title="笔记面板">
+                <i class="fas fa-pen"></i>
+              </button>
+              <button class="wenzhai-tool-btn" id="wenzhaiFullscreen" title="全屏">
+                <i class="fas fa-expand-arrows-alt"></i>
+              </button>
+              <button class="wenzhai-tool-btn" id="wenzhaiMore" title="更多">
+                <i class="fas fa-ellipsis"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- 空状态 -->
+          <div class="wenzhai-empty" id="wenzhaiEmpty">
+            <div class="wenzhai-empty-icon">
+              <i class="fas fa-book-open"></i>
+            </div>
+            <div class="wenzhai-empty-title">拖拽 PDF 到此处，或点击「本地 PDF」选择文件</div>
+            <div class="wenzhai-empty-desc">
+              支持 PDF 上传、DOI 解析、中文对照、笔记标注<br>
+              所有功能都在这一个界面完成
+            </div>
+          </div>
+
+          <!-- 进度 -->
+          <div class="wenzhai-progress" id="wenzhaiProgress" hidden>
+            <div class="wenzhai-progress-stage" id="wenzhaiProgressStage">排队中…</div>
+            <div class="wenzhai-progress-bar">
+              <div class="wenzhai-progress-fill" id="wenzhaiProgressFill" style="width: 0%"></div>
+            </div>
+            <div class="wenzhai-progress-pct" id="wenzhaiProgressPct">0%</div>
+          </div>
+
+          <!-- 主内容区 -->
+          <div class="wenzhai-main" id="wenzhaiMain">
+            <!-- PDF 预览区 -->
+            <div class="wenzhai-pdf-viewer" id="wenzhaiPdfViewer">
+              <canvas id="wenzhaiCanvas"></canvas>
+            </div>
+            
+            <!-- 编辑区（右侧） -->
+            <div class="wenzhai-editor" id="wenzhaiEditor">
+              <div class="wenzhai-doc-title" id="wenzhaiDocTitle"></div>
+              <div class="wenzhai-editor-body markdown-body" id="wenzhaiEditorBody" contenteditable="true"></div>
+            </div>
+            
+            <!-- 翻译区（左侧，对照模式时显示） -->
+            <div class="wenzhai-translation" id="wenzhaiTranslation" hidden>
+              <div class="wenzhai-translation-title">中文翻译（只读）</div>
+              <div class="wenzhai-translation-body markdown-body" id="wenzhaiTranslationBody"></div>
+            </div>
+          </div>
+
+          <!-- 操作按钮 -->
+          <div class="wenzhai-actions" id="wenzhaiActions" hidden>
+            <button class="wenzhai-action-btn" id="wenzhaiSaveBtn">
+              <i class="fas fa-save"></i><span>存入文献库</span>
+            </button>
+            <button class="wenzhai-action-btn" id="wenzhaiCopyBtn">
+              <i class="fas fa-copy"></i><span>复制</span>
+            </button>
+            <button class="wenzhai-action-btn" id="wenzhaiDownloadBtn">
+              <i class="fas fa-download"></i><span>下载</span>
+            </button>
+          </div>
+
+          <!-- 浮动笔记面板 -->
+          <div class="wenzhai-note-panel" id="wenzhaiNotePanel" hidden>
+            <div class="wenzhai-note-header">
+              <span>笔记</span>
+              <button class="wenzhai-note-close" id="wenzhaiNoteClose">×</button>
+            </div>
+            <div class="wenzhai-note-body" contenteditable="true"></div>
+          </div>
+
+          <!-- 浮动目录面板 -->
+          <div class="wenzhai-outline-panel" id="wenzhaiOutlinePanel" hidden>
+            <div class="wenzhai-note-header">
+              <span>目录</span>
+              <button class="wenzhai-note-close" id="wenzhaiOutlineClose">×</button>
+            </div>
+            <div class="wenzhai-outline-body" id="wenzhaiOutlineBody"></div>
+          </div>
+
+          <!-- 浮动搜索面板 -->
+          <div class="wenzhai-search-panel" id="wenzhaiSearchPanel" hidden>
+            <div class="wenzhai-note-header">
+              <span>全文搜索</span>
+              <button class="wenzhai-note-close" id="wenzhaiSearchClose">×</button>
+            </div>
+            <div class="wenzhai-search-input">
+              <input type="text" id="wenzhaiSearchInput" placeholder="输入搜索关键词...">
+            </div>
+            <div class="wenzhai-search-results" id="wenzhaiSearchResults"></div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ===== 面板：文件夹 ===== -->
+      <section class="panel" id="panel-sections">
+        <div class="sections-grid" id="sectionsGrid"></div>
+      </section>
+
+      <!-- ===== 面板：研究日志 ===== -->
+      <section class="panel" id="panel-journal">
+        <div class="week-review" id="weekReview" hidden></div>
+        <div class="card">
+          <div class="card-dot"></div>
+          <div class="card-label">快速记录</div>
+          <div class="journal-input-row">
+            <div style="display:flex;gap:10px;align-items:center;">
+              <select id="journalType" class="todo-input" style="flex:0 0 100px;cursor:pointer;">
+                <option value="日常">日常</option>
+                <option value="想法">想法</option>
+                <option value="问题">问题</option>
+                <option value="进展">进展</option>
+              </select>
+              <span style="font-size:12px;color:var(--text-muted);">选择日志类型</span>
+            </div>
+            <textarea id="journalInput" class="journal-input" placeholder="今天的研究进展、想法、卡住的地方…&#10;写 [[card:论文标题]] 能链到摘要卡片，点一下就跳过去" rows="3"></textarea>
+            <button class="btn-primary" id="journalAddBtn">记录</button>
+          </div>
+        </div>
+        <div class="journal-filters" id="journalTypeFilters"></div>
+        <div class="journal-timeline" id="journalTimeline"></div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<!-- Toast 提示 -->
+<div class="toast" id="toast"></div>
+
+<!-- 综述草稿模态（挂在 body 直下，避免 panel 动画 stacking context 困住 z-index） -->
+<div class="review-modal" id="reviewModal" hidden>
+  <div class="review-modal-overlay" id="reviewModalOverlay"></div>
+  <div class="review-modal-content">
+    <div class="review-modal-head">
+      <div class="review-modal-title" id="reviewModalTitle">综述草稿</div>
+      <button class="pdf-file-clear" id="reviewModalClose" title="关闭">×</button>
+    </div>
+    <div class="review-modal-toolbar" id="reviewModalToolbar">
+      <input type="text" id="reviewTopicInput" placeholder="综述主题（留空则用默认主题）" maxlength="60" autocomplete="off" />
+      <button class="hs-btn hs-btn-primary" id="reviewRunBtn">生成</button>
+      <button class="hs-btn" id="reviewCopyBtn" hidden>复制全文</button>
+      <button class="hs-btn" id="reviewDownloadBtn" hidden>下载 .md</button>
+    </div>
+    <div class="review-modal-status" id="reviewModalStatus" hidden></div>
+    <div class="review-modal-body markdown-body" id="reviewModalBody" hidden></div>
+  </div>
+</div>
+
+<!-- 番茄钟专注计时浮条 -->
+<div class="pomo-timer" id="pomoTimer" hidden>
+  <svg class="pomo-ring" viewBox="0 0 48 48">
+    <circle class="pomo-ring-bg" cx="24" cy="24" r="20"/>
+    <circle class="pomo-ring-fg" id="pomoRingFg" cx="24" cy="24" r="20"/>
+  </svg>
+  <div class="pomo-info">
+    <div class="pomo-clock" id="pomoClock">25:00</div>
+    <div class="pomo-task" id="pomoTask"></div>
+  </div>
+  <div class="pomo-btns">
+    <button class="pomo-btn" id="pomoPauseBtn" title="暂停 / 继续">暂停</button>
+    <button class="pomo-btn pomo-btn-stop" id="pomoStopBtn" title="放弃本次专注">放弃</button>
+  </div>
+</div>
+
+<!-- 原文精读生成进度：浮动进度卡，任何面板都能看到（生成在服务端跑，切走/关标签都不中断） -->
+<div class="read-task" id="readTaskBar" hidden>
+  <div class="read-task-head">
+    <span class="read-task-dot" aria-hidden="true"></span>
+    <span class="read-task-title" id="readTaskTitle">原文精读生成中</span>
+    <button class="read-task-cancel" id="readTaskCancel" type="button" title="停止生成（已完成的部分不会保留）">取消</button>
+  </div>
+  <div class="read-task-bar">
+    <div class="read-task-track"><div class="read-task-fill" id="readTaskFill"></div></div>
+    <span class="read-task-pct" id="readTaskPct">0%</span>
+  </div>
+  <div class="read-task-foot">
+    <span class="read-task-count" id="readTaskSub">0 / 0 段</span>
+    <span class="read-task-eta" id="readTaskEta"></span>
+  </div>
+</div>
+
+<!-- 天气详情模态框 -->
+<div class="weather-modal" id="weatherModal">
+  <div class="weather-modal-overlay" id="weatherModalOverlay"></div>
+  <div class="weather-modal-content">
+    <div class="weather-modal-header">
+      <div class="weather-modal-title">
+        <span class="weather-modal-icon" id="wModalIcon" data-wx-ico="thermo"></span>
+        <span>天气详情</span>
+      </div>
+      <button class="weather-modal-close" id="weatherModalClose" aria-label="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="weather-modal-body" id="weatherModalBody">
+      <!-- 当前天气 -->
+      <div class="weather-main">
+        <div class="weather-temp-block">
+          <div class="weather-now-icon" id="wModalNowIcon" data-wx-ico="cloud"></div>
+          <div class="weather-readout">
+            <div class="weather-temp" id="wModalTemp">--</div>
+            <div class="weather-desc" id="wModalDesc">--</div>
+            <div class="weather-feels" id="wModalFeels">--</div>
+          </div>
+        </div>
+        <div class="weather-details">
+          <div class="weather-detail-item">
+            <span class="weather-detail-icon" data-wx-ico="humidity"></span>
+            <span class="weather-detail-label">湿度</span>
+            <span class="weather-detail-value" id="wModalHumidity">--</span>
+          </div>
+          <div class="weather-detail-item">
+            <span class="weather-detail-icon" data-wx-ico="wind"></span>
+            <span class="weather-detail-label">风向</span>
+            <span class="weather-detail-value" id="wModalWind">--</span>
+          </div>
+          <div class="weather-detail-item">
+            <span class="weather-detail-icon" data-wx-ico="gauge"></span>
+            <span class="weather-detail-label">气压</span>
+            <span class="weather-detail-value" id="wModalPressure">--</span>
+          </div>
+          <div class="weather-detail-item">
+            <span class="weather-detail-icon" data-wx-ico="eye"></span>
+            <span class="weather-detail-label">能见度</span>
+            <span class="weather-detail-value" id="wModalVisibility">--</span>
+          </div>
+          <div class="weather-detail-item">
+            <span class="weather-detail-icon" data-wx-ico="uv"></span>
+            <span class="weather-detail-label">紫外线</span>
+            <span class="weather-detail-value" id="wModalUV">--</span>
+          </div>
+          <div class="weather-detail-item">
+            <span class="weather-detail-icon" data-wx-ico="sunrise"></span>
+            <span class="weather-detail-label">日出日落</span>
+            <span class="weather-detail-value" id="wModalSun">--</span>
+          </div>
+        </div>
+      </div>
+      <!-- 3天预报 -->
+      <div class="weather-forecast" id="wModalForecast"></div>
+      <!-- 空气质量 + 天气指数 -->
+      <div class="weather-bottom">
+        <div class="weather-aqi" id="wModalAqiBlock">
+          <div class="weather-aqi-ring">
+            <svg class="aqi-ring-svg" viewBox="0 0 44 44" aria-hidden="true">
+              <circle class="aqi-ring-track" cx="22" cy="22" r="18"/>
+              <circle class="aqi-ring-arc" id="wModalAqiArc" cx="22" cy="22" r="18"/>
+            </svg>
+            <div class="weather-aqi-value" id="wModalAqiValue">--</div>
+          </div>
+          <div class="weather-aqi-meta">
+            <div class="weather-aqi-label">空气质量指数</div>
+            <div class="weather-aqi-category" id="wModalAqiCategory">--</div>
+          </div>
+        </div>
+        <div class="weather-indices" id="wModalIndices"></div>
+      </div>
+      <!-- 天气预警 -->
+      <div class="weather-alerts" id="wModalAlerts" style="display:none;"></div>
+    </div>
+    <div class="weather-modal-footer">
+      <span>数据源：和风天气 QWeather · 每小时自动更新</span>
+    </div>
+  </div>
+</div>
+
+<!-- PDF 一键入库弹框（P0） -->
+<div class="pdf-modal" id="pdfIngestModal" hidden>
+  <div class="pdf-modal-overlay" id="pdfIngestOverlay"></div>
+  <div class="pdf-modal-content">
+    <div class="pdf-modal-header">
+      <span class="pdf-modal-title">存入文献库</span>
+      <button class="pdf-modal-close" id="pdfIngestClose" aria-label="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="pdf-modal-body">
+      <div class="pdf-ingest-hint" id="pdfIngestHint">正在提取元数据…</div>
+      <label class="pdf-field">
+        <span class="pdf-field-label">标题 <em>*</em></span>
+        <input type="text" id="piTitle" placeholder="论文标题（自动提取，可修改）">
+      </label>
+      <div class="pdf-field-row">
+        <label class="pdf-field">
+          <span class="pdf-field-label">作者</span>
+          <input type="text" id="piAuthors" placeholder="多个作者用、分隔">
+        </label>
+        <label class="pdf-field pdf-field-narrow">
+          <span class="pdf-field-label">年份</span>
+          <input type="text" id="piYear" placeholder="如 2021" inputmode="numeric">
+        </label>
+      </div>
+      <div class="pdf-field-row">
+        <label class="pdf-field">
+          <span class="pdf-field-label">期刊 / 会议 / 出版社</span>
+          <input type="text" id="piJournal">
+        </label>
+        <label class="pdf-field pdf-field-narrow">
+          <span class="pdf-field-label">DOI</span>
+          <input type="text" id="piDoi" placeholder="可空">
+        </label>
+      </div>
+      <label class="pdf-field">
+        <span class="pdf-field-label">
+          摘要
+          <button type="button" class="pdf-ai-btn" id="piAiBtn"><svg class="ico-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15.5l-1.9-4.6L5.5 9l4.6-1.4L12 3z"/><path d="M18.5 15l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8.8-1.9z"/></svg> AI 智能补全</button>
+        </span>
+        <textarea id="piAbstract" rows="3" placeholder="论文摘要（可点上方 AI 智能补全自动生成，约15秒；也可手动填写）"></textarea>
+      </label>
+      <label class="pdf-field">
+        <span class="pdf-field-label">关键词</span>
+        <input type="text" id="piKeywords" placeholder="多个关键词用逗号分隔">
+      </label>
+      <input type="hidden" id="piSummaryZh">
+      <div class="pdf-field-row">
+        <label class="pdf-field pdf-field-narrow">
+          <span class="pdf-field-label">分类</span>
+          <select id="piCategory">
+            <option value="精读" selected>精读</option>
+            <option value="泛读">泛读</option>
+            <option value="待读">待读</option>
+          </select>
+        </label>
+        <label class="pdf-field">
+          <span class="pdf-field-label">研究主题（可选已有，也可直接输入新建）</span>
+          <input type="text" id="piTheme" list="piThemeList" placeholder="如：可解释性">
+          <datalist id="piThemeList"></datalist>
+        </label>
+        <label class="pdf-field pdf-field-narrow">
+          <span class="pdf-field-label">优先级</span>
+          <select id="piPriority">
+            <option value="核心">核心</option>
+            <option value="参考" selected>参考</option>
+            <option value="补充">补充</option>
+          </select>
+        </label>
+      </div>
+      <label class="pdf-check">
+        <input type="checkbox" id="piMakeNotes" checked>
+        <span>同时生成读书札记骨架（02_研究笔记 / 02_读书札记）</span>
+      </label>
+      <div class="pdf-ingest-error" id="pdfIngestError" hidden></div>
+      <div class="pdf-ingest-done" id="pdfIngestDone" hidden>
+        <div class="pdf-ingest-done-title">已存入文献库</div>
+        <div class="pdf-ingest-path" id="piDonePaper"></div>
+        <div class="pdf-ingest-path" id="piDoneNote"></div>
+      </div>
+    </div>
+    <div class="pdf-modal-footer" id="pdfIngestFooter">
+      <button class="pdf-mini-btn" id="pdfIngestCancel">取消</button>
+      <button class="pdf-mini-btn pdf-mini-btn-primary" id="pdfIngestConfirm">确认入库</button>
+    </div>
+  </div>
+</div>
+
+<!-- 选中文字浮动工具栏：PDF预览中选中文字时出现 -->
+<div class="pdf-sel-toolbar" id="pdfSelToolbar" hidden>
+  <button class="pdf-sel-btn" id="pdfSelQuoteBtn" title="将选中段落作为引用追加到读书札记的「可引用段落摘录」">
+    引用到札记
+  </button>
+  <span class="pdf-sel-count" id="pdfSelCount"></span>
+</div>
+
+<!-- 图片灯箱：点击放大查看 -->
+<div class="pdf-img-lightbox" id="pdfImgLightbox" hidden>
+  <div class="pdf-img-lightbox-overlay" id="pdfImgLightboxOverlay"></div>
+  <div class="pdf-img-lightbox-content">
+    <button class="pdf-img-lightbox-close" id="pdfImgLightboxClose" aria-label="关闭"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+    <img class="pdf-img-lightbox-img" id="pdfImgLightboxImg" src="" alt="">
+    <div class="pdf-img-lightbox-caption" id="pdfImgLightboxCaption"></div>
+  </div>
+</div>
+
+<!-- ===== ⌘K 命令面板 ===== -->
+<div class="cmdk-overlay" id="cmdkOverlay" role="dialog" aria-modal="true" aria-label="命令面板">
+  <div class="cmdk">
+    <div class="cmdk-input-row">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="cmdk-input" id="cmdkInput" type="text" placeholder="输入面板名或动作…" autocomplete="off" spellcheck="false">
+    </div>
+    <div class="cmdk-list" id="cmdkList"></div>
+    <div class="cmdk-foot">
+      <span><kbd>↑</kbd><kbd>↓</kbd>选择</span>
+      <span><kbd>↵</kbd>执行</span>
+      <span><kbd>esc</kbd>关闭</span>
+    </div>
+  </div>
+</div>
+
+<!-- 文斋开拓主控制器（内联脚本，避免文件加载问题） -->
+<script>
+(() => {
+  'use strict'
+
+  // 设置 PDF.js worker
+  if (window.pdfjsLib) {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
+  }
+
+  const state = {
+    file: null,
+    fileName: '',
+    pdfDoc: null,
+    pageCount: 0,
+    activePage: 1,
+    scale: 1,
+    notes: [],
+    transcription: ''
+  }
+
+  const el = {}
+  const cache = id => { el[id] = el[id] || document.getElementById(id); return el[id] }
+
+  const toast = (msg, type = 'info', ms = 2500) => {
+    console.log('[wenzhai] ' + msg)
+  }
+
+  const renderPage = async (pageNum) => {
+    if (!state.pdfDoc) return
+    try {
+      const page = await state.pdfDoc.getPage(pageNum)
+      const viewport = page.getViewport({ scale: state.scale })
+      const canvas = cache('wenzhaiCanvas')
+      if (!canvas) return
+      const ctx = canvas.getContext('2d')
+      canvas.height = viewport.height
+      canvas.width = viewport.width
+      await page.render({ canvasContext: ctx, viewport: viewport }).promise
+    } catch (err) {
+      console.error('[wenzhai] render error:', err)
+    }
+  }
+
+  const loadPdf = async (file) => {
+    try {
+      const arrayBuffer = await file.arrayBuffer()
+      state.pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+      state.pageCount = state.pdfDoc.numPages
+      state.activePage = 1
+      state.file = file
+      state.fileName = file.name
+      
+      // 隐藏空状态，显示主内容区
+      const emptyEl = cache('wenzhaiEmpty')
+      if (emptyEl) emptyEl.style.display = 'none'
+      const mainEl = cache('wenzhaiMain')
+      if (mainEl) mainEl.style.display = 'flex'
+      
+      updatePageLabel()
+      renderPage(state.activePage)
+      toast('PDF 加载成功：' + file.name + '，共 ' + state.pageCount + ' 页')
+    } catch (err) {
+      toast('PDF 加载失败：' + err.message)
+    }
+  }
+
+  const bindEvents = () => {
+    const fileInput = cache('wenzhai-file')
+    if (fileInput) fileInput.addEventListener('change', e => {
+      const file = e.target.files[0]
+      if (file) loadPdf(file)
+    })
+
+    const openBtn = cache('wenzhai-open')
+    if (openBtn) openBtn.addEventListener('click', submit)
+
+    const sourceInput = cache('wenzhai-source')
+    if (sourceInput) sourceInput.addEventListener('keydown', e => { if (e.key === 'Enter') submit() })
+
+    const prevBtn = cache('wenzhaiPrevPage')
+    if (prevBtn) prevBtn.addEventListener('click', prevPage)
+
+    const nextBtn = cache('wenzhaiNextPage')
+    if (nextBtn) nextBtn.addEventListener('click', nextPage)
+
+    const zoomOutBtn = cache('wenzhaiZoomOut')
+    if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => zoomBy(-0.1))
+
+    const zoomInBtn = cache('wenzhaiZoomIn')
+    if (zoomInBtn) zoomInBtn.addEventListener('click', () => zoomBy(0.1))
+
+    const exportMdBtn = cache('wenzhaiExportMd')
+    if (exportMdBtn) exportMdBtn.addEventListener('click', exportMd)
+
+    // 笔记面板
+    const notePanelBtn = cache('wenzhaiNotePanelBtn')
+    if (notePanelBtn) notePanelBtn.addEventListener('click', toggleNotePanel)
+    const noteCloseBtn = cache('wenzhaiNoteClose')
+    if (noteCloseBtn) noteCloseBtn.addEventListener('click', () => {
+      const panel = cache('wenzhaiNotePanel')
+      if (panel) panel.style.display = 'none'
+    })
+
+    // 目录面板
+    const outlineBtn = cache('wenzhaiOutline')
+    if (outlineBtn) outlineBtn.addEventListener('click', toggleOutlinePanel)
+    const outlineCloseBtn = cache('wenzhaiOutlineClose')
+    if (outlineCloseBtn) outlineCloseBtn.addEventListener('click', () => {
+      const panel = cache('wenzhaiOutlinePanel')
+      if (panel) panel.style.display = 'none'
+    })
+
+    // AI 摘要和中文翻译
+    const summaryBtn = cache('wenzhaiSummary')
+    if (summaryBtn) summaryBtn.addEventListener('click', generateSummary)
+    const translateBtn = cache('wenzhaiTranslate')
+    if (translateBtn) translateBtn.addEventListener('click', generateTranslation)
+
+    // 标注功能
+    const highlightBtn = cache('wenzhaiHighlight')
+    if (highlightBtn) highlightBtn.addEventListener('click', () => addAnnotation('highlight'))
+    const underlineBtn = cache('wenzhaiUnderline')
+    if (underlineBtn) underlineBtn.addEventListener('click', () => addAnnotation('underline'))
+    const annotBtn = cache('wenzhaiAnnot')
+    if (annotBtn) annotBtn.addEventListener('click', () => addAnnotation('annot'))
+
+    // 搜索面板
+    const searchBtn = cache('wenzhaiSearch')
+    if (searchBtn) searchBtn.addEventListener('click', toggleSearchPanel)
+    const searchCloseBtn = cache('wenzhaiSearchClose')
+    if (searchCloseBtn) searchCloseBtn.addEventListener('click', () => {
+      const panel = cache('wenzhaiSearchPanel')
+      if (panel) panel.style.display = 'none'
+    })
+    const searchInput = cache('wenzhaiSearchInput')
+    if (searchInput) searchInput.addEventListener('input', debounce(handleSearch, 300))
+  }
+
+  const submit = () => {
+    const url = cache('wenzhai-source')
+    if (!url || !url.value.trim()) {
+      toast('请输入 DOI 或 PDF 链接')
+      return
+    }
+    toast('正在打开：' + url.value.trim())
+  }
+
+  const prevPage = () => {
+    if (state.activePage > 1) {
+      state.activePage--
+      updatePageLabel()
+      renderPage(state.activePage)
+    }
+  }
+
+  const nextPage = () => {
+    if (state.activePage < state.pageCount) {
+      state.activePage++
+      updatePageLabel()
+      renderPage(state.activePage)
+    }
+  }
+
+  const updatePageLabel = () => {
+    const label = cache('wenzhaiPageLabel')
+    if (label) label.textContent = state.activePage + ' / ' + (state.pageCount || '—')
+  }
+
+  const zoomBy = (delta) => {
+    state.scale = Math.max(0.5, Math.min(3, state.scale + delta))
+    updateZoomLabel()
+    renderPage(state.activePage)
+  }
+
+  const updateZoomLabel = () => {
+    const label = cache('wenzhaiZoomLabel')
+    if (label) label.textContent = Math.round(state.scale * 100) + '%'
+  }
+
+  // 笔记面板功能
+  const toggleNotePanel = () => {
+    const panel = cache('wenzhaiNotePanel')
+    if (!panel) return
+    if (panel.style.display === 'none' || !panel.style.display) {
+      panel.style.display = 'flex'
+      loadNote()
+    } else {
+      saveNote()
+      panel.style.display = 'none'
+    }
+  }
+
+  const loadNote = () => {
+    const body = document.querySelector('#wenzhaiNotePanel .wenzhai-note-body')
+    if (!body) return
+    const key = 'wenzhai-note-' + (state.fileName || 'default')
+    body.textContent = localStorage.getItem(key) || ''
+  }
+
+  const saveNote = () => {
+    const body = document.querySelector('#wenzhaiNotePanel .wenzhai-note-body')
+    if (!body) return
+    const key = 'wenzhai-note-' + (state.fileName || 'default')
+    localStorage.setItem(key, body.textContent)
+    toast('笔记已保存')
+  }
+
+  // 目录面板功能
+  const toggleOutlinePanel = async () => {
+    const panel = cache('wenzhaiOutlinePanel')
+    if (!panel) return
+    if (panel.style.display === 'none' || !panel.style.display) {
+      panel.style.display = 'flex'
+      await loadOutline()
+    } else {
+      panel.style.display = 'none'
+    }
+  }
+
+  const loadOutline = async () => {
+    const body = cache('wenzhaiOutlineBody')
+    if (!body || !state.pdfDoc) return
+    try {
+      const outline = await state.pdfDoc.getOutline()
+      if (!outline || outline.length === 0) {
+        body.innerHTML = '<div style="padding: 20px; color: #999; text-align: center;">暂无目录</div>'
+        return
+      }
+      body.innerHTML = outline.map(item => 
+        `<div class="outline-item" data-page="${item.dest[0]?.num || 1}">
+          <i class="fas fa-bookmark"></i> ${item.title}
+        </div>`
+      ).join('')
+      
+      // 点击目录项跳转到对应页面
+      body.querySelectorAll('.outline-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const pageNum = parseInt(item.dataset.page)
+          if (pageNum) {
+            state.activePage = pageNum
+            updatePageLabel()
+            renderPage(state.activePage)
+          }
+        })
+      })
+    } catch (err) {
+      body.innerHTML = '<div style="padding: 20px; color: #999; text-align: center;">目录加载失败</div>'
+    }
+  }
+
+  // AI 摘要和中文翻译
+  const generateSummary = async () => {
+    if (!state.pdfDoc) {
+      toast('请先打开 PDF 文件')
+      return
+    }
+    toast('正在生成摘要...')
+    try {
+      // 提取第一页的文本作为示例
+      const page = await state.pdfDoc.getPage(1)
+      const textContent = await page.getTextContent()
+      const text = textContent.items.map(item => item.str).join(' ')
+      
+      const response = await fetch('/api/wenzhai/summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text.substring(0, 1000) }) // 只发送前 1000 个字符
+      })
+      const result = await response.json()
+      
+      if (result.error) {
+        toast('摘要生成失败：' + (result.message || result.error))
+      } else {
+        toast('摘要生成完成')
+        // TODO: 在笔记面板中显示摘要
+      }
+    } catch (err) {
+      toast('摘要生成失败：' + err.message)
+    }
+  }
+
+  const generateTranslation = async () => {
+    if (!state.pdfDoc) {
+      toast('请先打开 PDF 文件')
+      return
+    }
+    toast('正在生成中文翻译...')
+    try {
+      // 提取第一页的文本作为示例
+      const page = await state.pdfDoc.getPage(1)
+      const textContent = await page.getTextContent()
+      const text = textContent.items.map(item => item.str).join(' ')
+      
+      const response = await fetch('/api/wenzhai/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text.substring(0, 1000) }) // 只发送前 1000 个字符
+      })
+      const result = await response.json()
+      
+      if (result.error) {
+        toast('中文翻译生成失败：' + (result.message || result.error))
+      } else {
+        const translationPanel = cache('wenzhaiTranslation')
+        if (translationPanel) {
+          translationPanel.hidden = false
+          const translationBody = document.getElementById('wenzhaiTranslationBody')
+          if (translationBody) {
+            translationBody.textContent = result.translation
+          }
+        }
+        toast('中文翻译生成完成')
+      }
+    } catch (err) {
+      toast('中文翻译生成失败：' + err.message)
+    }
+  }
+
+  // 标注功能
+  const addAnnotation = (type) => {
+    const selection = window.getSelection()
+    if (!selection || selection.isCollapsed) {
+      toast('请先选中要标注的文本')
+      return
+    }
+    
+    const selectedText = selection.toString()
+    if (!selectedText) return
+    
+    // 创建标注
+    const annotation = {
+      id: Date.now(),
+      type: type, // highlight | underline | annot
+      text: selectedText,
+      page: state.activePage,
+      timestamp: new Date().toISOString()
+    }
+    
+    // 保存标注到 localStorage
+    const key = 'wenzhai-annotations-' + (state.fileName || 'default')
+    const annotations = JSON.parse(localStorage.getItem(key) || '[]')
+    annotations.push(annotation)
+    localStorage.setItem(key, JSON.stringify(annotations))
+    
+    // 高亮选中的文本
+    if (type === 'highlight') {
+      highlightSelection(selectedText, 'yellow')
+    } else if (type === 'underline') {
+      highlightSelection(selectedText, 'transparent', 'underline')
+    }
+    
+    toast('标注已添加')
+  }
+  
+  const highlightSelection = (text, color = 'yellow', style = 'background') => {
+    const selection = window.getSelection()
+    if (!selection.rangeCount) return
+    
+    const range = selection.getRangeAt(0)
+    const span = document.createElement('span')
+    if (style === 'background') {
+      span.style.backgroundColor = color
+    } else {
+      span.style.textDecoration = 'underline'
+      span.style.textDecorationColor = 'red'
+    }
+    span.className = 'wenzhai-annotation'
+    span.appendChild(range.extractContents())
+    range.insertNode(span)
+    
+    selection.removeAllRanges()
+  }
+
+  // 搜索面板功能
+  const toggleSearchPanel = () => {
+    const panel = cache('wenzhaiSearchPanel')
+    if (!panel) return
+    if (panel.style.display === 'none' || !panel.style.display) {
+      panel.style.display = 'flex'
+      const input = cache('wenzhaiSearchInput')
+      if (input) input.focus()
+    } else {
+      panel.style.display = 'none'
+    }
+  }
+
+  const handleSearch = async (e) => {
+    const keyword = e.target.value.trim()
+    const resultsContainer = cache('wenzhaiSearchResults')
+    if (!resultsContainer) return
+    
+    if (!keyword) {
+      resultsContainer.innerHTML = ''
+      return
+    }
+    
+    if (!state.pdfDoc) {
+      resultsContainer.innerHTML = '<div style="padding: 20px; color: #999; text-align: center;">请先打开 PDF 文件</div>'
+      return
+    }
+    
+    resultsContainer.innerHTML = '<div style="padding: 20px; color: #999;">正在搜索...</div>'
+    
+    try {
+      const results = []
+      for (let i = 1; i <= state.pageCount; i++) {
+        const page = await state.pdfDoc.getPage(i)
+        const textContent = await page.getTextContent()
+        const pageText = textContent.items.map(item => item.str).join(' ')
+        
+        if (pageText.toLowerCase().includes(keyword.toLowerCase())) {
+          // 提取匹配位置的上下文
+          const index = pageText.toLowerCase().indexOf(keyword.toLowerCase())
+          const start = Math.max(0, index - 50)
+          const end = Math.min(pageText.length, index + keyword.length + 50)
+          const context = '...' + pageText.substring(start, end) + '...'
+          
+          results.push({
+            page: i,
+            context: context
+          })
+        }
+      }
+      
+      if (results.length === 0) {
+        resultsContainer.innerHTML = '<div style="padding: 20px; color: #999; text-align: center;">未找到匹配结果</div>'
+      } else {
+        resultsContainer.innerHTML = results.map(r => 
+          `<div class="search-result-item" data-page="${r.page}">
+            <div class="search-result-page">第 ${r.page} 页</div>
+            <div class="search-result-context">${r.context}</div>
+          </div>`
+        ).join('')
+        
+        // 点击搜索结果跳转到对应页面
+        resultsContainer.querySelectorAll('.search-result-item').forEach(item => {
+          item.addEventListener('click', () => {
+            const pageNum = parseInt(item.dataset.page)
+            if (pageNum) {
+              state.activePage = pageNum
+              updatePageLabel()
+              renderPage(state.activePage)
+            }
+          })
+        })
+      }
+    } catch (err) {
+      resultsContainer.innerHTML = '<div style="padding: 20px; color: #999; text-align: center;">搜索失败</div>'
+    }
+  }
+
+  // 防抖函数
+  const debounce = (func, wait) => {
+    let timeout
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout)
+        func(...args)
+      }
+      clearTimeout(timeout)
+      timeout = setTimeout(later, wait)
+    }
+  }
+
+  const exportMd = () => {
+    if (!state.transcription) {
+      toast('没有可导出的内容')
+      return
+    }
+    const blob = new Blob([state.transcription], { type: 'text/markdown' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = (state.fileName || 'document').replace('.pdf', '.md')
+    a.click()
+    URL.revokeObjectURL(url)
+    toast('已导出 Markdown 文件')
+  }
+
+  const init = () => {
+    bindEvents()
+    console.log('[wenzhai] reader initialized')
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init)
+  } else {
+    init()
+  }
+
+  console.log('[wenzhai] about to expose window.WENZHAI_READER')
+  window.WENZHAI_READER = { state, init }
+  console.log('[wenzhai] window.WENZHAI_READER exposed successfully')
+})()
+</script>
+
+<!-- 原文精读文献库管理模块 -->
+<script src="/js/academic-workbench/reading-library.js"></script>
+
+<!-- 译文库管理模块 -->
+<script src="/js/academic-workbench/translation-library.js"></script>
+
+<script src="/js/academic-workbench/app.js"></script>
+</body>
+</html>

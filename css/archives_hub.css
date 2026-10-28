@@ -16,38 +16,49 @@
 
 /* ---------- 1. 版心：压掉 banner，理由同 /calendar/ ---------- */
 /* front-matter 的 top_img: '' 并不会关掉 banner（主题会 fallback 到
- * default_top_img），所以这里显式压成与顶栏等高的 61px。 */
+ * default_top_img），所以这里显式压成 0，让版心紧贴视口顶部。 */
 .page.type-archives #page-header {
-  height: 61px;
-  min-height: 61px;
+  height: 0 !important;
+  min-height: 0 !important;
   padding: 0 !important;
+  margin: 0 !important;
   background-color: transparent !important;
   background-image: none !important;
   box-shadow: none !important;
   border: 0 !important;
   transition: none !important;
-  margin-bottom: 0 !important;
+  display: none !important;
+  visibility: hidden !important;
+  overflow: hidden !important;
 }
 .page.type-archives #page-header #page-site-info { display: none !important; }
-.page.type-archives #content-inner { padding-top: 0 !important; }
 
 /* ---------- 2. 外层 ---------- */
+/* ★ 版心布局由公共规范文件统一控制（#content-inner） */
+/* ★ archives 页面特有：版心微微加深的半透明背景 */
+.page.type-archives #content-inner {
+  background: rgba(0, 0, 0, 0.15);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  /* ★ 版心左右间距从 40px 改为 80px */
+  padding-left: 80px !important;
+  padding-right: 80px !important;
+}
+
+/* .ar 只负责页面特有的样式，不再负责版心布局 */
 .ar {
-  /* 与 /calendar/ 的 .wl 同宽，两页切换时版心不跳 */
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 20px 20px 56px;
   font-family: var(--font-ui);
   color: var(--fg);
 }
 
 /* 页头卡片：与 /calendar/ 的 .wl-head 同一套底与圆角 */
 .ar-head {
-  padding: 22px 24px;
+  padding: var(--layout-card-pad-x, 20px);
   border: 1px solid var(--line);
-  border-radius: var(--r-panel);
+  border-radius: var(--layout-radius, 24px);
   background: var(--card);
   box-shadow: var(--shadow-sm);
+  margin-bottom: var(--layout-gap, 24px);
 }
 .ar-eyebrow {
   margin: 0 0 10px;

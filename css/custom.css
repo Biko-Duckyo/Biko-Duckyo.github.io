@@ -78,13 +78,26 @@ html[data-theme='dark'] #aside_content .card-info-social-icons .social-icon:hove
   background-color: #7e96b8;
 }
 
-/* ---------- 2. 全局背景（鲸鱼星空全屏固定背景） ---------- */
+/* ---------- 2. 全局背景（同一张鲸鱼星空，深浅靠遮罩调节） ---------- */
 #web_bg {
-  background: url(https://s2.loli.net/2022/04/11/oDZPBRxHn59rbYO.jpg) no-repeat center center fixed !important;
+  /* ★ 2026-10 昼夜切换：深浅模式用同一张鲸鱼图，
+     参照站结构：背景图本身先模糊一层，卡片再叠加玻璃态，文字不糊。 */
+  position: fixed;
+  inset: 0;
+  z-index: -100;
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.35)),
+    url(https://s2.loli.net/2022/04/11/oDZPBRxHn59rbYO.jpg) no-repeat center center;
   background-size: cover !important;
+  filter: blur(12px);
+  transform: scale(1.05);
+  transition: opacity 1.5s ease;
 }
 [data-theme="dark"] #web_bg {
-  background: url(https://s2.loli.net/2022/04/11/oDZPBRxHn59rbYO.jpg) no-repeat center center fixed !important;
+  /* 深色：鲸鱼图 + 30% 深色遮罩 */
+  background:
+    linear-gradient(rgba(15, 23, 42, 0.30), rgba(15, 23, 42, 0.30)),
+    url(https://s2.loli.net/2022/04/11/oDZPBRxHn59rbYO.jpg) no-repeat center center fixed !important;
   background-size: cover !important;
 }
 
@@ -362,34 +375,30 @@ div#quit-box {
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 12px;
 }
-.relatedPosts .relatedPosts-list > div {
+/* 主题的卡片是 <a class="pagination-related">，不是 div。
+   采用主题原有的「背景图 + 文字浮层」设计，只做圆角和悬停效果。 */
+.relatedPosts .relatedPosts-list > a.pagination-related {
+  width: 100% !important;
+  height: 200px;
+  margin: 0 !important;
   border-radius: 8px;
   overflow: hidden;
   transition: transform 0.25s ease, box-shadow 0.25s ease;
-  background: var(--content-bg);
 }
-.relatedPosts .relatedPosts-list > div:hover {
+.relatedPosts .relatedPosts-list > a.pagination-related:hover {
   transform: translateY(-4px);
   box-shadow: 0 6px 16px rgba(0,0,0,0.15);
 }
+/* 封面铺满整个卡片，保持主题默认的背景图效果 */
 .relatedPosts .relatedPosts-list .cover {
-  width: 100%;
-  height: 120px;
+  width: 100% !important;
+  height: 100% !important;
   object-fit: cover;
-  display: block;
+  opacity: 0.4;
 }
-.relatedPosts .relatedPosts-list .title {
-  display: block;
-  padding: 8px 10px;
-  font-size: 0.9em;
-  line-height: 1.4;
-  color: var(--font-color);
-}
-.relatedPosts .relatedPosts-list .date {
-  display: block;
-  padding: 0 10px 8px;
-  font-size: 0.75em;
-  color: var(--second-font-color);
+.relatedPosts .relatedPosts-list > a.pagination-related:hover .cover {
+  opacity: 0.5;
+  transform: scale(1.05);
 }
 
 /* ---------- 13. 右侧功能按钮默认展开（不再藏进齿轮） ---------- */
@@ -582,15 +591,52 @@ a#site-name:hover:before {
  * 全局固定背景：鲸鱼星空图始终铺满整个页面（参考 superq314.github.io）
  * ====================================================== */
 body {
-  background: url('https://s2.loli.net/2022/04/11/oDZPBRxHn59rbYO.jpg') no-repeat center center fixed !important;
+  background: transparent !important;
+}
+
+/* 背景图层：z:-100，最底层 */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -100;
+  background: url('https://s2.loli.net/2022/04/11/oDZPBRxHn59rbYO.jpg') no-repeat center center;
   background-size: cover !important;
+  filter: blur(6px);
+  transform: scale(1.05);
+}
+
+/* 遮罩层：z:-9，在背景图上面 */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -9;
+  pointer-events: none;
+  /* 浅色模式：淡蓝白 36% */
+  background: rgba(180, 200, 240, 0.36);
+}
+/* 深色模式：深蓝黑 36% */
+[data-theme="dark"] body::after {
+  background: rgba(15, 20, 40, 0.36);
+}
+
+/* 首页 dash-veil 已存在，伪元素不重复 */
+body.home-dashboard::after {
+  display: none;
+}
+/* 欢迎页、书斋页不加遮罩 */
+body.page-welcome::after,
+body.page-books::after {
+  display: none;
 }
 #body-wrap,
 #footer,
 #page-header.full_page,
 .layout_page,
 #article-container,
-#aside-content .card-widget {
+#aside-content .card-widget,
+#page {
   background: transparent !important;
 }
 #aside-content .card-widget {
@@ -642,7 +688,7 @@ body {
      跑马灯文字靠 align-items:center 竖直居中后，上下各留半个行高的空白，
      看上去就像「这一行下面多了一条空行」。
      这里把行高收回到 1.2，只压紧跑马灯这一行，其余 4 行的行距维持不变。 */
-  line-height: 2;
+  line-height: 1.2;
   /* 两侧渐隐遮罩，滚出/滚入更自然（不支持 mask 的浏览器自动降级为硬边） */
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
   mask-image: linear-gradient(90deg, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
@@ -1179,6 +1225,68 @@ body {
   white-space: nowrap;
   border: 0;
 }
+
+/* ======================================================
+ * 萤火虫动画效果
+ * ====================================================== */
+.biko-firefly-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  pointer-events: none;
+  overflow: hidden;
+}
+.biko-firefly {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(200, 255, 200, 0.9);
+  box-shadow: 0 0 6px 2px rgba(200, 255, 200, 0.6);
+  animation: fireflyBreath 4s ease-in-out infinite;
+}
+@keyframes fireflyBreath {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 1; }
+}
+@keyframes float1 {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(20px, -30px); }
+  50% { transform: translate(-10px, -60px); }
+  75% { transform: translate(-30px, -20px); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes float2 {
+  0% { transform: translate(0, 0); }
+  33% { transform: translate(-25px, -40px); }
+  66% { transform: translate(15px, -70px); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes float3 {
+  0% { transform: translate(0, 0); }
+  50% { transform: translate(30px, -50px); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes float4 {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-20px, -25px); }
+  50% { transform: translate(25px, -55px); }
+  75% { transform: translate(-15px, -35px); }
+  100% { transform: translate(0, 0); }
+}
+/* 书斋页不加萤火虫 */
+body.page-books .biko-firefly-layer {
+  display: none;
+}
 @media (max-width: 640px) {
+  /* 结构件高度：音乐面板顶条收窄档，与控件高度无关，不并入 --control-h */
   .topbar-mp { height: 50px; }
+}
+
+/* Hide footer on all pages except home */
+body:not(.biko-home) #footer {
+  display: none !important;
+}
+
+/* 历史上的今天：仅首页 dashboard 保留，文章/归档等内页侧栏隐藏（功能冗余） */
+body:not(.home-dashboard) #history-card-widget {
+  display: none !important;
 }

@@ -37,18 +37,8 @@ html[data-theme='light'] {
   --line: rgba(126, 150, 184, 0.26);
   --line-strong: rgba(126, 150, 184, 0.42);
 
-  --accent: #7e96b8;
-  --accent-2: #9db4d3;
-  --accent-fg: #ffffff;
-
-  --shadow: 0 18px 48px rgba(40, 55, 80, 0.16);
-  --shadow-sm: 0 6px 18px rgba(40, 55, 80, 0.10);
-
-  /* 与 custom_nav.css 的 --r-* 刻度保持一致（独立页未引入该文件，故复刻） */
-  --r-control: 10px;
-  --r-card: 8px;
-  --r-panel: 18px;
-  --r-pill: 999px;
+  /* --accent/-2/-fg、--shadow/-sm 与 --r-* 由 common_layout.css 统一提供；
+     独立页（/books/ /finance/ 等）head 已补引该文件，此处不再复刻。 */
 }
 
 /* ---------- 2. 深色令牌 ---------- */
@@ -71,12 +61,7 @@ html[data-theme='dark'] {
   --line: rgba(157, 180, 211, 0.20);
   --line-strong: rgba(157, 180, 211, 0.36);
 
-  --accent: #9db4d3;
-  --accent-2: #b9cbe4;
-  --accent-fg: #10151f;
-
-  --shadow: 0 18px 48px rgba(4, 8, 16, 0.50);
-  --shadow-sm: 0 6px 18px rgba(4, 8, 16, 0.38);
+  /* --accent/-2/-fg、--shadow/-sm 已由 common_layout.css 统一提供。 */
 }
 
 /* ---------- 3. 背景：与主站同一张鲸鱼星空 ---------- */

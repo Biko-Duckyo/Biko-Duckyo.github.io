@@ -7,7 +7,7 @@
   position: fixed;
   top: clamp(12px, 2.2vw, 20px);
   right: clamp(12px, 2.2vw, 20px);
-  z-index: 900;
+  z-index: var(--z-fab);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -79,21 +79,21 @@
  * 星球旋转过场（精确复刻主站 custom_nav.css 的 Cuteen 效果）
  * 值全部照抄主站：渐变三色、2s cubic-bezier(.7,0,0,1)、
  * 月亮 9.375rem / 0 0 60px 光晕，保证两处观感完全一致。
- * 主站用 var(--z-sky)，独立页未定义该变量，这里写死等价层级。
+ * 层级引用公共 --z-scene（与主站过场星空同层，数值不变）。
  * ============================================================ */
 .Cuteen_DarkSky,
 .Cuteen_DarkSky::before {
   content: "";
   position: fixed;
   inset: 0;
-  z-index: 9998;
+  z-index: var(--z-scene);
 }
 .Cuteen_DarkSky {
   background: linear-gradient(rgb(76, 63, 109), rgb(108, 98, 187), rgb(147, 177, 237));
   opacity: 1;
 }
 .Cuteen_DarkPlanet {
-  z-index: 9998;
+  z-index: var(--z-scene);
   position: fixed;
   left: -50%;
   top: -50%;

@@ -1,0 +1,1300 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>百宝箱 | Biko的个人小站</title><meta name="author" content="Biko"><meta name="copyright" content="Biko"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0d1018"><meta name="description" content="Biko 的资源导航：学术、学习、工具、AI 等常用网站。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="百宝箱">
+<meta property="og:url" content="https://biko-duckyo.pages.dev/resources/index.html">
+<meta property="og:site_name" content="Biko的个人小站">
+<meta property="og:description" content="Biko 的资源导航：学术、学习、工具、AI 等常用网站。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://biko-duckyo.pages.dev/img/avatar.jpg">
+<meta property="article:published_time" content="2026-10-28T13:33:44.112Z">
+<meta property="article:modified_time" content="2026-10-28T13:33:44.112Z">
+<meta property="article:author" content="Biko">
+<meta property="article:tag" content="web前端 html css js vue hexo nodejs">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://biko-duckyo.pages.dev/img/avatar.jpg"><script type="application/ld+json"></script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://biko-duckyo.pages.dev/resources/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="/css/vendor/fontawesome.min.css"><link rel="stylesheet" href="/css/vendor/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="/css/vendor/fancybox.min.css" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!true && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d1018')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', 'f2f5fa')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","preload":false,"top_n_per_article":1,"unescape":false,"pagination":{"enable":false,"hitsPerPage":8},"languages":{"hits_empty":"未找到符合您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#7E96B8","bgDark":"#1a2030","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '百宝箱',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'page'
+}</script><link rel="stylesheet" href="/css/common_layout.css"><link rel="stylesheet" href="/css/custom.css"><link rel="stylesheet" href="/css/custom_nav.css"><link rel="stylesheet" href="/css/custom_article.css"><link rel="stylesheet" href="/css/home_dashboard.css"><link rel="stylesheet" href="/css/home_hub.css"><link rel="stylesheet" href="/css/music_panel.css"><link rel="stylesheet" href="/css/music_page.css"><link rel="stylesheet" href="/css/biko_subpage.css"><link rel="stylesheet" href="/css/biko_theme_toggle.css"><link rel="stylesheet" href="/css/worklog_calendar.css"><link rel="stylesheet" href="/css/anime.css"><link rel="stylesheet" href="/css/resources.css"><link rel="stylesheet" href="/css/gallery_page.css"><link rel="stylesheet" href="/css/gallery_gate.css"><link rel="stylesheet" href="/nanaly/css/noimpty-ai.css"><link rel="stylesheet" href="/nanaly/css/nanaly-workspace.css"><link rel="stylesheet" href="/nanaly/css/nanaly-notes.css"><link rel="stylesheet" href="/nanaly/css/nanaly-delight.css"><link rel="stylesheet" href="/nanaly/css/nanaly-voice.css"><link rel="stylesheet" href="/nanaly/css/nanaly-agent.css"><link rel="stylesheet" href="/nanaly/css/nanaly-shell.css"><link rel="stylesheet" href="/nanaly/css/nanaly-biko-theme.css"><link rel="stylesheet" href="/css/tag-link.css"><link rel="stylesheet" href="/css/rightmenu.css"><link rel="stylesheet" href="https://at.alicdn.com/t/c/font_3764468_7jp6rqh1vde.css"><script src="/js/custom/fontawesome-guard.js"></script><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-butterfly-tag-plugins-plus@1.0.19/lib/assets/font-awesome-animation.min.css" media="defer" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-butterfly-tag-plugins-plus@1.0.19/lib/tag_plugins.css" media="defer" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/hexo-butterfly-tag-plugins-plus@1.0.19/lib/assets/carousel-touch.js"></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-butterfly-wowjs/lib/animate.min.css" media="print" onload="this.media='screen'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-double-row-display@1.00/cardlistpost.min.css"/>
+<style>#recent-posts > .recent-post-item >.recent-post-info > .article-meta-wrap > .tags:before {content:"\A";
+  white-space: pre;}#recent-posts > .recent-post-item >.recent-post-info > .article-meta-wrap > .tags > .article-meta__separator{display:none}</style>
+<link rel="stylesheet" href="/swiper/swiper.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="/swiper/swiperstyle.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="/clock/clock.css" /><link rel="stylesheet" href="/footer-beautify/runtime.min.css" media="print" onload="this.media='all'"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 8.1.2"><link rel="alternate" href="/atom.xml" title="Biko的个人小站" type="application/atom+xml">
+</head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (true) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">16</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">27</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly/"><i class="fa-fw fas fa-heart"></i><span> butterfly主题</span></a></div></div></div></div><div class="page type-resources" id="body-wrap"><header class="not-top-img fixed" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Biko的个人小站</span></a></span><div id="menus"><div id="search-button"><span class="site-page social-icon search"><i class="fas fa-search fa-fw"></i><span> 搜索</span></span></div><div class="menus_items"><div class="menus_item"><a class="site-page" href="/link/"><i class="fa-fw fas fa-link"></i><span> 友链</span></a></div><div class="menus_item"><a class="site-page" target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly/"><i class="fa-fw fas fa-heart"></i><span> butterfly主题</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><h1 class="title-seo">百宝箱</h1></header><main class="layout hide-aside" id="content-inner"><div class="page-title">百宝箱</div><div class="container" id="article-container">
+<!-- page styles moved to /css/resources.css (see docs/theme-architecture.md) -->
+
+<div class="resources-page">
+  <!-- 顶部标题卡片 -->
+  <div class="resources-hero">
+    <p class="eyebrow">RESOURCES</p>
+    <h1>百宝箱</h1>
+  </div>
+
+  <!-- 分类导航 -->
+  <nav class="resources-chips-nav">
+    <a href="#phd" class="resources-chip">🔬 PhD工具</a>
+    <a href="#academic" class="resources-chip">📚 学术网站</a>
+    <a href="#entertainment" class="resources-chip">🎬 娱乐影音</a>
+    <a href="#games" class="resources-chip">🎮 游戏动画</a>
+    <a href="#tools" class="resources-chip">🛠️ 实用工具</a>
+    <a href="#ai" class="resources-chip">🤖 AI工具</a>
+    <button type="button" class="chips-toggle" id="chipsToggle">全部展开</button>
+  </nav>
+
+  <!-- PhD工具 -->
+  <section id="phd" class="resource-group">
+    <div class="resource-group-header">
+      <div class="resource-group-title">
+        <span class="icon">🔬</span>
+        <h2>PhD工具</h2>
+        <span class="count">10</span>
+      </div>
+      <button type="button" class="resource-group-arrow" aria-label="折叠或展开板块" aria-expanded="true">→</button>
+    </div>
+    <div class="resource-sub-chips">
+      <span class="resource-sub-chip">学校门户<small>1</small></span>
+      <span class="resource-sub-chip">学习资源<small>2</small></span>
+      <span class="resource-sub-chip">校内服务<small>7</small></span>
+    </div>
+    <div class="resource-grid">
+      <a href="https://www.seu.edu.cn/" target="_blank" class="resource-item">
+        <h3>东南大学</h3>
+        <p>东南大学官方门户网站，校情、通知与新闻总入口。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">seu.edu.cn</span>
+          <span class="resource-item-tag">学校门户</span>
+        </div>
+      </a>
+      <a href="https://lib.seu.edu.cn/" target="_blank" class="resource-item">
+        <h3>东南大学图书馆</h3>
+        <p>馆藏目录、中外文数据库与电子资源统一检索。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">lib.seu.edu.cn</span>
+          <span class="resource-item-tag">学习资源</span>
+        </div>
+      </a>
+      <a href="https://seugs.seu.edu.cn/" target="_blank" class="resource-item">
+        <h3>研究生院</h3>
+        <p>招生、培养、学位授予与学籍管理服务入口。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">seugs.seu.edu.cn</span>
+          <span class="resource-item-tag">学习资源</span>
+        </div>
+      </a>
+      <a href="https://ehall.seu.edu.cn/new/index.html" target="_blank" class="resource-item">
+        <h3>网上办事大厅</h3>
+        <p>一站式校园事务办理、流程查询与服务大厅。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">ehall.seu.edu.cn</span>
+          <span class="resource-item-tag">校内服务</span>
+        </div>
+      </a>
+      <a href="https://nic.seu.edu.cn/" target="_blank" class="resource-item">
+        <h3>网络与信息中心</h3>
+        <p>校园网、信息化服务、账号与技术支持。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">nic.seu.edu.cn</span>
+          <span class="resource-item-tag">校内服务</span>
+        </div>
+      </a>
+      <a href="https://w.seu.edu.cn/" target="_blank" class="resource-item">
+        <h3>网络认证</h3>
+        <p>校园网 Web 认证登录与自助服务入口。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">w.seu.edu.cn</span>
+          <span class="resource-item-tag">校内服务</span>
+        </div>
+      </a>
+      <a href="https://yingxin.seu.edu.cn/2024/0712/c27754a497585/page.htm" target="_blank" class="resource-item">
+        <h3>软件正版化</h3>
+        <p>在校师生正版软件资源与下载指引。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">yingxin.seu.edu.cn</span>
+          <span class="resource-item-tag">校内服务</span>
+        </div>
+      </a>
+      <a href="https://mail.seu.edu.cn/" target="_blank" class="resource-item">
+        <h3>东大邮件</h3>
+        <p>东南大学学生/教职工邮箱系统，校园通知重要渠道。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">mail.seu.edu.cn</span>
+          <span class="resource-item-tag">校内服务</span>
+        </div>
+      </a>
+      <a href="https://cwc.seu.edu.cn/" target="_blank" class="resource-item">
+        <h3>财务处</h3>
+        <p>经费报销、工资查询、校园缴费等财务服务。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">cwc.seu.edu.cn</span>
+          <span class="resource-item-tag">校内服务</span>
+        </div>
+      </a>
+      <a href="https://www.seu.edu.cn/bsxl/" target="_blank" class="resource-item">
+        <h3>校园巴士</h3>
+        <p>校车路线查询与时刻表，多校区通勤必备。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">seu.edu.cn/bsxl</span>
+          <span class="resource-item-tag">校内服务</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- 学术网站 -->
+  <section id="academic" class="resource-group">
+    <div class="resource-group-header">
+      <div class="resource-group-title">
+        <span class="icon">📚</span>
+        <h2>学术网站</h2>
+        <span class="count">13</span>
+      </div>
+      <button type="button" class="resource-group-arrow" aria-label="折叠或展开板块" aria-expanded="true">→</button>
+    </div>
+    <div class="resource-sub-chips">
+      <span class="resource-sub-chip">中文数据库<small>2</small></span>
+      <span class="resource-sub-chip">综合检索<small>2</small></span>
+      <span class="resource-sub-chip">开放论文<small>1</small></span>
+      <span class="resource-sub-chip">文献管理与发现<small>4</small></span>
+      <span class="resource-sub-chip">科研绘图与数据<small>4</small></span>
+    </div>
+    <div class="resource-grid">
+      <a href="https://www.cnki.net/" target="_blank" class="resource-item">
+        <h3>中国知网</h3>
+        <p>中文期刊、学位论文与会议资料检索。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">cnki.net</span>
+          <span class="resource-item-tag">中文数据库</span>
+        </div>
+      </a>
+      <a href="https://www.wanfangdata.com.cn/" target="_blank" class="resource-item">
+        <h3>万方数据</h3>
+        <p>中文期刊、学位论文、标准与成果入口。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">wanfangdata.com.cn</span>
+          <span class="resource-item-tag">中文数据库</span>
+        </div>
+      </a>
+      <a href="https://scholar.google.com/" target="_blank" class="resource-item">
+        <h3>Google Scholar</h3>
+        <p>跨学科论文、作者与引文关系检索。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">scholar.google.com</span>
+          <span class="resource-item-tag">综合检索</span>
+        </div>
+      </a>
+      <a href="https://www.semanticscholar.org/" target="_blank" class="resource-item">
+        <h3>Semantic Scholar</h3>
+        <p>免费论文发现、摘要与引用图谱。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">semanticscholar.org</span>
+          <span class="resource-item-tag">综合检索</span>
+        </div>
+      </a>
+      <a href="https://arxiv.org/" target="_blank" class="resource-item">
+        <h3>arXiv</h3>
+        <p>理工、计算机与量化研究预印本平台。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">arxiv.org</span>
+          <span class="resource-item-tag">开放论文</span>
+        </div>
+      </a>
+      <a href="https://www.zotero.org/" target="_blank" class="resource-item">
+        <h3>Zotero</h3>
+        <p>开源文献管理、引用与笔记协作工具。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">zotero.org</span>
+          <span class="resource-item-tag">文献管理与发现</span>
+        </div>
+      </a>
+      <a href="https://www.connectedpapers.com/" target="_blank" class="resource-item">
+        <h3>Connected Papers</h3>
+        <p>以引用关系可视化论文关联图谱。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">connectedpapers.com</span>
+          <span class="resource-item-tag">文献管理与发现</span>
+        </div>
+      </a>
+      <a href="https://www.researchrabbit.ai/" target="_blank" class="resource-item">
+        <h3>Research Rabbit</h3>
+        <p>追踪作者与文献脉络的文献发现工具。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">researchrabbit.ai</span>
+          <span class="resource-item-tag">文献管理与发现</span>
+        </div>
+      </a>
+      <a href="https://www.litmaps.com/" target="_blank" class="resource-item">
+        <h3>Litmaps</h3>
+        <p>用知识地图追溯领域论文演化路径。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">litmaps.com</span>
+          <span class="resource-item-tag">文献管理与发现</span>
+        </div>
+      </a>
+      <a href="https://www.originlab.com/" target="_blank" class="resource-item">
+        <h3>Origin Pro</h3>
+        <p>科技绘图、曲线拟合与数据分析软件。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">originlab.com</span>
+          <span class="resource-item-tag">科研绘图与数据</span>
+        </div>
+      </a>
+      <a href="https://www.graphpad.com/" target="_blank" class="resource-item">
+        <h3>GraphPad Prism</h3>
+        <p>生物医学统计、曲线拟合与科研绘图。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">graphpad.com</span>
+          <span class="resource-item-tag">科研绘图与数据</span>
+        </div>
+      </a>
+      <a href="https://imagej.net/" target="_blank" class="resource-item">
+        <h3>ImageJ / FIJI</h3>
+        <p>科学图像测量、处理与定量分析平台。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">imagej.net</span>
+          <span class="resource-item-tag">科研绘图与数据</span>
+        </div>
+      </a>
+      <a href="https://www.anaconda.com/" target="_blank" class="resource-item">
+        <h3>Anaconda</h3>
+        <p>Python 数据科学与机器学习发行版。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">anaconda.com</span>
+          <span class="resource-item-tag">科研绘图与数据</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- 娱乐影音 -->
+  <section id="entertainment" class="resource-group">
+    <div class="resource-group-header">
+      <div class="resource-group-title">
+        <span class="icon">🎬</span>
+        <h2>娱乐影音</h2>
+        <span class="count">8</span>
+      </div>
+      <button type="button" class="resource-group-arrow" aria-label="折叠或展开板块" aria-expanded="true">→</button>
+    </div>
+    <div class="resource-sub-chips">
+      <span class="resource-sub-chip">综合视频<small>2</small></span>
+      <span class="resource-sub-chip">影视资料<small>2</small></span>
+      <span class="resource-sub-chip">影视记录<small>1</small></span>
+      <span class="resource-sub-chip">影视发现<small>1</small></span>
+      <span class="resource-sub-chip">音乐<small>2</small></span>
+    </div>
+    <div class="resource-grid">
+      <a href="https://www.bilibili.com/" target="_blank" class="resource-item">
+        <h3>哔哩哔哩</h3>
+        <p>视频、动画、知识与创作者内容平台。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">bilibili.com</span>
+          <span class="resource-item-tag">综合视频</span>
+        </div>
+      </a>
+      <a href="https://www.youtube.com/" target="_blank" class="resource-item">
+        <h3>YouTube</h3>
+        <p>全球视频内容、课程与创作者平台。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">youtube.com</span>
+          <span class="resource-item-tag">综合视频</span>
+        </div>
+      </a>
+      <a href="https://movie.douban.com/" target="_blank" class="resource-item">
+        <h3>豆瓣电影</h3>
+        <p>中文影视条目、演职员与用户评价。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">movie.douban.com</span>
+          <span class="resource-item-tag">影视资料</span>
+        </div>
+      </a>
+      <a href="https://www.imdb.com/" target="_blank" class="resource-item">
+        <h3>IMDb</h3>
+        <p>全球影视作品与演职人员数据库。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">imdb.com</span>
+          <span class="resource-item-tag">影视资料</span>
+        </div>
+      </a>
+      <a href="https://letterboxd.com/" target="_blank" class="resource-item">
+        <h3>Letterboxd</h3>
+        <p>电影标记、短评、片单与社交记录。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">letterboxd.com</span>
+          <span class="resource-item-tag">影视记录</span>
+        </div>
+      </a>
+      <a href="https://www.justwatch.com/" target="_blank" class="resource-item">
+        <h3>JustWatch</h3>
+        <p>查询影视作品可观看的正版平台。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">justwatch.com</span>
+          <span class="resource-item-tag">影视发现</span>
+        </div>
+      </a>
+      <a href="https://open.spotify.com/" target="_blank" class="resource-item">
+        <h3>Spotify</h3>
+        <p>音乐、播客、歌单与个性化发现。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">open.spotify.com</span>
+          <span class="resource-item-tag">音乐</span>
+        </div>
+      </a>
+      <a href="https://music.apple.com/" target="_blank" class="resource-item">
+        <h3>Apple Music</h3>
+        <p>正版音乐、专辑、歌单与电台。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">music.apple.com</span>
+          <span class="resource-item-tag">音乐</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- 游戏动画 -->
+  <section id="games" class="resource-group">
+    <div class="resource-group-header">
+      <div class="resource-group-title">
+        <span class="icon">🎮</span>
+        <h2>游戏动画</h2>
+        <span class="count">11</span>
+      </div>
+      <button type="button" class="resource-group-arrow" aria-label="折叠或展开板块" aria-expanded="true">→</button>
+    </div>
+    <div class="resource-sub-chips">
+      <span class="resource-sub-chip">游戏平台<small>5</small></span>
+      <span class="resource-sub-chip">独立游戏<small>1</small></span>
+      <span class="resource-sub-chip">动画资料<small>3</small></span>
+      <span class="resource-sub-chip">视觉小说<small>1</small></span>
+      <span class="resource-sub-chip">游戏资料<small>1</small></span>
+    </div>
+    <div class="resource-grid">
+      <a href="https://store.steampowered.com/" target="_blank" class="resource-item">
+        <h3>Steam</h3>
+        <p>PC 游戏商店、社区与愿望单。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">store.steampowered.com</span>
+          <span class="resource-item-tag">游戏平台</span>
+        </div>
+      </a>
+      <a href="https://www.nintendo.com/" target="_blank" class="resource-item">
+        <h3>Nintendo</h3>
+        <p>Nintendo 游戏、主机与官方资讯。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">nintendo.com</span>
+          <span class="resource-item-tag">游戏平台</span>
+        </div>
+      </a>
+      <a href="https://www.playstation.com/" target="_blank" class="resource-item">
+        <h3>PlayStation</h3>
+        <p>PlayStation 游戏、主机与服务入口。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">playstation.com</span>
+          <span class="resource-item-tag">游戏平台</span>
+        </div>
+      </a>
+      <a href="https://www.xbox.com/" target="_blank" class="resource-item">
+        <h3>Xbox</h3>
+        <p>Xbox 游戏、主机与 Game Pass。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">xbox.com</span>
+          <span class="resource-item-tag">游戏平台</span>
+        </div>
+      </a>
+      <a href="https://store.epicgames.com/" target="_blank" class="resource-item">
+        <h3>Epic Games Store</h3>
+        <p>PC 游戏商店与每周内容入口。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">store.epicgames.com</span>
+          <span class="resource-item-tag">游戏平台</span>
+        </div>
+      </a>
+      <a href="https://itch.io/" target="_blank" class="resource-item">
+        <h3>itch.io</h3>
+        <p>独立游戏发布、发现与创作者社区。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">itch.io</span>
+          <span class="resource-item-tag">独立游戏</span>
+        </div>
+      </a>
+      <a href="https://bgm.tv/" target="_blank" class="resource-item">
+        <h3>Bangumi</h3>
+        <p>动画、书籍、游戏条目与收藏记录。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">bangumi.tv</span>
+          <span class="resource-item-tag">动画资料</span>
+        </div>
+      </a>
+      <a href="https://myanimelist.net/" target="_blank" class="resource-item">
+        <h3>MyAnimeList</h3>
+        <p>国际动画与漫画资料、评分和清单。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">myanimelist.net</span>
+          <span class="resource-item-tag">动画资料</span>
+        </div>
+      </a>
+      <a href="https://anilist.co/" target="_blank" class="resource-item">
+        <h3>AniList</h3>
+        <p>动画漫画追踪、统计与发现平台。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">anilist.co</span>
+          <span class="resource-item-tag">动画资料</span>
+        </div>
+      </a>
+      <a href="https://vndb.org/" target="_blank" class="resource-item">
+        <h3>VNDB</h3>
+        <p>视觉小说作品、角色与制作信息数据库。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">vndb.org</span>
+          <span class="resource-item-tag">视觉小说</span>
+        </div>
+      </a>
+      <a href="https://howlongtobeat.com/" target="_blank" class="resource-item">
+        <h3>HowLongToBeat</h3>
+        <p>查询游戏通关时间与玩家进度。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">howlongtobeat.com</span>
+          <span class="resource-item-tag">游戏资料</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- 实用工具 -->
+  <section id="tools" class="resource-group">
+    <div class="resource-group-header">
+      <div class="resource-group-title">
+        <span class="icon">🛠️</span>
+        <h2>实用工具</h2>
+        <span class="count">15</span>
+      </div>
+      <button type="button" class="resource-group-arrow" aria-label="折叠或展开板块" aria-expanded="true">→</button>
+    </div>
+    <div class="resource-sub-chips">
+      <span class="resource-sub-chip">笔记与协作<small>1</small></span>
+      <span class="resource-sub-chip">设计与创作<small>4</small></span>
+      <span class="resource-sub-chip">文件处理<small>4</small></span>
+      <span class="resource-sub-chip">内容排版<small>1</small></span>
+      <span class="resource-sub-chip">写作与排版<small>1</small></span>
+      <span class="resource-sub-chip">安全与诊断<small>2</small></span>
+      <span class="resource-sub-chip">网络档案<small>1</small></span>
+      <span class="resource-sub-chip">正版素材<small>1</small></span>
+    </div>
+    <div class="resource-grid">
+      <a href="https://www.notion.so/" target="_blank" class="resource-item">
+        <h3>Notion</h3>
+        <p>笔记、知识库、项目与团队协作。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">notion.so</span>
+          <span class="resource-item-tag">笔记与协作</span>
+        </div>
+      </a>
+      <a href="https://www.figma.com/" target="_blank" class="resource-item">
+        <h3>Figma</h3>
+        <p>界面设计、原型与实时协作。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">figma.com</span>
+          <span class="resource-item-tag">设计与创作</span>
+        </div>
+      </a>
+      <a href="https://www.canva.com/" target="_blank" class="resource-item">
+        <h3>Canva</h3>
+        <p>海报、演示、社交媒体与视频设计。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">canva.com</span>
+          <span class="resource-item-tag">设计与创作</span>
+        </div>
+      </a>
+      <a href="https://www.photopea.com/" target="_blank" class="resource-item">
+        <h3>Photopea</h3>
+        <p>浏览器内进行图像与 PSD 编辑。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">photopea.com</span>
+          <span class="resource-item-tag">设计与创作</span>
+        </div>
+      </a>
+      <a href="https://excalidraw.com/" target="_blank" class="resource-item">
+        <h3>Excalidraw</h3>
+        <p>快速绘制草图、流程图与协作白板。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">excalidraw.com</span>
+          <span class="resource-item-tag">设计与创作</span>
+        </div>
+      </a>
+      <a href="https://tinypng.com/" target="_blank" class="resource-item">
+        <h3>TinyPNG</h3>
+        <p>在线压缩 WebP、PNG 与 JPEG 图片。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">tinypng.com</span>
+          <span class="resource-item-tag">文件处理</span>
+        </div>
+      </a>
+      <a href="https://smallpdf.com/" target="_blank" class="resource-item">
+        <h3>Smallpdf</h3>
+        <p>常用 PDF 转换、合并、压缩与签署。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">smallpdf.com</span>
+          <span class="resource-item-tag">文件处理</span>
+        </div>
+      </a>
+      <a href="https://www.freeconvert.com/" target="_blank" class="resource-item">
+        <h3>FreeConvert</h3>
+        <p>常见图片、音频、视频与文档转换。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">freeconvert.com</span>
+          <span class="resource-item-tag">文件处理</span>
+        </div>
+      </a>
+      <a href="https://www.iloveofd.cn/" target="_blank" class="resource-item">
+        <h3>iLoveOFD</h3>
+        <p>OFD、PDF 与常用办公文档处理。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">iloveofd.cn</span>
+          <span class="resource-item-tag">文件处理</span>
+        </div>
+      </a>
+      <a href="https://xiumi.us/" target="_blank" class="resource-item">
+        <h3>秀米</h3>
+        <p>微信公众号图文编辑与长页排版。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">xiumi.us</span>
+          <span class="resource-item-tag">内容排版</span>
+        </div>
+      </a>
+      <a href="https://www.overleaf.com/" target="_blank" class="resource-item">
+        <h3>Overleaf</h3>
+        <p>在线 LaTeX 写作、模板与协作。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">overleaf.com</span>
+          <span class="resource-item-tag">写作与排版</span>
+        </div>
+      </a>
+      <a href="https://www.virustotal.com/" target="_blank" class="resource-item">
+        <h3>VirusTotal</h3>
+        <p>使用多引擎检查文件、网址与域名。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">virustotal.com</span>
+          <span class="resource-item-tag">安全与诊断</span>
+        </div>
+      </a>
+      <a href="https://speed.cloudflare.com/" target="_blank" class="resource-item">
+        <h3>Cloudflare Speed Test</h3>
+        <p>测试网络速度、延迟与连接质量。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">speed.cloudflare.com</span>
+          <span class="resource-item-tag">安全与诊断</span>
+        </div>
+      </a>
+      <a href="https://web.archive.org/" target="_blank" class="resource-item">
+        <h3>Wayback Machine</h3>
+        <p>查看网页保存的历史版本与快照。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">web.archive.org</span>
+          <span class="resource-item-tag">网络档案</span>
+        </div>
+      </a>
+      <a href="https://unsplash.com/" target="_blank" class="resource-item">
+        <h3>Unsplash</h3>
+        <p>高质量摄影图片与授权说明。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">unsplash.com</span>
+          <span class="resource-item-tag">正版素材</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- AI工具 -->
+  <section id="ai" class="resource-group">
+    <div class="resource-group-header">
+      <div class="resource-group-title">
+        <span class="icon">🤖</span>
+        <h2>AI工具</h2>
+        <span class="count">28</span>
+      </div>
+      <button type="button" class="resource-group-arrow" aria-label="折叠或展开板块" aria-expanded="true">→</button>
+    </div>
+    <div class="resource-sub-chips">
+      <span class="resource-sub-chip">通用助手<small>5</small></span>
+      <span class="resource-sub-chip">搜索与研究<small>4</small></span>
+      <span class="resource-sub-chip">中文助手<small>4</small></span>
+      <span class="resource-sub-chip">图像生成<small>5</small></span>
+      <span class="resource-sub-chip">音频音乐<small>3</small></span>
+      <span class="resource-sub-chip">视频数字人<small>3</small></span>
+      <span class="resource-sub-chip">编程开发<small>4</small></span>
+      <span class="resource-sub-chip">模型与开发<small>1</small></span>
+    </div>
+    <div class="resource-grid">
+      <a href="https://chat.openai.com/" target="_blank" class="resource-item">
+        <h3>ChatGPT</h3>
+        <p>OpenAI 的通用对话与创作助手。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">chatgpt.com</span>
+          <span class="resource-item-tag">通用助手</span>
+        </div>
+      </a>
+      <a href="https://gemini.google.com/" target="_blank" class="resource-item">
+        <h3>Gemini</h3>
+        <p>Google 的多模态 AI 助手。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">gemini.google.com</span>
+          <span class="resource-item-tag">通用助手</span>
+        </div>
+      </a>
+      <a href="https://claude.ai/" target="_blank" class="resource-item">
+        <h3>Claude</h3>
+        <p>Anthropic 的长文本与分析助手。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">claude.ai</span>
+          <span class="resource-item-tag">通用助手</span>
+        </div>
+      </a>
+      <a href="https://chat.deepseek.com/" target="_blank" class="resource-item">
+        <h3>DeepSeek</h3>
+        <p>DeepSeek 的推理、写作与代码助手。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">chat.deepseek.com</span>
+          <span class="resource-item-tag">通用助手</span>
+        </div>
+      </a>
+      <a href="https://grok.com/" target="_blank" class="resource-item">
+        <h3>Grok</h3>
+        <p>xAI 的实时信息与多模态助手。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">grok.com</span>
+          <span class="resource-item-tag">通用助手</span>
+        </div>
+      </a>
+      <a href="https://www.perplexity.ai/" target="_blank" class="resource-item">
+        <h3>Perplexity</h3>
+        <p>带来源引用的 AI 搜索与研究工具。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">perplexity.ai</span>
+          <span class="resource-item-tag">搜索与研究</span>
+        </div>
+      </a>
+      <a href="https://notebooklm.google.com/" target="_blank" class="resource-item">
+        <h3>NotebookLM</h3>
+        <p>基于个人资料源的阅读与研究助手。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">notebooklm.google.com</span>
+          <span class="resource-item-tag">搜索与研究</span>
+        </div>
+      </a>
+      <a href="https://kimi.com/" target="_blank" class="resource-item">
+        <h3>Kimi</h3>
+        <p>面向中文长文与资料处理的 AI 助手。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">kimi.com</span>
+          <span class="resource-item-tag">中文助手</span>
+        </div>
+      </a>
+      <a href="https://chat.qwen.ai/" target="_blank" class="resource-item">
+        <h3>通义千问</h3>
+        <p>Qwen 官方多模态对话产品。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">chat.qwen.ai</span>
+          <span class="resource-item-tag">中文助手</span>
+        </div>
+      </a>
+      <a href="https://huggingface.co/" target="_blank" class="resource-item">
+        <h3>Hugging Face</h3>
+        <p>开放模型、数据集与 AI 应用社区。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">huggingface.co</span>
+          <span class="resource-item-tag">模型与开发</span>
+        </div>
+      </a>
+
+      <!-- 搜索与研究新增 -->
+      <a href="https://www.phind.com/" target="_blank" class="resource-item">
+        <h3>Phind</h3>
+        <p>开发者专属 AI 搜索，代码问题精准度高。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">phind.com</span>
+          <span class="resource-item-tag">搜索与研究</span>
+        </div>
+      </a>
+      <a href="https://metaso.cn/" target="_blank" class="resource-item">
+        <h3>秘塔AI搜索</h3>
+        <p>纯中文无广告 AI 搜索，查资料高效。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">metaso.cn</span>
+          <span class="resource-item-tag">搜索与研究</span>
+        </div>
+      </a>
+
+      <!-- 中文助手新增 -->
+      <a href="https://www.marscode.cn/" target="_blank" class="resource-item">
+        <h3>MarsCode</h3>
+        <p>字节跳动出品的 AI 编程助手，全功能免费。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">marscode.cn</span>
+          <span class="resource-item-tag">中文助手</span>
+        </div>
+      </a>
+      <a href="https://tongyi.aliyun.com/lingma" target="_blank" class="resource-item">
+        <h3>通义灵码</h3>
+        <p>阿里云出品的 AI 编程助手，个人永久免费。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">tongyi.aliyun.com/lingma</span>
+          <span class="resource-item-tag">中文助手</span>
+        </div>
+      </a>
+
+      <!-- 图像生成 -->
+      <a href="https://leonardo.ai/" target="_blank" class="resource-item">
+        <h3>Leonardo AI</h3>
+        <p>每日 150 Tokens，AI 绘画与设计生成。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">leonardo.ai</span>
+          <span class="resource-item-tag">图像生成</span>
+        </div>
+      </a>
+      <a href="https://firefly.adobe.com/" target="_blank" class="resource-item">
+        <h3>Adobe Firefly</h3>
+        <p>每月 25 点数，Adobe 官方 AI 图像生成。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">firefly.adobe.com</span>
+          <span class="resource-item-tag">图像生成</span>
+        </div>
+      </a>
+      <a href="https://designer.microsoft.com/" target="_blank" class="resource-item">
+        <h3>Microsoft Designer</h3>
+        <p>每日 15 次快速生成，微软官方 AI 设计工具。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">designer.microsoft.com</span>
+          <span class="resource-item-tag">图像生成</span>
+        </div>
+      </a>
+      <a href="https://clipdrop.co/" target="_blank" class="resource-item">
+        <h3>Clipdrop</h3>
+        <p>抠图、放大、擦除等 AI 图像处理工具集。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">clipdrop.co</span>
+          <span class="resource-item-tag">图像生成</span>
+        </div>
+      </a>
+      <a href="https://cleanup.pictures/" target="_blank" class="resource-item">
+        <h3>Cleanup.pictures</h3>
+        <p>无限次免费擦除图片中多余物体。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">cleanup.pictures</span>
+          <span class="resource-item-tag">图像生成</span>
+        </div>
+      </a>
+
+      <!-- 音频音乐 -->
+      <a href="https://elevenlabs.io/" target="_blank" class="resource-item">
+        <h3>ElevenLabs</h3>
+        <p>每月 1 万字符，AI 语音生成。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">elevenlabs.io</span>
+          <span class="resource-item-tag">音频音乐</span>
+        </div>
+      </a>
+      <a href="https://suno.com/" target="_blank" class="resource-item">
+        <h3>Suno AI</h3>
+        <p>每日 5 次生成，AI 音乐创作。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">suno.com</span>
+          <span class="resource-item-tag">音频音乐</span>
+        </div>
+      </a>
+      <a href="https://otter.ai/" target="_blank" class="resource-item">
+        <h3>Otter.ai</h3>
+        <p>每月 300 分钟，会议录音转文字。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">otter.ai</span>
+          <span class="resource-item-tag">音频音乐</span>
+        </div>
+      </a>
+
+      <!-- 视频数字人 -->
+      <a href="https://www.heygen.com/" target="_blank" class="resource-item">
+        <h3>HeyGen</h3>
+        <p>每月 3 部视频，AI 数字人生成。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">heygen.com</span>
+          <span class="resource-item-tag">视频数字人</span>
+        </div>
+      </a>
+      <a href="https://jimeng.ai/" target="_blank" class="resource-item">
+        <h3>即梦AI</h3>
+        <p>字节跳动出品，中文 AI 视频生成。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">jimeng.ai</span>
+          <span class="resource-item-tag">视频数字人</span>
+        </div>
+      </a>
+      <a href="https://runwayml.com/" target="_blank" class="resource-item">
+        <h3>Runway ML</h3>
+        <p>每月 125 积分，专业 AI 视频生成。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">runwayml.com</span>
+          <span class="resource-item-tag">视频数字人</span>
+        </div>
+      </a>
+
+      <!-- 编程开发 -->
+      <a href="https://bolt.new/" target="_blank" class="resource-item">
+        <h3>Bolt.new</h3>
+        <p>每月 100 万 Token，AI 全栈开发。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">bolt.new</span>
+          <span class="resource-item-tag">编程开发</span>
+        </div>
+      </a>
+      <a href="https://cursor.com/" target="_blank" class="resource-item">
+        <h3>Cursor</h3>
+        <p>AI 代码编辑器，每月 500 次快速补全。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">cursor.com</span>
+          <span class="resource-item-tag">编程开发</span>
+        </div>
+      </a>
+      <a href="https://codeium.com/" target="_blank" class="resource-item">
+        <h3>Codeium</h3>
+        <p>无限次代码自动补全，支持 70+ 语言。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">codeium.com</span>
+          <span class="resource-item-tag">编程开发</span>
+        </div>
+      </a>
+      <a href="https://modelscope.cn/" target="_blank" class="resource-item">
+        <h3>魔搭社区</h3>
+        <p>阿里旗下开源 AI 社区，上千模型免费体验。</p>
+        <div class="resource-item-meta">
+          <span class="resource-item-url">modelscope.cn</span>
+          <span class="resource-item-tag">编程开发</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+</div>
+
+<script>
+// ===== 资源分组折叠逻辑 =====
+const groups = Array.from(document.querySelectorAll('.resource-group'));
+
+function setCollapsed(group, collapsed) {
+  group.classList.toggle('is-collapsed', collapsed);
+  const btn = group.querySelector('.resource-group-arrow');
+  if (btn) btn.setAttribute('aria-expanded', String(!collapsed));
+}
+
+// 1. 默认全部收起
+groups.forEach(g => setCollapsed(g, true));
+
+// 2. 点分组右上角箭头：只切换这一个，不影响其他
+groups.forEach(group => {
+  const btn = group.querySelector('.resource-group-arrow');
+  if (!btn) return;
+  btn.addEventListener('click', () => {
+    setCollapsed(group, !group.classList.contains('is-collapsed'));
+  });
+});
+
+// 3. 顶部分类 chip：手风琴——展开目标、收起其他、平滑滚动
+document.querySelectorAll('.resources-chips-nav .resources-chip').forEach(chip => {
+  chip.addEventListener('click', (e) => {
+    const id = chip.getAttribute('href').slice(1);
+    const target = document.getElementById(id);
+    if (!target) return;
+    e.preventDefault();
+    groups.forEach(g => setCollapsed(g, g !== target));
+    target.scrollIntoView({behavior: 'smooth', block: 'start'});
+    history.replaceState(null, '', '#' + id);
+  });
+});
+
+// 4. 直接带 hash 打开页面（如 /resources/#ai）：展开对应板块
+if (location.hash) {
+  const g = document.querySelector(location.hash);
+  if (g) setCollapsed(g, false);
+}
+
+// 5. 全部展开 / 全部收起 切换
+const toggleBtn = document.getElementById('chipsToggle');
+if (toggleBtn) {
+  toggleBtn.addEventListener('click', () => {
+    const anyCollapsed = groups.some(g => g.classList.contains('is-collapsed'));
+    groups.forEach(g => setCollapsed(g, !anyCollapsed));
+    toggleBtn.textContent = anyCollapsed ? '全部收起' : '全部展开';
+  });
+}
+
+// ===== 自动给每个资源卡片加上网站图标 =====
+document.querySelectorAll('.resource-item').forEach(item => {
+  const href = item.getAttribute('href');
+  if (!href) return;
+  try {
+    const domain = new URL(href).hostname;
+    const title = item.querySelector('h3')?.textContent || domain;
+    const iconDiv = document.createElement('div');
+    iconDiv.className = 'resource-icon';
+    const img = document.createElement('img');
+    img.src = `https://api.xinac.net/icon/?url=https://${domain}`;
+    img.alt = domain;
+    img.onerror = () => {
+      iconDiv.innerHTML = '';
+      const span = document.createElement('span');
+      span.textContent = title.charAt(0).toUpperCase();
+      span.style.cssText = `font-size:18px;font-weight:700;color:var(--accent);`;
+      iconDiv.appendChild(span);
+    };
+    iconDiv.appendChild(img);
+    item.insertBefore(iconDiv, item.firstChild);
+  } catch (e) {
+    console.warn('解析域名失败:', href);
+  }
+});
+</script>
+
+</div></main><footer id="footer" style="background-image: url(/img/banner.jpg);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2022 - 2026 By Biko</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.7.0</a></span></div><div class="footer_custom_text">Hi, welcome to my <a target="_blank" rel="noopener" href="https://biko-duckyo.github.io/">blog</a>!<p><a target="_blank" href="https://hexo.io/"><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&logo=hexo" title="博客框架为Hexo"></a>&nbsp;<a target="_blank" href="https://butterfly.js.org/"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&logo=bitdefender" title="主题采用butterfly"></a>&nbsp;<a target="_blank" href="https://www.jsdelivr.com/"><img src="https://img.shields.io/badge/CDN-jsDelivr-orange?style=flat&logo=jsDelivr" title="本站使用JsDelivr为静态资源提供CDN加速"></a>&nbsp;<a target="_blank" href="https://github.com/"><img src="https://img.shields.io/badge/Source-Github-d021d6?style=flat&logo=GitHub" title="本站项目由Gtihub托管"></a>&nbsp;<a target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&logo=Claris" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可"></a></p></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><script src="/js/tw_cn.js?v=5.7.0"></script><script src="/js/vendor/fancybox.umd.min.js"></script><script src="/js/vendor/instantpage.min.js" type="module"></script><script src="/js/vendor/snackbar.min.js"></script><div class="js-pjax"></div><script defer data-pjax>(function(){function rm(){var n=document.getElementById('nav');if(n&&n.parentNode)n.parentNode.removeChild(n)}if(document.readyState!=='loading')rm();else document.addEventListener('DOMContentLoaded',rm);document.addEventListener('pjax:complete',rm)})()</script><script defer data-pjax src="/js/custom/footer_butterfly.js"></script><script defer data-pjax src="/js/custom/fireflies.js"></script><div id="menu-container" class="menu-container"><div class="biko-nav"><button class="bn-burger" type="button" onclick="Navvisible()" aria-label="打开菜单"><i class="fas fa-bars"></i></button><div class="bn-left"><span class="bn-weather" id="he-plugin-simple"></span><span class="bn-clock" id="message-date-box"></span></div><ul class="bn-menu"><li class="menu-item-main"><a class="site-page" href="/"><i class="fas fa-home fa-fw"></i><span>鸭喵屋</span></a></li><li class="menu-item-main"><a class="site-page" href="/calendar/"><i class="fas fa-calendar-day fa-fw"></i><span>迹录</span></a></li><li class="menu-item-main"><a class="site-page" href="/archives/"><i class="fas fa-list fa-fw"></i><span>随笔</span></a></li><li class="menu-item-main has-child"><span class="menu-item-parent"><a class="site-page" href="javascript:void(0);"><i class="fas fa-heartbeat fa-fw"></i><span>闲趣</span></a></span><a class="site-page menu-item-child" href="/galleryGroup/"><i class="fas fa-images fa-fw"></i><span>相册</span></a><a class="site-page menu-item-child" href="/music/"><i class="fas fa-music fa-fw"></i><span>音乐</span></a><a class="site-page menu-item-child" href="/anime/"><i class="fas fa-tv fa-fw"></i><span>追番</span></a></li><li class="menu-item-main"><a class="site-page" href="/scholar/"><i class="fas fa-book fa-fw"></i><span>研思</span></a></li><li class="menu-item-main"><a class="site-page" href="/finance/"><i class="fas fa-wallet fa-fw"></i><span>金库</span></a></li><li class="menu-item-main is-active"><a class="site-page" href="/resources/"><i class="fas fa-bookmark fa-fw"></i><span>百宝箱</span></a></li></ul><div class="bn-right"><div id="search-button"><a class="bn-icon social-icon search" title="搜索" role="button" tabindex="0" aria-label="搜索" data-bn-label="搜索"><i class="fas fa-search"></i></a></div><a class="bn-icon icon-V" data-bn-no-label="true" onclick="switchNightMode()" title="浅色/深色模式切换" aria-label="明暗切换" data-bn-label="明暗"><svg width="23" height="23" viewBox="0 0 1024 1024" aria-hidden="true"><use id="modeicon" xlink:href="#icon-sun"></use></svg><svg width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true"><defs><symbol id="icon-sun" viewBox="0 0 1024 1024"><path d="M960 512l-128 128v192h-192l-128 128-128-128H192v-192l-128-128 128-128V192h192l128-128 128 128h192v192z" fill="#FFD878"></path><path d="M736 512a224 224 0 1 0-448 0 224 224 0 1 0 448 0z" fill="#FFE4A9"></path><path d="M512 320c105.888 0 192 86.112 192 192s-86.112 192-192 192-192-86.112-192-192 86.112-192 192-192m0-32a224 224 0 1 0 0 448 224 224 0 0 0 0-448z" fill="#4D5152"></path></symbol><symbol id="icon-moon" viewBox="0 0 1024 1024"><path d="M611.37 167.08a445.01 445.01 0 0 1-38.4 161.83 477.82 477.82 0 0 1-244.74 244.4 445.14 445.14 0 0 1-161.1 38.06 85.08 85.08 0 0 0-65.07 135.72A462.08 462.08 0 1 0 747.09 102.06 85.08 85.08 0 0 0 611.37 167.08z" fill="#FFB531"></path></symbol></defs></svg></a></div></div></div><script defer data-pjax src="/js/custom/nav.js"></script><script defer data-pjax src="/js/custom/music_button.js"></script><script defer data-pjax src="/js/custom/page_footer.js"></script><script defer data-pjax src="/js/custom/music_page.js"></script><script defer data-pjax src="/js/custom/worklog_calendar.js"></script><script defer data-pjax src="/js/custom/gallery_seal.js"></script><script defer data-pjax src="/js/custom/gallery_page.js"></script><script defer data-pjax src="/js/custom/home_hub.js"></script><script defer data-pjax src="/js/custom/banner_parallax.js"></script><script>setTimeout(function(){var lb=document.getElementById('loading-box');if(lb){lb.classList.add('loaded');document.body.style.overflow='auto';}},3000);document.addEventListener('pjax:complete',function(){setTimeout(function(){var lb=document.getElementById('loading-box');if(lb){lb.classList.add('loaded');document.body.style.overflow='auto';}},1500);});</script><script data-pjax defer src="/js/custom/fixed_card_widget.js"></script><script data-pjax defer src="/js/custom/title_hover.js"></script><script>function injectWechatCapsule(){var icons=document.getElementById('site_social_icons');if(icons&&!document.getElementById('wechat-capsule')){var w=document.createElement('div');w.id='wechat-capsule';w.innerHTML='<i class=\"fab fa-weixin\"></i><span>微信：15651005256</span>';icons.parentNode.insertBefore(w,icons.nextSibling);}}if(document.readyState!=='loading'){injectWechatCapsule();}else{document.addEventListener('DOMContentLoaded',injectWechatCapsule);}document.addEventListener('pjax:complete',function(){setTimeout(injectWechatCapsule,300);});</script><script data-pjax defer src="/js/custom/runtime_fallback.js"></script><script defer data-pjax src="/js/custom/weather.js"></script><script defer data-pjax src="/js/custom/article_title_move.js"></script><script defer data-pjax src="/js/custom/auto_cover.js"></script><script defer data-pjax src="/js/custom/zh-history.js"></script><script defer data-pjax src="/js/custom/history.js"></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1/dist/APlayer.min.css" media="print" onload="this.media='all'"><script defer src="https://cdn.jsdelivr.net/npm/aplayer@1/dist/APlayer.min.js"></script><script>(function(){var O=window.APlayer;if(!O||O.__bikoWrap)return;function W(cfg){/* /music/ 自带歌词渲染：建实例前把 lrc 清空，避免 APlayer 在 lrcType=3 时立刻去请求正文当 URL（404），也避免它抢歌词显示。正文转存到 __bikoLrc，供 music_page.js 自渲染用。其它页面不动，左下角小面板行为不变。 */try{if(cfg&&cfg.audio&&/\/music\//.test(location.pathname)){for(var i=0;i<cfg.audio.length;i++){var t=cfg.audio[i];if(t){t.__bikoLrc=t.lrc||'';t.lrc='';}}}}catch(e){}var ap=new O(cfg);try{window.__BIKO_AP__=ap;}catch(e){}return ap;}W.prototype=O.prototype;try{Object.setPrototypeOf(W,O);}catch(e){}Object.getOwnPropertyNames(O).forEach(function(k){if(k==='length'||k==='prototype'||k==='name')return;try{W[k]=O[k];}catch(e){}});W.__bikoWrap=true;window.APlayer=W;})();</script><script>window.meting_api='https://api.injahow.cn/meting/?server=:server&type=:type&id=:id&r=:r';</script><script defer src="https://cdn.jsdelivr.net/gh/metowolf/MetingJS@1.2/dist/Meting.min.js"></script><div class="aplayer no-destroy" data-id="2120966270" data-server="netease" data-type="playlist" data-fixed="true" data-mini="true" data-autoplay="false" data-preload="none" data-listfolded="true"> </div><script src="/nanaly/js/nanaly-backup-entry.js"></script><script src="/nanaly/js/nanaly-identity.js"></script><script src="/nanaly/js/nanaly-knowledge.js"></script><script src="/nanaly/js/nanaly-provider.js"></script><script src="/nanaly/js/nanaly-agent.js"></script><script src="/nanaly/js/nanaly-workspace.js"></script><script src="/nanaly/js/nanaly-files.js"></script><script src="/nanaly/js/nanaly-vision.js"></script><script src="/nanaly/js/nanaly-research.js"></script><script src="/nanaly/js/nanaly-tasks.js"></script><script src="/nanaly/js/nanaly-audio.js"></script><script src="/nanaly/js/nanaly-prosody.js"></script><script src="/nanaly/js/nanaly-voice.js"></script><script src="/nanaly/js/nanaly-shell.js"></script><script src="/nanaly/js/noimpty-ai.js"></script><script src="/nanaly/js/nanaly-agent-ui.js"></script><script src="/nanaly/js/nanaly-cat-trigger.js"></script><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward" title="后退"><i class="fas fa-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward" title="前进"><i class="fas fa-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh" title="刷新"><i class="fas fa-arrow-rotate-right"></i></div><div class="rightMenu-item" id="menu-home" title="回首页"><i class="fas fa-house"></i></div></div><div class="rightMenu-group rightMenu-line"><div class="rightMenu-item" id="menu-radompage"><i class="fas fa-shoe-prints"></i><span>随便逛逛</span></div><div class="rightMenu-item" id="menu-darkmode"><i class="fas fa-moon"></i><span>切换模式</span></div><div class="rightMenu-item" id="menu-translate"><i class="fas fa-earth-asia"></i><span>繁简切换</span></div></div></div><div id="rightmenu-mask"></div><script defer src="/js/custom/rightmenu.js"></script><script defer src="/js/home_dashboard.js"></script><script id="click-heart" src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/dist/click-heart.min.js" async="async" mobile="true"></script><script src="/js/vendor/pjax.min.js" defer="defer"></script><script>document.addEventListener('DOMContentLoaded', () => {
+  const pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+  window.pjax = new Pjax({
+    elements: 'a:not([target="_blank"]):not([data-fancybox])',
+    selectors: pjaxSelectors,
+    cacheBust: false,
+    analytics: false,
+    scrollRestoration: false
+  })
+
+  const triggerPjaxFn = (val) => {
+    if (!val) return
+    Object.values(val).forEach(fn => {
+      try {
+        fn()
+      } catch (err) {
+        console.debug('Pjax callback failed:', err)
+      }
+    })
+  }
+
+  document.addEventListener('pjax:send', () => {
+    // removeEventListener
+    btf.removeGlobalFnEvent('pjaxSendOnce')
+    btf.removeGlobalFnEvent('themeChange')
+
+    // reset readmode
+    const $bodyClassList = document.body.classList
+    if ($bodyClassList.contains('read-mode')) $bodyClassList.remove('read-mode')
+
+    triggerPjaxFn(window.globalFn.pjaxSend)
+  })
+
+  document.addEventListener('pjax:complete', () => {
+    btf.removeGlobalFnEvent('pjaxCompleteOnce')
+    document.querySelectorAll('script[data-pjax]').forEach(item => {
+      if (!item.parentNode) return
+      const newScript = document.createElement('script')
+      const content = item.text || item.textContent || ''
+      Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+      newScript.appendChild(document.createTextNode(content))
+      item.parentNode.replaceChild(newScript, item)
+    })
+
+    triggerPjaxFn(window.globalFn.pjaxComplete)
+  })
+
+  document.addEventListener('pjax:error', e => {
+    const responseURL = e.request && e.request.responseURL
+    if (e.request && e.request.status === 404) {
+      true
+        ? pjax.loadUrl('/404.html')
+        : responseURL && (window.location.href = responseURL)
+    } else if (responseURL) {
+      window.location.href = responseURL
+    }
+  })
+})</script><script async data-pjax src="/js/vendor/busuanzi-local.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><i class="fas fa-spinner fa-pulse" id="loading-status" hidden="hidden"></i><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="text-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据加载中</span></div><div class="local-search-input"><input placeholder="搜索文章" type="text"/></div><hr/><div id="local-search-results"></div><div class="ais-Pagination" id="local-search-pagination" style="display:none;"><ul class="ais-Pagination-list"></ul></div><div id="local-search-stats"></div></div><div id="search-mask"></div><script src="/js/search/local-search.js?v=5.7.0"></script></div></div><!-- hexo injector body_end start --><script async src="https://at.alicdn.com/t/font_2032782_8d5kxvn09md.js"></script><div class="js-pjax"><script async="async">var arr = document.getElementsByClassName('recent-post-item');
+for(var i = 0;i<arr.length;i++){
+    arr[i].classList.add('wow');
+    arr[i].classList.add('animate__zoomIn');
+    arr[i].setAttribute('data-wow-duration', '1s');
+    arr[i].setAttribute('data-wow-delay', '');
+    arr[i].setAttribute('data-wow-offset', '');
+    arr[i].setAttribute('data-wow-iteration', '');
+  }</script><script async="async">var arr = document.getElementsByClassName('card-widget');
+for(var i = 0;i<arr.length;i++){
+    arr[i].classList.add('wow');
+    arr[i].classList.add('animate__slideInRight');
+    arr[i].setAttribute('data-wow-duration', '1s');
+    arr[i].setAttribute('data-wow-delay', '');
+    arr[i].setAttribute('data-wow-offset', '');
+    arr[i].setAttribute('data-wow-iteration', '');
+  }</script></div><script defer src="https://cdn.jsdelivr.net/npm/hexo-butterfly-wowjs/lib/wow.min.js"></script><script defer src="https://cdn.jsdelivr.net/npm/hexo-butterfly-wowjs/lib/wow_init.js"></script><script data-pjax>
+  function butterfly_swiper_injector_config(){
+    var parent_div_git = document.getElementById('recent-posts');
+    var item_html = '<div class="recent-post-item" style="height: auto;width: 100%"><div class="blog-slider swiper-container-fade swiper-container-horizontal" id="swiper_container"><div class="blog-slider__wrp swiper-wrapper" style="transition-duration: 0ms;"><div class="blog-slider__item swiper-slide" style="width: 750px; opacity: 1; transform: translate3d(0px, 0px, 0px); transition-duration: 0ms;"><a class="blog-slider__img" onclick="pjax.loadUrl(&quot;2026/10/03/hello-world/&quot;);" href="javascript:void(0);" alt=""><img width="48" height="48" src="/img/banner.jpg" alt="" onerror="this.src=https://unpkg.zhimg.com/akilar-candyassets/image/loading.gif; this.onerror = null;"/></a><div class="blog-slider__content"><span class="blog-slider__code">2026-10-03</span><a class="blog-slider__title" onclick="pjax.loadUrl(&quot;2026/10/03/hello-world/&quot;);" href="javascript:void(0);" alt="">这个站怎么用：一览、功能与全部指令</a><div class="blog-slider__text">本站（Hexo 8 + Butterfly 5.7 + Cloudflare Pages）的使用说明书：左侧导航每个入口是干什么的、有哪些隐藏交互与快捷键，以及从写作、校验、发布到后端密钥配置的全部命令，一条不落。</div><a class="blog-slider__button" onclick="pjax.loadUrl(&quot;2026/10/03/hello-world/&quot;);" href="javascript:void(0);" alt="">详情       </a></div></div><div class="blog-slider__item swiper-slide" style="width: 750px; opacity: 1; transform: translate3d(0px, 0px, 0px); transition-duration: 0ms;"><a class="blog-slider__img" onclick="pjax.loadUrl(&quot;2026/10/06/Hexo+GitHub搭建指南/&quot;);" href="javascript:void(0);" alt=""><img width="48" height="48" src="/img/banner.jpg" alt="" onerror="this.src=https://unpkg.zhimg.com/akilar-candyassets/image/loading.gif; this.onerror = null;"/></a><div class="blog-slider__content"><span class="blog-slider__code">2026-10-06</span><a class="blog-slider__title" onclick="pjax.loadUrl(&quot;2026/10/06/Hexo+GitHub搭建指南/&quot;);" href="javascript:void(0);" alt="">Hexo + GitHub 搭建个人博客完整指南</a><div class="blog-slider__text">Hexo + GitHub Pages 搭建个人博客的完整指南：Node.js / Git 环境准备（Windows、macOS、Linux 三平台），Hexo 初始化、主题替换、GitHub 仓库与仓库 Pages 配置、一键部署，以及自定义域名的收尾步骤。</div><a class="blog-slider__button" onclick="pjax.loadUrl(&quot;2026/10/06/Hexo+GitHub搭建指南/&quot;);" href="javascript:void(0);" alt="">详情       </a></div></div><div class="blog-slider__item swiper-slide" style="width: 750px; opacity: 1; transform: translate3d(0px, 0px, 0px); transition-duration: 0ms;"><a class="blog-slider__img" onclick="pjax.loadUrl(&quot;2026/10/25/博客魔改总览/&quot;);" href="javascript:void(0);" alt=""><img width="48" height="48" src="/img/banner.jpg" alt="" onerror="this.src=https://unpkg.zhimg.com/akilar-candyassets/image/loading.gif; this.onerror = null;"/></a><div class="blog-slider__content"><span class="blog-slider__code">2026-10-25</span><a class="blog-slider__title" onclick="pjax.loadUrl(&quot;2026/10/25/博客魔改总览/&quot;);" href="javascript:void(0);" alt="">博客魔改总览：所有定制功能一览</a><div class="blog-slider__text">本站所有自定义魔改功能的总览：从文章卡片化、侧边栏组件、到追番库和学术工作站，一篇文章看懂所有定制。</div><a class="blog-slider__button" onclick="pjax.loadUrl(&quot;2026/10/25/博客魔改总览/&quot;);" href="javascript:void(0);" alt="">详情       </a></div></div><div class="blog-slider__item swiper-slide" style="width: 750px; opacity: 1; transform: translate3d(0px, 0px, 0px); transition-duration: 0ms;"><a class="blog-slider__img" onclick="pjax.loadUrl(&quot;2026/10/11/东南大学境外参会办理清单/&quot;);" href="javascript:void(0);" alt=""><img width="48" height="48" src="/img/banner.jpg" alt="" onerror="this.src=https://unpkg.zhimg.com/akilar-candyassets/image/loading.gif; this.onerror = null;"/></a><div class="blog-slider__content"><span class="blog-slider__code">2026-10-11</span><a class="blog-slider__title" onclick="pjax.loadUrl(&quot;2026/10/11/东南大学境外参会办理清单/&quot;);" href="javascript:void(0);" alt="">东南大学 · 境外参加国际会议办理清单</a><div class="blog-slider__text">东南大学研究生出国（境）参加国际会议的完整办理清单：从收到录用通知到财务报销，含资助申请、因公出国境审批、签证材料、回国报销与未出境只报签证费的专门流程。</div><a class="blog-slider__button" onclick="pjax.loadUrl(&quot;2026/10/11/东南大学境外参会办理清单/&quot;);" href="javascript:void(0);" alt="">详情       </a></div></div><div class="blog-slider__item swiper-slide" style="width: 750px; opacity: 1; transform: translate3d(0px, 0px, 0px); transition-duration: 0ms;"><a class="blog-slider__img" onclick="pjax.loadUrl(&quot;2026/10/11/VPN与机场笔记/&quot;);" href="javascript:void(0);" alt=""><img width="48" height="48" src="/img/banner.jpg" alt="" onerror="this.src=https://unpkg.zhimg.com/akilar-candyassets/image/loading.gif; this.onerror = null;"/></a><div class="blog-slider__content"><span class="blog-slider__code">2026-10-11</span><a class="blog-slider__title" onclick="pjax.loadUrl(&quot;2026/10/11/VPN与机场笔记/&quot;);" href="javascript:void(0);" alt="">VPN &amp; 机场笔记（资料备份）</a><div class="blog-slider__text">一份 VPN 与机场订阅的备份笔记：主流代理协议对比、客户端选型、macOS 代理配置、机场选购维度与故障排查踩坑记录。资料整理性质，信息可能过期，请以实际为准。</div><a class="blog-slider__button" onclick="pjax.loadUrl(&quot;2026/10/11/VPN与机场笔记/&quot;);" href="javascript:void(0);" alt="">详情       </a></div></div></div><div class="blog-slider__pagination swiper-pagination-clickable swiper-pagination-bullets"></div></div></div>';
+    console.log('已挂载butterfly_swiper')
+    parent_div_git.insertAdjacentHTML("afterbegin",item_html)
+    }
+  var elist = 'undefined'.split(',');
+  var cpage = location.pathname;
+  var epage = '/';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_swiper_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_swiper_injector_config();
+  }
+  </script><script defer src="/swiper/swiper.min.js"></script><script defer data-pjax src="/swiper/swiper_init.js"></script><script data-pjax>
+  function butterfly_clock_injector_config(){/*biko-guard*/if(!document.getElementsByClassName('sticky_layout').length)return;
+    var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+    var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img class="entered loading" id="card-clock-loading" src="/clock/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading"/></div></div></div></div></div>';
+    console.log('已挂载butterfly_clock')
+    parent_div_git.insertAdjacentHTML("afterbegin",item_html)
+    }
+  var elist = '/posts/'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_clock_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_clock_injector_config();
+  }
+  </script><script src="/js/vendor/noop.js"></script><script data-pjax src="/clock/clock.js"></script><script data-pjax>
+  function butterfly_footer_beautify_injector_config(){/*biko-guard*/if(!document.getElementById('footer-wrap'))return;
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><p id="ghbdages"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" data-title="博客框架为 Hexo" title=""><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" data-title="主题 Butterfly" title=""><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="https://pages.github.com/" style="margin-inline:5px" data-title="本站托管于 GitHub Pages" title=""><img src="https://img.shields.io/badge/Hosted-GitHub_Pages-181717?style=flat&amp;logo=github" alt=""/></a><a class="github-badge" target="_blank" href="https://github.com/Biko-Duckyo/Biko-Duckyo.github.io" style="margin-inline:5px" data-title="本站项目由 GitHub 托管" title=""><img src="https://img.shields.io/badge/Source-Github-d021d6?style=flat&amp;logo=GitHub" alt=""/></a><a class="github-badge" target="_blank" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" data-title="本站采用 CC BY-NC-SA 4.0 协议" title=""><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=creativecommons" alt=""/></a></p>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'undefined'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async src="/footer-beautify/runtime.js"></script><!-- hexo injector body_end end --><script src="https://cdn.jsdelivr.net/npm/live2d-widget@^3.1.3/lib/L2Dwidget.min.js"></script><script>L2Dwidget.init({"pluginRootPath":"live2dw/","pluginModelPath":"assets/","tagMode":false,"log":false,"model":{"jsonPath":"/live2dw/assets/hijiki.model.json"},"display":{"position":"left","width":150,"height":300},"mobile":{"show":false},"pluginJsPath":"lib/"});</script></body></html>

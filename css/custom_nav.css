@@ -11,43 +11,8 @@
   --nav-bar-bg: rgba(17, 20, 28, 0.92);
   --nav-info-bg: rgba(255, 255, 255, 0.06);
 
-  /* ======================================================
-   * 统一圆角刻度（全站唯一来源，禁止再用魔法数字）
-   * 用法：border-radius: var(--r-card);
-   * ====================================================== */
-  --r-pill: 999px;          /* 胶囊：天气/时钟/CTA */
-  --r-control: 10px;        /* 控件：菜单项、图标按钮 */
-  --r-card: 8px;            /* 卡片：侧栏卡、文章卡 */
-  --r-panel: 18px;          /* 浮层面板：音乐面板、聊天面板 */
-  --r-panel-sm: 12px;       /* 浮层面板内嵌块 */
-
-  /* ======================================================
-   * 统一字体栈（全站唯一来源）
-   * 西文用 Titillium Web（与站点标题一致），中文回退到系统中文字体。
-   * ====================================================== */
-  --font-ui: 'Titillium Web', -apple-system, BlinkMacSystemFont, 'Segoe UI',
-             'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC',
-             'Source Han Sans SC', sans-serif;
-
-  /* ======================================================
-   * 统一层级刻度（全站唯一来源，禁止再用魔法数字）
-   * 用法：z-index: var(--z-xxx);
-   * 留白刻意取整十/整百，方便后续在两层之间插入新层。
-   * ====================================================== */
-  --z-base: 1;              /* 顶栏内左/右区内部 */
-  --z-nav: 10;              /* 顶栏容器 #menu-container（fixed） */
-  --z-nav-menu: 11;         /* 顶栏中区菜单（需压住左右区） */
-  --z-card-float: 40;       /* 手机端侧栏悬浮卡（fixed-card-widget） */
-  --z-dropdown: 50;         /* 下拉 / 浮层 */
-  --z-backtop: 60;          /* 回顶按钮 */
-  --z-live2d: 70;           /* 看板娘 + 其点击热区 */
-  --z-live2d-hotspot: 71;   /* 看板娘热区需压在看板娘之上 */
-  --z-rightside: 80;        /* 左下/右下齿轮按钮列（含音乐按钮） */
-  --z-music-panel: 90;      /* 音乐圆角面板 */
-  --z-overlay: 100;         /* 全屏遮罩（首页 Home Hub 首屏） */
-  --z-loader: 100;          /* 加载动画 */
-  --z-sky: 1100;            /* 昼夜切换星球动画（短暂全屏，需盖住一切） */
-  --z-top: 1200;            /* 极端情况兜底：必须最顶层的临时层 */
+  /* 圆角 --r-*、字体栈 --font-ui、层级 --z-* 已统一上移到
+     common_layout.css（head 最先加载，全站可见），此处不再重复定义。 */
 }
 
 /* 隐藏 Butterfly 原生 #nav，本套顶栏完全替代它 */
@@ -64,6 +29,11 @@
 }
 body:has(#recent-posts) #menu-container { transform: translateY(-100%); }
 body:has(#recent-posts).biko-nav-on #menu-container { transform: translateY(0); }
+
+/* ★ 2026-10 用户要求：首页（Dashboard 模式）顶栏固定住，不随滚动收/展。
+   body.home-dashboard 是 home_dashboard.js 在首页挂载时加的类。
+   强制 translateY(0) 覆盖上面的 -100% 规则；内页没有这个类，不受影响。 */
+body.home-dashboard #menu-container { transform: translateY(0) !important; }
 /* 兜底：不支持 :has() 的浏览器（Safari <15.4 / Firefox <121）无法命中上面两条，
  * 会导致首页顶栏被永久藏起。@supports not selector(:has(*)) 时改为只依赖 body 上的
  * .biko-nav-on 类（由 home_hub.js 写入），从而保证顶栏仍能滑入。 */
@@ -124,21 +94,21 @@ html[data-theme='light'] .biko-nav .bn-clock i { color: #6b81a3; }
 }
 .bn-weather,
 .bn-clock {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 5px 11px;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 14px;
   border-radius: var(--r-pill);
   background: var(--nav-info-bg);
   color: var(--nav-item-fg);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.2;
   white-space: nowrap;
   flex: 0 0 auto;
 }
 .bn-weather i,
-.bn-clock i { color: #9db4d3; font-size: 12px; }
-.bn-weather .bn-city { opacity: .85; display: inline-flex; align-items: center; gap: 4px; }
-.bn-weather .bn-wx { display: inline-flex; align-items: center; gap: 4px; margin-left: 6px; }
-.bn-weather .bn-aqi { margin-left: 4px; font-size: 12px; }
+.bn-clock i { color: #9db4d3; font-size: 14px; }
+.bn-weather .bn-city { opacity: .9; display: inline-flex; align-items: center; gap: 5px; }
+.bn-weather .bn-wx { display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; }
+.bn-weather .bn-aqi { margin-left: 5px; font-size: 13px; }
 .bn-clock .bn-weekday { opacity: .72; margin-left: 2px; }
 .bn-weather .bn-city i,
 .bn-weather .bn-wx i { color: #9db4d3; font-size: 12px; }
@@ -163,7 +133,8 @@ html[data-theme='light'] .biko-nav .bn-clock i { color: #6b81a3; }
  * 之前是按 :hover 展开/收起；现在恒为展开态，仅保留悬停时的轻微交互反馈。
  * ====================================================== */
 .bn-weather {
-  max-width: 200px;
+  display: inline-flex !important;
+  max-width: 280px;
   opacity: 1;
   transition: max-width .34s cubic-bezier(.4, 0, .2, 1),
               opacity .26s ease,
@@ -318,10 +289,10 @@ html[data-theme='light'] .bn-menu::after { background: linear-gradient(to left, 
   transition: opacity .3s ease;
   white-space: nowrap;
 }
-/* 悬停：父项收 0 让位 + li 变宽到正好容纳 3 个子项（3×82=246px） */
+/* 悬停：父项收 0 让位 + li 变宽到正好容纳 4 个子项（4×82=328px） */
 .bn-menu .menu-item-main.has-child:hover,
 .bn-menu .menu-item-main.has-child:focus-within {
-  max-width: 246px;
+  max-width: 328px;
   background: var(--nav-item-hover);
   color: #fff;
 }
@@ -340,6 +311,8 @@ html[data-theme='light'] .bn-menu::after { background: linear-gradient(to left, 
 .bn-menu .menu-item-main.has-child:focus-within .menu-item-child:nth-of-type(2) { transition-delay: .16s; }
 .bn-menu .menu-item-main.has-child:hover .menu-item-child:nth-of-type(3),
 .bn-menu .menu-item-main.has-child:focus-within .menu-item-child:nth-of-type(3) { transition-delay: .24s; }
+.bn-menu .menu-item-main.has-child:hover .menu-item-child:nth-of-type(4),
+.bn-menu .menu-item-main.has-child:focus-within .menu-item-child:nth-of-type(4) { transition-delay: .32s; }
 .bn-menu .menu-item-child:hover { background: var(--nav-item-hover); color: #fff; border-radius: var(--r-control); }
 
 /* 右区：搜索 + 明暗 */
@@ -377,9 +350,6 @@ html[data-theme='light'] .bn-menu::after { background: linear-gradient(to left, 
   border-radius: var(--r-control); color: #fff; background: transparent; border: 0; cursor: pointer;
 }
 .bn-burger:hover { background: var(--nav-item-hover); }
-
-/* 全局为固定顶栏预留高度 */
-#content-inner.layout { padding-top: 74px !important; }
 
 /* 中等宽度（769~1000px）：左区「天气 + 时钟」两枚胶囊把中区挤到只剩几十像素，
  * 表现为文字叠文字。此区间直接收起天气胶囊，只保留时钟 + 搜索/明暗。 */
@@ -419,6 +389,7 @@ html[data-theme='light'] .bn-menu::after { background: linear-gradient(to left, 
   }
 }
 @media (max-width: 400px) {
+  /* 结构件高度：移动端顶栏收窄档，归属 --layout-nav-h 体系，勿与控件令牌 --control-h 混用 */
   .biko-nav { height: 50px; padding: 0 8px; }
   .bn-clock .bn-weekday { display: none; }
   .bn-clock { font-size: 11px; }
@@ -567,6 +538,38 @@ html[data-theme='light'] .bn-menu::after { background: linear-gradient(to left, 
   }
   #live2d-widget.live2d-widget-container { display: none !important; }
   #nanaly-cat-hotspot { display: none !important; }
+}
+
+/* ======================================================
+ * 320px 超窄屏适配
+ * ====================================================== */
+@media screen and (max-width: 360px) {
+  /* 顶栏：隐藏次要文字，只留图标 */
+  .bn-clock-text,
+  .bn-search-text {
+    display: none !important;
+  }
+  .bn-weather-text {
+    display: none !important;
+  }
+
+  /* 浮动按钮：缩小并减少间距 */
+  #rightside {
+    gap: 4px !important;
+    bottom: 8px !important;
+    right: 8px !important;
+  }
+  #rightside button {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 12px !important;
+  }
+
+  /* 正文：给浮动按钮留出避让区域 */
+  #article-container,
+  .layout_page {
+    padding-right: 44px !important;
+  }
 }
 
 /* ======================================================

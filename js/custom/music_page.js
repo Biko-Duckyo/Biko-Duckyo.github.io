@@ -117,6 +117,7 @@
       }
       markActive()
       buildList()
+      wire()
       bind()
       renderAll()
       return
@@ -201,6 +202,7 @@
       if (timer) { clearInterval(timer); timer = null }
       markActive()
       buildList()
+      wire()
       bind()
       renderAll()
       setStatus('已载入「' + pl.name + '」· 共 ' + audios.length + ' 首')
@@ -344,6 +346,17 @@
 
   function renderLrc (raw) {
     if (!live || !ui.lrc) return
+
+    /* 如果 raw 是 URL（以 http 开头），先请求获取歌词正文 */
+    if (typeof raw === 'string' && raw.trim().startsWith('http')) {
+      setLrcHint('正在请求歌词…')
+      fetch(raw.trim())
+        .then(function (r) { return r.text() })
+        .then(function (text) { renderLrc(text) })
+        .catch(function () { setLrcHint('歌词加载失败。') })
+      return
+    }
+
     var rows = parseLrc(raw)
     lrcRows = []; lrcTimes = []; lrcActive = -1
 

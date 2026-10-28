@@ -1,0 +1,2662 @@
+/* ============================================================
+ * Biko · 首页四行 Dashboard
+ * ------------------------------------------------------------
+ * 页面加载动画：先模糊后清晰（参照 xinghuisama.top）
+ * ============================================================ */
+
+/* 深色模式下原生控件（select 下拉、滚动条）自动适配 */
+body.home-dashboard {
+  color-scheme: dark;
+}
+body.home-dashboard select {
+  background: var(--card);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: var(--r-card);
+  padding: 4px 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+body.home-dashboard select option {
+  background: var(--card-2);
+  color: var(--fg);
+}
+
+@keyframes dash-page-in {
+  from {
+    opacity: 0;
+    filter: blur(12px);
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: scale(1);
+  }
+}
+
+body.home-dashboard .dash-grid,
+body.home-dashboard #footer {
+  animation: dash-page-in 0.8s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* ============================================================
+ * 四行结构：
+ *   ① 身份带（头像/签名/3 数字/7 图标）  |  ② 历史上的今天
+ *   ③ 轮播 swiper                        |  ④ 网站信息
+ *   ⑤ AI 日报（三类 RSS + 今日状态）      整宽
+ *   ⑥ 页脚（玻璃卡片）
+ *
+ * ── 视觉语言（与参照站对齐）────────────────────────────────
+ * ★ 参照站根本没有「一整块玻璃板」，这里曾经做成过「版心一块玻璃 + 卡片
+ *   浮在上面」，是误读。对着 xinghuisama.top 的整页截图逐像素量过之后：
+ *
+ *   全屏那一层（fixed inset:0）只有「背景图 + 压暗」，没有圆角、没有模糊；
+ *   卡片几乎贴着版心边缘（左右只剩 0~24px），玻璃只长在每张卡片自己身上。
+ *
+ *   所以正确的层次是两层，不是三层：
+ *
+ *   L0  #web_bg        鲸鱼星空固定背景（custom.css 已给全站铺好，不动它）
+ *   L1  .dash-veil     全屏压暗层（fixed）：只管「把背景压下去」，不管版心形状
+ *   L2  .dash-card     卡片 = 唯一的玻璃（backdrop-blur + 半透明底色）
+ *
+ *   由此推出一条结论：卡片之间的缝隙里看到的是【背景板】，不是玻璃。
+ *   这就是「按玻璃态能看出层次」的根据 —— 玻璃的边界 = 卡片的边界。
+ *
+ * 「缝隙与四周一致」在这里的含义也随之变成：
+ *   留白、gap、版心上下边距同源于 --dash-edge，各张卡片之间的间距与
+ *   卡片到版心边缘的间距相等 —— 是【同一把尺子】，不是【同一块玻璃】。
+ *
+ * L1 的底色由 --dash-veil-* 一组令牌驱动，浅色/深色各一份，
+ * 切换 [data-theme] 时颜色自动过渡（transition 写在 .dash-veil 上），
+ * 所以「随昼夜变色」这件事只发生在这里一处。
+ *
+ * 实现前提（非常重要）：
+ *   本文件【不生成 DOM】，只负责「摆位置」和「加皮肤」。
+ *   - 骨架由 inject.bottom 的脚本在 #recent-posts 前后插入
+ *   - 玻璃遮罩 .dash-veil 由 home_dashboard.js 插入到 #biko-dashboard 之后
+ *   - swiper 是主题插件用 JS 注入到 #recent-posts 里的，我们只是把
+ *     整个 #recent-posts 搬进 ③ 号槽位
+ *   - 文章卡片列表（.recent-post-item 中非 swiper 的那些）整块隐藏但保留在
+ *     DOM 里，避免 pjax / 搜索 / 主题脚本找不到元素而报错
+ *
+ * 只作用于首页：用 body.home-dashboard 这个类作开关（由 JS 加），
+ * 其它页面（归档/标签/关于）完全不受影响。
+ * ============================================================ */
+
+/* ---------- 比例令牌：微调只改这里 ---------- */
+body.home-dashboard {
+  /* ★ 映射到全站通用布局规范（common_layout.css）
+     以后改布局只需改 common_layout.css，所有页面同步生效。 */
+  --dash-max: var(--layout-max);
+  --dash-pad-x: var(--layout-pad-x);
+  --dash-edge: var(--layout-gap);
+  --dash-nav-h: var(--layout-nav-h);
+  --dash-pad-top: var(--layout-pad-top);
+  --dash-pad-bottom: var(--layout-pad-bottom);
+  --dash-radius: var(--layout-radius);
+  --dash-blur: var(--layout-blur);
+  --dash-sat: var(--layout-sat);
+
+  /* ★ 参照站 xinghuisama.top 用的是 12 列栅格：
+       行1 = 身份卡 7 列 + 音乐卡 5 列
+       行2 = 文章轮播 4 列 + 中间卡 5 列 + 右侧「夜间模式」小卡 3 列
+     ⚠️ 行 2 曾经照抄成「轮播 8 : 网站信息 4」，实测反而「左小右大」。
+        原因不是比例算错，而是【内容重量】：
+          · 轮播左侧是一张封面，视觉上「重」但面积有上限；
+          · 网站信息只有三行文字，8:4 时文字被拉成一条细线、右边空一片，
+            8 份宽度里大半是空白，眼睛读到的就是「左边窄、右边宽」。
+        参照站的处理是：左栏只给 4 列，右边那块内容少，就拆成「中间 5 列
+        + 右侧 3 列小卡」，面积分散开，谁都不显得空。
+        本站只有两块卡，于是合成 7 : 5 —— 数值仍等于「4+3 列」的右半区，
+        只是把中间卡与右侧小卡并成一块给「网站信息」。
+     ⚠️ 用 fr 而不是 %：百分比加起来 100% 时再把 gap 算进去，两列会溢出
+        容器（旧版 58%+42%+gap 就超了 18px，靠 min-width:0 硬扛着）。
+     换算成格子数可以直接对照：7fr 5fr ≡ 7/12 与 5/12。 */
+  --row1-left: 7fr;
+  --row1-right: 5fr;
+  /* ★ row2（轮播 | 网站信息）按 2026-10 用户要求调成 9:3，
+     左侧轮播尽量宽；右侧网站信息卡强制正方形，只够放三行信息。 */
+  --row2-left: 9fr;
+  --row2-right: 3fr;
+  --dash-gap: var(--dash-edge);
+
+  /* ★ 版心、间距、圆角、玻璃质感已走公共规范（--layout-*），
+     这里只保留首页独有的变量： */
+  --dash-radius-sm: var(--r-panel-sm);
+
+  /* 行高令牌（旧的写死高度）。
+   ⚠️ 现已不参与桌面端排版：行 1 用 min-height:280、行 2 让内容 + swiper 封面
+      决定（见下面的 .dash-row--1 / --row2）。保留令牌只是给 swiper 容器
+      一个「至少这么高」的兜底，以及窄屏断点里显式清零。
+      为什么改掉：写死的高度一旦和「按宽度走的内容」对不上，卡片底部就会
+      多一条空档，而且行 2 的左右两卡会明显不齐。 */
+  --row1-h: 280px;
+  --row2-h: 260px;
+
+  /* ---- 浅色：雾蓝玻璃（参照站 glass 卡片 bg-white/40 的反相） ---- */
+  /* ⚠️ 遮罩不透明度必须很低（≤0.25）：
+     遮罩与卡片是两层半透明相乘，0.72 的遮罩会让最终透光率只剩
+     (1-0.72)×(1-0.52) ≈ 13%，背景彻底看不见 —— 这是踩过的坑。 */
+  --dash-veil-1: rgba(238, 243, 250, 0.20);
+  --dash-veil-2: rgba(222, 231, 243, 0.14);
+  /* ★ 与深色同理：遮罩是「卡片外围的玻璃」，卡片叠在它上面，
+     所以卡片要比遮罩更透（.36 叠在 .20 上 ≈ 最终 .50），
+     缝隙与卡片才是同一块玻璃的两种「处理程度」，而不是两个色号。 */
+  --dash-glass: rgba(255, 255, 255, 0.40);
+  /* 文字区（轮播右侧）用的稍实底色 */
+  --dash-glass-strong: rgba(255, 255, 255, 0.65);
+  --dash-line: rgba(126, 150, 184, 0.24);
+  --dash-line-soft: rgba(126, 150, 184, 0.14);
+  --dash-ink: #111827;
+  --dash-ink-dim: rgba(17, 24, 39, 0.65);
+  --dash-accent: var(--accent);
+  --dash-accent-soft: rgba(126, 150, 184, 0.14);
+  --dash-shadow: var(--shadow);
+  --dash-shadow-sm: var(--shadow-sm);
+  --dash-glow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* 三卡分色（文章蓝 / 标签紫 / 分类粉）与头像描边渐变：固定装饰色，不随主题翻转 */
+body.home-dashboard {
+  --dash-stat-1-num: #60a5fa;
+  --dash-stat-1-label: #3b82f6;
+  --dash-stat-2-num: #a78bfa;
+  --dash-stat-2-label: #8b5cf6;
+  --dash-stat-3-num: #f472b6;
+  --dash-stat-3-label: #ec4899;
+  --dash-avatar-ring: linear-gradient(135deg, var(--dash-stat-2-num), var(--dash-stat-1-num), var(--dash-stat-3-num));
+}
+
+/* ---- 深色：石墨蓝玻璃（对齐参照站 bg-slate-800/50） ---- */
+[data-theme='dark'] body.home-dashboard {
+  /* ★ 遮罩 =「卡片外围的那块玻璃」，卡片 = 同一个色 + 模糊。
+     卡片是半透明地叠在遮罩之上的，所以卡片令牌要比版心玻璃**更透**
+     （.40 叠在 .30 上 ≈ 最终 .58），否则半边会明显比缝隙深一块，
+     「一圈等宽的玻璃」就断在卡片边上了。 */
+  --dash-veil-1: rgba(12, 17, 27, 0.22);
+  --dash-veil-2: rgba(6, 9, 15, 0.30);
+  /* slate-800 = #1e293b → rgba(30, 41, 59, .5) */
+  --dash-glass: rgba(30, 41, 59, 0.50);
+  --dash-glass-strong: rgba(38, 49, 68, 0.65);
+  --dash-line: rgba(157, 180, 211, 0.20);
+  --dash-line-soft: rgba(157, 180, 211, 0.12);
+  --dash-ink: #f8fafc;
+  --dash-ink-dim: rgba(248, 250, 252, 0.7);
+  --dash-accent: var(--accent);
+  --dash-accent-soft: rgba(157, 180, 211, 0.14);
+  --dash-shadow: var(--shadow);
+  --dash-shadow-sm: var(--shadow-sm);
+  --dash-glow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* ============================================================
+ * L1 · 全屏压暗层
+ * ------------------------------------------------------------
+ * 为什么是 fixed 而不是给 #content-inner 加背景：
+ *   参照站的玻璃是「整块屏幕」的，内容滚动时玻璃不动、
+ *   只有底下的星空在移动。fixed + inset:0 正好是这个观感，
+ *   而且不会因为内容高度变化而出现「玻璃只盖一半」的断裂。
+ *
+ * 这一层只负责「把背景压下去」，不管版心的形状：
+ * 它没有圆角、没有模糊、也不跟着「版心那一圈玻璃」走，
+ * 因为参照站的全屏层就是这样一个矩形。
+ *
+ * ⚠️ 挂载位置（JS 侧决定）：它是 body 的直接子元素，排在 #body-wrap 之后。
+ *    不能挂在 #content-inner 里 —— 那个元素有 isolation: isolate，
+ *    会把 fixed 子元素裁进「版心那一块盒子」，顶栏两侧与页脚都拿不到遮罩。
+ *    挂在 body 上，fixed + inset:0 才是真正的整个视口。
+ *
+ * pointer-events: none 保证永远不挡点击。
+ * z-index: 2（负 z-index 已在前面「让遮罩成为卡片外围的那块玻璃」一节里否掉：
+ *   它会被渲染到 body 背景之下，直接失联）。卡片是 110，顶栏是 10，都按预期分层。
+ *
+ * ⚠️ 不需要 display:none 的开关：#biko-hub 首屏是独立 fixed 层
+ *    （z-index: var(--z-overlay, 100)），比本层高，自然盖住它。
+ * ============================================================ */
+body.home-dashboard .dash-veil {
+  position: fixed;
+  inset: 0;
+  z-index: -9;
+  pointer-events: none;
+  /* 浅色模式：淡蓝白 36% */
+  background: rgba(180, 200, 240, 0.36);
+}
+/* 深色模式：深蓝黑 36% */
+[data-theme='dark'] body.home-dashboard .dash-veil {
+  background: rgba(15, 20, 40, 0.36);
+}
+  /* ★ 遮罩只「压暗」，不「模糊」。
+     原先这里是 blur(18px)：遮罩覆盖整屏，等于把星空先糊掉一层，
+     卡片再做一次 backdrop-blur —— 背景被处理两遍，肉眼只剩一片死黑。
+     参照站没有全屏遮罩，模糊只发生在卡片自身，所以这里去掉 backdrop-filter。 */
+  /* 昼夜切换时玻璃「慢慢变色」，而不是硬切 */
+  transition: background-color .5s ease, background .5s ease;
+
+  /* ------------------------------------------------------------
+   * ★ 为什么是全屏 fixed，而不是「版心那一块」
+   * ------------------------------------------------------------
+   * 曾经这里写过 absolute + JS 喂宽高（--dash-outer-w/h），以为参照站的
+   * 缝隙里是一块玻璃。对着参照站整页截图量过之后否掉了：它的全屏层就是
+   * 一个铺满视口的矩形，卡片之间的缝隙露出来的是【背景板】。
+   *
+   * fixed 还有个附带好处：内容滚动时这层纹丝不动，只有底下的星空在动，
+   * 不会因为内容高度变化出现「玻璃只盖一半」的断裂。
+   *
+   * ⚠️ 层级仍要 isolation：fixed 层在 #content-inner 里，被 isolation
+   *    收进同一个层叠上下文，卡片 z-index:110 才能稳定压在它上面。
+   * ------------------------------------------------------------ */
+  /* background / transition 见上方，这里只补「全屏」所需的收尾：
+     不需要 border-radius、不需要 JS 喂宽高。 */
+}
+
+/* 不支持 backdrop-filter 的浏览器（老 Firefox / 部分国产内核）：
+   模糊失效后卡片玻璃会变成「纯半透明」，文字直接压在星空上会糊。
+   ★ 兜底要给【卡片】补实，而不是把【整屏】糊死 ——
+     后者的做法（遮罩 opacity .96）会让整站背景彻底消失，代价过大。 */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  body.home-dashboard .dash-card,
+  body.home-dashboard .dash-history {
+    background: var(--dash-glass-strong);
+  }
+}
+
+/* 左侧浮动按钮（主题的 #rightside）在版心收窄后会压在卡片上。
+   ⚠️ 不改 _config.butterfly.yml 的 readmode/translate/darkmode ——
+      那些是「全站功能开关」，为首页让路去关掉它们，内页会一起少功能。
+   ⚠️ 也不能用 padding-left 让位：padding 会吃掉内容宽度，身份卡会从
+      615 缩到 582，比例就不再与参照站一致。
+   做法：整块版心向右平移「半个按钮宽度」，再靠 max-width 保持内容宽度不变。 */
+@media (min-width: 1081px) {
+  body.home-dashboard #content-inner.layout {
+    /* 向右移 28px：左边按钮区留出空隙，右边仍有对称余量 */
+    margin-left: auto !important;
+    margin-right: auto !important;
+    /* ★ 用 relative + left 而不是 transform: translateX(28px)：
+       transform 会把 #content-inner 变成「定位包含块」，父级加了
+       transform 时，absolute 子元素（defer 遮罩、fixed 侧栏）的基准会整体偏移。
+       实测遮罩跟着平移 28px，卡片两侧的留白就一边 40 一边 68，缝隙与四周全是 24
+       也就失去对称。left 只挪盒子本身，不影响子元素定位。 */
+    position: relative;
+    left: 28px;
+    transform: none;
+  }
+
+  /* 页脚是 #body-wrap 的直接子元素，不在 #content-inner 里，吃不到上面那个 left:28px。
+     这里补一份同样的平移，否则页脚会整体比卡片偏左 28px（实测 184 vs 212）。 */
+  body.home-dashboard #footer {
+    position: relative;
+    left: 28px;
+    transform: none;
+  }
+}
+
+body.home-dashboard #content-inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dash-gap);
+  /* ★ 版心：宽度不再交给整块视口，而是对齐参照站的 max-w-6xl。
+     ⚠️ 必须 !important：主题把 #content-inner 的 max-width 写死在
+        index.css 里，不压过它就还是主题那个 1180 的窄盒（并且不居中）。 */
+  width: 100%;
+  max-width: var(--dash-max) !important;
+  margin: 0 auto !important;
+  /* ★ 版心要「至少占满一屏」，否则页脚会压到 AI 日报上：
+     #content-inner 是 flex 容器，高度按内容定；页脚是它父级 #body-wrap 的
+     另一个子节点，从盒子的【底边】开始排。少了这条，盒子只到内容就停
+     （实测 755，而页面 1001），页脚就贴着 AI 日报上来了。
+     ⚠️ 这里曾试过 flex:1 0 auto —— 无效，因为 #body-wrap 不是 flex 容器，
+        flex-grow 无处生长。只能用 min-height + 视口高。
+     ⚠️ 减去 200px 是给页脚的预算（页脚内容约 200px 高）。
+        实测 900 高的视口下盒子是 700、页脚从 779 起，AI 日报底边 731，
+        中间正好留出 48px —— 比原来的 24px 多，但不会叠住。 */
+  min-height: calc(100vh - 200px);
+
+  /* 用长写而不是 padding 简写：简写里混着两个自定义属性时，
+     某些引擎会把 "--dash-pad-x" 前面的 "-" 当成减法/未知语法而整条丢弃。 */
+  padding-top: var(--dash-pad-top);
+  padding-right: var(--dash-pad-x);
+  padding-bottom: var(--dash-pad-bottom);
+  padding-left: var(--dash-pad-x);
+  box-sizing: border-box;
+
+  /* ★ 遮罩是全屏 fixed，这里不再需要给它当定位基准。 */
+  position: relative;
+  /* ★ 隔离层：让遮罩的 z-index:2 与卡片的 z-index:110 只在版心内部比较，
+     不会被页面里其它 z-index（主题的 #rightside、顶栏等）串味。
+      ⚠️ 副作用：isolation 同时也是「层叠上下文 + 裁剪盒」，挂在这里的 fixed
+         子元素只在版心的盒子里绘制。所以 .dash-veil 已改挂到 body（见 JS），
+         不放在这个元素内部。 */
+  isolation: isolate;
+
+  /* ★#1 遮罩下面必须真的“什么都没有”，否则量到的不是遮罩。
+     主题给 body 铺了 `background: var(--global-bg)`（深色 = #121212），
+     而 custom.css 又把 body 换成一张 `fixed` 的背景图（星空）。
+     —— 一旦星空没加载出来 / 被网络拦掉，body 就退回 #121212，
+        此时视口左上角已经是 rgb(18,18,18) 的“70% 暗板”，
+        与遮罩叠在一起肉眼根本分不出是谁在压暗。
+     这里显式把底色置为透明：看得见的只能是星空图与遮罩本身。
+     ⚠️ 只在首页生效，内页仍走主题原来的 --global-bg。 */
+  background-color: transparent !important;
+}
+
+/* ⚠️ 主题的布局规则会「顺手」命中我们的挂载点：
+     .layout > div:first-child            把宽度设成 74%
+     .layout > div:first-child:not(.nc)   再加 50px 40px 内边距
+   #biko-dashboard 正是 #content-inner.layout 的第一个子元素，于是：
+     · 整块被压成父级 74% 宽（1440px 下只剩 1027px，右边空一大片）
+     · 外加 40px 内边距，卡片又往里缩了一圈
+   这是当初「首页只占桌面中间一小块」的真正原因（不是我们自己的 max-width）。
+   必须在这里显式解掉，否则无论外层怎么铺满，内容仍然缩在左侧。
+   ⚠️ 注释里不要写花括号，否则会让后面的规则解析错位。 */
+body.home-dashboard #biko-dashboard {
+  width: 100%;
+  align-self: stretch;
+  padding: 0;
+
+  /* ⚠️ 必须清掉底色：主题的 `.cardHover` 同时挂在
+     `.layout > div:first-child:not(.nc)` 上，而 #biko-dashboard 正是
+     #content-inner 的第一个子元素 —— 它会吃到 `background: var(--card-bg)`
+     （深色 = rgb(18,18,18)，完全不透明）。
+     这块板子压在遮罩【之上】，于是卡片缝隙与顶栏下方的留白全被它盖住，
+     量遮罩时 Δ=0（踩过：以为遮罩没画上去，其实是上面盖了一层实底）。
+     这里显式透明，让「背景 = 星空 + 遮罩」这条链真正成立。 */
+  background: transparent !important;
+  box-shadow: none !important;
+
+  /* ★ 行与行之间的缝隙在这里，不在 .dash-row 上：
+     #biko-dashboard 里只有三个「行」子元素，gap 写在容器上才是行间距。
+     ⚠️ 之前把 gap 写在 .dash-row 上，而每一行只有一个子元素（卡片），
+        gap 无处生效 —— 实测行 1 与行 2、行 2 与 AI 日报之间的间距是 0。
+     值和卡片的横向缝隙同源，保证「横缝 = 竖缝 = --dash-edge」。 */
+  display: flex;
+  flex-direction: column;
+  gap: var(--dash-gap);
+}
+
+/* 主题布局层（.layout / #page）也要一起收进版心，否则外层撑满视口、
+   内层 1152 居中，玻璃遮罩与卡片的左右留白会对不上（顶栏是另一套宽度）。
+   ⚠️ 这里不能给 #content-inner.layout 写 padding:0 !important ——
+      首页的 #content-inner 本身就带 .layout 类，那条规则会把上面刚设好的
+      左右留白清零，整排卡片直接贴到屏幕边缘（实测 1920px 下卡片左右各 0px）。
+      留白只由上面的 --dash-pad-* 提供，这一组只负责「收宽 + 居中」。 */
+body.home-dashboard #page,
+body.home-dashboard .container {
+  max-width: var(--dash-max) !important;
+  width: 100%;
+  padding: 0 !important;
+  margin: 0 auto !important;
+}
+
+/* 主题给固定顶栏预留的 74px，首页要保留（顶栏是 fixed，不留就被盖住）。
+   custom_nav.css 的 #content-inner.layout 规则优先级更高，
+   这里显式声明一次，避免以后调 padding 时被它悄悄改回 74px。 */
+body.home-dashboard #content-inner.layout {
+  padding-top: var(--dash-pad-top) !important;
+}
+
+/* 四行里的每一行：默认是 2 列网格 */
+body.home-dashboard .dash-row {
+  display: grid;
+  gap: var(--dash-gap);
+  align-items: stretch;
+}
+
+body.home-dashboard .dash-row--1 {
+  grid-template-columns: var(--row1-left) var(--row1-right);
+  /* ★ 行高由这张卡决定，两侧都 stretch 到它。
+     参照站的身份卡是 min-h-[280px]，音乐卡跟着拉伸 → 两卡等高；
+     本站的「历史上的今天」条目数不固定（今天 5 条、明天可能 8 条），
+     如果让内容决定行高，行 1 会随数据忽高忽低。
+     这里把行高固定成「身份卡内容 + 280 下限」，历史卡改为内部滚动。 */
+  /* ★ 行 1 不再写死高度：身份卡里有三处「按宽度定高」的东西
+     （签名条、轮播封面、数字行），网格宽度一变行高就该跟着变。写死 320
+     时，窄一点的桌面会在身份卡底部留一条空档，宽屏又可能差几像素。
+     改成 min-height：高度 = 两张卡里更高的那张（auto），但不少于 280（参照站）。
+
+     ⚠️ 别以为「历史卡让出高度」就没事：#biko-dashboard 是 grid 容器，
+        行高等于两张卡的最大内容高度。历史卡一旦比身份卡高，行就被它撑开、
+        身份卡再被 stretch 拉高 —— 于是「按身份卡算条目数」会自我放大。
+        所以分页逻辑（home_dashboard.js 的 historyPerPage / settleHistory）
+        会按「历史卡是否比身份卡高」回退条目数，而不是在这里写死高度
+        （写死就和「按宽度走」的身份卡内容对不上了）。
+     这里另加 minmax(0, auto)：让网格行允许收缩到内容以下，由上面的
+     min-height 兜底，避免历史卡被拉伸时把行撑得更高。 */
+  grid-template-rows: minmax(0, auto);
+  min-height: 280px;
+}
+
+body.home-dashboard .dash-row--23 {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  grid-template-rows: auto auto;
+  gap: var(--dash-gap);
+  align-items: stretch;
+  min-height: 400px;
+}
+
+/* 左上方：swiper 文章卡 */
+body.home-dashboard .dash-row--23 > .dash-slider {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+/* 右上方：天气卡片（跨两行） */
+body.home-dashboard .dash-row--23 > .dash-weather {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+}
+
+/* 左下方：网站信息卡 + 工作日历卡 */
+body.home-dashboard .dash-row--23 > .dash-bottom-left {
+  grid-column: 1;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--dash-gap);
+}
+
+body.home-dashboard .dash-row--4 {
+  grid-template-columns: 1fr;
+}
+
+/* ---------- 天气卡片 ---------- */
+body.home-dashboard .dash-weather {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  justify-content: space-evenly;
+}
+
+body.home-dashboard .dash-weather__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+body.home-dashboard .dash-weather__city {
+  font-size: 14px;
+  color: var(--fg);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+body.home-dashboard .dash-weather__loc {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: var(--r-panel-sm);
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--fg-mute);
+  cursor: pointer;
+}
+
+body.home-dashboard .dash-weather__main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+body.home-dashboard .dash-weather__temp {
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--fg);
+  line-height: 1;
+}
+
+body.home-dashboard .dash-weather__icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 16px;
+  background: rgba(255, 200, 100, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  color: #ffc864;
+}
+
+body.home-dashboard .dash-weather__desc {
+  font-size: 14px;
+  color: var(--fg);
+}
+
+body.home-dashboard .dash-weather__range {
+  font-size: 12px;
+  color: var(--fg-mute);
+}
+
+body.home-dashboard .dash-weather__hourly {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+
+body.home-dashboard .dash-weather__hour {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+body.home-dashboard .dash-weather__hour-label {
+  font-size: 11px;
+  color: var(--fg-mute);
+}
+
+body.home-dashboard .dash-weather__hour-icon {
+  font-size: 18px;
+  color: var(--fg);
+}
+
+body.home-dashboard .dash-weather__hour-temp {
+  font-size: 12px;
+  color: var(--fg);
+  font-weight: 600;
+}
+
+body.home-dashboard .dash-weather__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+body.home-dashboard .dash-weather__stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  border-radius: var(--r-panel-sm);
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 12px;
+  color: var(--fg-mute);
+}
+
+body.home-dashboard .dash-weather__stat span {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+/* ---------- 工作日历卡 ---------- */
+body.home-dashboard .dash-calendar {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+body.home-dashboard .dash-calendar__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+body.home-dashboard .dash-calendar__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+body.home-dashboard .dash-calendar__title:hover {
+  color: var(--accent);
+}
+
+body.home-dashboard .dash-calendar__btn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-card);
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--fg-mute);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+body.home-dashboard .dash-calendar__year,
+body.home-dashboard .dash-calendar__month {
+  padding: 4px 8px;
+  border-radius: var(--r-card);
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--fg);
+  font-size: 12px;
+}
+
+body.home-dashboard .dash-calendar__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  font-size: 12px;
+}
+
+body.home-dashboard .dash-calendar__grid .header {
+  text-align: center;
+  color: var(--fg-mute);
+  padding: 4px 0;
+}
+
+body.home-dashboard .dash-calendar__grid .day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: var(--fg);
+  position: relative;
+}
+
+body.home-dashboard .dash-calendar__grid .day.has-post::after {
+  content: '';
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+body.home-dashboard .dash-calendar__grid .day.today {
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+
+/* 行内的卡片一律填满行高（grid 默认就是 stretch）。
+   ⚠️ 这里必须是 min-height: auto 而不是 0：
+      写 0 会让卡片在行高不够时「向内收缩」，身份卡底部的社交图标被压成
+      半截（截图里那排半圆形按钮就是它）。auto 表示「至少装得下自己」，
+      行高不够时宁可让行被撑高，也不裁切内容。 */
+body.home-dashboard .dash-row > * {
+  min-height: auto;
+}
+
+/* 通用卡片外观：玻璃卡片（叠在 L1 玻璃遮罩之上） */
+body.home-dashboard .dash-card {
+  position: relative;
+  /* ★ 改成参考站结构：z:auto，不单独设 */
+  z-index: auto;
+  /* 半透明底 + 背景模糊 = 玻璃。
+     为什么不用主题的 --card-bg：#fff 不透明，会把 L1 遮罩完全盖住，
+     整页又回到「白板」观感，透视感全丢。 */
+  background: var(--dash-glass);
+  /* 走 --dash-blur 令牌，别写死数字：写死会绕过断点里的降级，
+     且改了令牌却不生效会很难查（踩过：令牌改 12px、实际仍是 14px）。 */
+  -webkit-backdrop-filter: blur(var(--dash-blur)) saturate(var(--dash-sat));
+  backdrop-filter: blur(var(--dash-blur)) saturate(var(--dash-sat));
+  border: 1px solid var(--dash-line);
+  border-radius: var(--dash-radius);
+  box-shadow: var(--dash-shadow-sm), var(--dash-glow);
+  overflow: hidden;
+  min-width: 0; /* 关键：防止 grid 子项被内容撑破 */
+  color: var(--dash-ink);
+  transition: box-shadow var(--t-base) ease, transform var(--t-base) ease, border-color var(--t-base) ease,
+    background .5s ease;
+}
+
+body.home-dashboard .dash-card:hover {
+  box-shadow: var(--dash-shadow), var(--dash-glow);
+  border-color: var(--dash-line);
+  transform: translateY(-3px);
+}
+
+/* 卡片标题条 */
+body.home-dashboard .dash-card__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: var(--layout-card-pad-head-y) var(--layout-card-pad-x) var(--layout-card-pad-head-bottom);
+  font-size: .95rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+  color: var(--dash-ink);
+  border-bottom: 1px solid var(--dash-line-soft);
+}
+
+body.home-dashboard .dash-card__head i {
+  margin-right: 7px;
+  color: var(--dash-accent);
+}
+
+body.home-dashboard .dash-card__extra {
+  font-size: .76rem;
+  font-weight: 500;
+  color: var(--dash-ink-dim);
+}
+
+/* 历史卡日期处于「回退」状态（今天的数据还没生成）：
+   加一个前缀，避免把昨天的条目录误认为今天的。 */
+body.home-dashboard .dash-card__extra.is-fallback::before {
+  content: '最近 ';
+  opacity: .7;
+}
+
+body.home-dashboard .dash-card__body {
+  padding: 0 var(--layout-card-pad-x) var(--layout-card-pad-body-bottom);
+}
+
+/* ============================================================
+ * ① 身份带
+ * ============================================================ */
+body.home-dashboard .dash-identity {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  /* ★ 内边距对齐参照站身份卡的 p-8（32px） */
+  padding: 28px 32px;
+  /* ★ 段间距 14 → 8：身份卡里是「头像行 / 签名 / 四个数字 / 七个图标」四段，
+     参考站那张卡只有「头像行 + 三个数字 + 七个图标」。收紧到 8px 之后，
+     四段在 280px 里排得下，历史卡能多放一条，行高也不会被历史卡顶起来。
+     ⚠️ 不能只把行高压到 280 了事 —— 内容装不下时会被裁掉（社交图标会少半截）。 */
+  gap: 8px;
+  /* ★ 下限 280px 对齐参照站 min-h-[280px] */
+  min-height: 280px;
+}
+
+/* 上排：头像 + 名字 + 签名 */
+body.home-dashboard .dash-identity__top {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+body.home-dashboard .dash-identity {
+  background: var(--dash-glass-strong) !important;
+}
+
+body.home-dashboard .dash-identity__avatar {
+  width: clamp(76px, 5.2vw, 96px);
+  height: clamp(76px, 5.2vw, 96px);
+  border-radius: var(--r-panel-sm);
+  object-fit: cover;
+  flex: 0 0 auto;
+  /* 炫彩渐变描边：紫 → 蓝 → 粉 */
+  padding: 3px;
+  background: var(--dash-avatar-ring);
+  box-shadow: 0 6px 20px rgba(120, 100, 220, .35);
+  transition: transform var(--t-base) ease;
+}
+
+body.home-dashboard .dash-identity:hover .dash-identity__avatar {
+  transform: rotate(-6deg) scale(1.04);
+}
+
+body.home-dashboard .dash-identity__meta {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+body.home-dashboard .dash-identity__name {
+  font-size: clamp(1.25rem, 1.6vw, 1.7rem);
+  font-weight: 800;
+  letter-spacing: .01em;
+  color: var(--dash-ink);
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.home-dashboard .dash-identity__sign {
+  position: relative;
+  z-index: 10;
+  font-size: .82rem;
+  opacity: .62;
+  margin-top: 3px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ------------------------------------------------------------
+ * ①.1 炫彩滚动签名（biko-marquee 的首页版）
+ * ------------------------------------------------------------
+ * 文案来源：_config.butterfly.yml 公告卡里的 .biko-marquee（唯一来源，
+ * home_dashboard.js 只做克隆）。侧栏那套皮肤写在 custom.css，作用域是
+ * #aside-content —— 而首页把 #aside-content 整个 display:none 了，
+ * 于是签名既没样式也没关键帧，只剩一行普通文字。这里补一套首页皮肤。
+ *
+ * 节奏：16s 一个循环 —— 前半程滚动，后半程停在「句首对齐」的位置，
+ * 让整句「双手合十成为自己的神，自己所信念的即是信仰」有足够时间读完
+ * （纯线性滚动时中文长句一闪而过，实际上没人看得清）。
+ * 为什么用 -50% 而不是 -100%：轨道里是两份相同文案，
+ * 位移 -50% 恰好等于一份文案的宽度 —— 此时第二份正好顶到句首，
+ * 与循环起点视觉完全一致，所以首尾无缝。
+ * ------------------------------------------------------------ */
+body.home-dashboard .dash-sign {
+  /* 与身份带上下两排之间的 gap 对齐，视觉上是一条独立的分区带 */
+  margin: 2px 0;
+  min-width: 0;
+  /* ★ 必须 block：这个元素是 <span class="dash-sign__view">。
+     身份卡是 flex 列容器（align-items 默认 stretch），行内元素作为
+     flex 项会「块化」并被拉满剩余高度 —— 实测把签名条撑到 126px，
+     身份卡因此多出一条约 100px 的纵向空档（以前写死 320 行高时被掩盖）。 */
+  display: block;
+}
+
+body.home-dashboard .dash-sign .biko-marquee {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  line-height: 1.7;
+  /* ⚠️ 渐变不能挂在这个「裁剪视口」上：
+     它自身有 overflow:hidden + mask-image，background-clip:text 之后
+     文字填充会被一起裁掉，整句直接消失（实测签名条全空）。
+     渐变放回每个 __item 上，并给两份完全相同、且与元素宽度无关的
+     background-size，滚动时两份才落在同一段色带上。 */
+  background: none;
+  animation: none;
+  /* 两侧渐隐遮罩：文字从卡片边缘淡入淡出，而不是被硬切。
+     ⚠️ 左侧只留 10px：签名条和卡片左内边距对齐后，第一份文案的起点就在
+        可视区边缘，18px 的淡出会把首字「双」吃掉一半（看着像缺字）。 */
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 14px), transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 10px, #000 calc(100% - 14px), transparent 100%);
+}
+
+body.home-dashboard .dash-sign .biko-marquee__track {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  width: max-content;
+  /* ★ 速度按「一份文案的宽度」算，而不是写死秒数：
+     · --dash-sign-w 由 JS 实测一份文案的宽度写在 .dash-sign 上；
+     · 走完一份用 26s（约 15px/s，中文标题的舒适阅读速度）；
+     · 位移仍是 -50%（两份等宽，-50% = 一份宽度），首尾天然无缝。
+     以前写死 16s：一份 397px 时是 25px/s，762px 时变成 48px/s ——
+     字号/文案一变速度就跟着变，长文案会「冲过去」看不清。 */
+  animation: dash-sign-scroll var(--dash-sign-dur, 26s) linear infinite;
+  /* 渐变与 animation 都在外层 .biko-marquee 上；轨道只负责位移。
+     这里显式清掉背景与文字填充，让子项「透」出最外层的渐变裁切。 */
+  background: none;
+  -webkit-text-fill-color: inherit;
+}
+
+body.home-dashboard .dash-sign .biko-marquee__item {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  /* 复制份与正文之间留出循环间隔，避免首尾文字黏在一起 */
+  padding-right: 64px;
+  font-size: clamp(.95rem, 1.05vw, 1.12rem);
+  font-weight: 800;
+  letter-spacing: .06em;
+  /* ★ 让两份文案共享同一条色带：
+     两份 item 是各自的独立盒子，background-clip:text 的色带都从「自己盒子的
+     左边缘」开始算，所以同一时刻会落到不同色段 —— 视觉上左橙右粉（截图已复现）。
+     修法：色带长度固定为「一份文案宽 × 2」（794px），并给第二份一个
+     -397px 的起始偏移（397 = 一份文案宽）。这样第二份看到的色带，恰好是
+     第一份色带在 397px 之后的那一段，两份拼起来仍是一条连续渐变。
+     ★ 现在这两个数由 JS 实测后写成 CSS 变量（--dash-sign-w / --dash-sign-2w），
+        改文案、改字号、换断点都会自动跟上；下面的 397/794 只是兜底默认值。
+        以前是写死的：手机上字变小、一份只有 316px，色带仍按 794 排，
+        接缝处就会跳色（这也是「炫彩在窄屏上看着更别扭」的原因之一）。 */
+  background-image: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #a29bfe, #ff9ff3, #ff6b6b);
+  background-size: var(--dash-sign-2w, 794px) 100%;
+  background-repeat: repeat-x;
+  background-origin: border-box;
+  background-position: 0 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: dash-sign-shine 4s linear infinite;
+  filter: drop-shadow(0 0 10px rgba(255, 159, 243, .28));
+}
+
+/* 第二份：色带起点左移「一份宽度」，与第一份首尾相接 */
+body.home-dashboard .dash-sign .biko-marquee__item:nth-child(2) {
+  background-position: calc(var(--dash-sign-w, 397px) * -1) 0;
+}
+
+/* 浅色模式：上面那套亮色（#feca57 等）在白底上对比度只有 1.5:1 左右，
+   远看像褪色。浅色改用同色系的深一档（黄→橙、青→蓝、粉→玫红），
+   保持「炫彩」但每个色段都压得住白底。 */
+[data-theme='light'] body.home-dashboard .dash-sign .biko-marquee__item,
+html:not([data-theme='dark']) body.home-dashboard .dash-sign .biko-marquee__item {
+  background-image: linear-gradient(90deg, #e0332f, #d97400, #0b78c9, #5b3fd6, #d1277c, #e0332f);
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, .6));
+}
+
+/* 不支持 background-clip:text 时退回单色，绝不出现「看不见的文字」 */
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  body.home-dashboard .dash-sign .biko-marquee__item {
+    background: none;
+    -webkit-text-fill-color: #ff6b6b;
+    color: #ff6b6b;
+    animation: none;
+    filter: none;
+  }
+}
+
+[data-theme='dark'] body.home-dashboard .dash-sign .biko-marquee__item {
+  filter: drop-shadow(0 0 12px rgba(162, 155, 254, .45));
+}
+
+/* 关键词强调：只加粗，不碰颜色。
+   ⚠️ 不要给 .is-em 设 background 或 -webkit-text-fill-color: transparent ——
+      它的背景盒比整句窄得多，会裁出一段独立的渐变色块，
+      在句子里变成一个突兀的纯色矩形（踩过）。 */
+body.home-dashboard .dash-sign .biko-marquee__item .is-em {
+  font-weight: 900;
+  /* 颜色一路继承到 track 的渐变裁字结果 */
+  color: inherit;
+  -webkit-text-fill-color: inherit;
+  /* ★ 必须 none，不能 inherit：
+     background: inherit 会把 track 的「渐变 + 尺寸 + 位置」整份搬过来，
+     而 .is-em 的盒子只有几个字宽，于是裁出另一段渐变色 —— 句子里会出现
+     一个突兀的纯色方块。none 表示「不画背景」，只借用父级的文字裁切。 */
+  background: none;
+}
+
+/* 鼠标悬停 / 键盘聚焦：两段动画一起暂停，便于读完整句 */
+body.home-dashboard .dash-sign .biko-marquee:hover .biko-marquee__track,
+body.home-dashboard .dash-sign .biko-marquee:focus-within .biko-marquee__track,
+body.home-dashboard .dash-sign .biko-marquee:hover .biko-marquee__item,
+body.home-dashboard .dash-sign .biko-marquee:focus-within .biko-marquee__item {
+  animation-play-state: paused;
+}
+
+/* ★ 位移必须线性推进：从「刚滚完一句」直接跳回起点。
+   ⚠️ 旧版是 `0% → 0, 48% → -50%, 100% → -50%`，每轮在末尾刹停 52% 的
+      时长，再「啵」地回到起点 —— 读起来就是一顿一顿的，正是「不流畅」的来源。
+      两份文案首尾相接，-50% 与 0% 视觉完全等价，所以可以无缝循环。 */
+@keyframes dash-sign-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* 流光：色带走两轮（200%）再回到原点，保证循环处没有跳色 */
+@keyframes dash-sign-shine {
+  from { background-position: 0 0; }
+  to { background-position: 200% 0; }
+}
+
+/* 中排：三个数字 */
+/* 底部一行：统计数字 + 社交图标 */
+body.home-dashboard .dash-identity__bottom {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+body.home-dashboard .dash-identity__stats {
+  display: flex;
+  align-items: baseline;
+  gap: 24px;
+}
+
+body.home-dashboard .dash-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-decoration: none;
+  padding: 2px 8px;
+  border-radius: var(--dash-radius-sm);
+  transition: background var(--t-fast) ease;
+  position: relative;
+}
+/* 统计项之间加竖线分隔 */
+body.home-dashboard .dash-stat:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 24px;
+  background: var(--dash-line);
+}
+
+body.home-dashboard .dash-stat:hover {
+  background: var(--dash-accent-soft);
+}
+
+body.home-dashboard .dash-stat__num {
+  font-size: 24px;
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+/* 每个统计项一个纯色：文章=蓝，标签=紫，分类=粉 */
+body.home-dashboard .dash-stat:nth-child(1) .dash-stat__num { color: var(--dash-stat-1-num); }
+body.home-dashboard .dash-stat:nth-child(2) .dash-stat__num { color: var(--dash-stat-2-num); }
+body.home-dashboard .dash-stat:nth-child(3) .dash-stat__num { color: var(--dash-stat-3-num); }
+
+body.home-dashboard .dash-stat__label {
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  line-height: 1;
+}
+/* 标签颜色：比对应数字深一个色度 */
+body.home-dashboard .dash-stat:nth-child(1) .dash-stat__label { color: var(--dash-stat-1-label); }
+body.home-dashboard .dash-stat:nth-child(2) .dash-stat__label { color: var(--dash-stat-2-label); }
+body.home-dashboard .dash-stat:nth-child(3) .dash-stat__label { color: var(--dash-stat-3-label); }
+
+/* 下排：社交图标 */
+body.home-dashboard .dash-identity__social {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+body.home-dashboard .dash-soc {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--r-panel-sm);
+  font-size: 16px;
+  color: var(--dash-ink-dim);
+  background: var(--dash-accent-soft);
+  border: 1px solid transparent;
+  text-decoration: none;
+  transition: background var(--t-fast) ease, color var(--t-fast) ease, transform var(--t-fast) ease,
+    border-color var(--t-fast) ease;
+  cursor: pointer;
+}
+
+body.home-dashboard .dash-soc:hover {
+  transform: translateY(-2px);
+  color: #fff;
+  background: var(--soc-color, var(--dash-accent));
+  border-color: var(--dash-line);
+}
+
+/* 联系方式弹框（微信/QQ） */
+.dash-contact-modal {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(6px);
+  animation: dash-fade-in 0.2s ease;
+}
+.dash-contact-modal__box {
+  background: #fff;
+  border-radius: var(--r-panel);
+  padding: 32px 36px;
+  text-align: center;
+  max-width: 320px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  animation: dash-scale-in 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.dash-contact-modal__title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #222;
+  margin-bottom: 16px;
+}
+.dash-contact-modal__label {
+  font-size: 13px;
+  color: #999;
+  margin-bottom: 6px;
+}
+.dash-contact-modal__value {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--accent-strong);
+  font-variant-numeric: tabular-nums;
+  margin-bottom: 12px;
+  letter-spacing: 0.05em;
+}
+.dash-contact-modal__desc {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+.dash-contact-modal__close {
+  padding: 10px 32px;
+  border: none;
+  border-radius: var(--r-panel-sm);
+  background: var(--accent);
+  color: var(--accent-fg);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--t-fast) ease, transform var(--t-fast) ease;
+}
+.dash-contact-modal__close:hover {
+  background: var(--accent-strong);
+  transform: translateY(-1px);
+}
+[data-theme='dark'] .dash-contact-modal__box {
+  background: #1e293b;
+}
+[data-theme='dark'] .dash-contact-modal__title {
+  color: #e9edf3;
+}
+[data-theme='dark'] .dash-contact-modal__label {
+  color: #94a3b8;
+}
+[data-theme='dark'] .dash-contact-modal__desc {
+  color: #cbd5e1;
+}
+@keyframes dash-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes dash-scale-in {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* ============================================================
+ * ② 历史上的今天
+ * ============================================================ */
+body.home-dashboard .dash-history {
+  display: flex;
+  flex-direction: column;
+}
+
+body.home-dashboard .dash-history__list {
+  flex: 1 1 auto;
+  list-style: none;
+  margin: 0;
+  padding: 6px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly; /* 条目随卡片高度均匀分布，不留底部空档 */
+  gap: 2px;
+  /* ★ 高度由行决定，而不是反过来由条目数决定。
+     原来这里靠 5 条 × 2 行把整行撑到 415px（参照站身份卡只有 280）。
+     现在条目可以滚（看全部），卡片高度跟着行 1 走，两卡始终等高。 */
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* 细滚动条：只在真的需要滚时才出现，避免一直占着右边缘 */
+  scrollbar-width: thin;
+  scrollbar-color: var(--dash-line) transparent;
+}
+
+body.home-dashboard .dash-history__list::-webkit-scrollbar {
+  width: 4px;
+}
+
+body.home-dashboard .dash-history__list::-webkit-scrollbar-thumb {
+  background: var(--dash-line);
+  border-radius: 2px;
+}
+
+body.home-dashboard .dash-history__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  /* ★ 上下内边距收窄一档（8→6）：把省下的高度留给「5 条一屏」，
+     280px 的行高里刚好放得下 5 条 2 行文本。 */
+  padding: 6px 0;
+  font-size: .85rem;
+  line-height: 1.5;
+  border-bottom: 1px dashed var(--dash-line-soft);
+  text-decoration: none;
+  color: var(--dash-ink);
+  transition: color var(--t-fast) ease, padding-left var(--t-fast) ease;
+}
+
+body.home-dashboard .dash-history__item:last-child {
+  border-bottom: 0;
+}
+
+body.home-dashboard .dash-history__item:hover {
+  padding-left: 4px;
+}
+/* 浅色 hover：文字更深（近黑） */
+body.home-dashboard .dash-history__item:hover {
+  color: #000;
+}
+/* 深色 hover：文字更白（近白） */
+[data-theme='dark'] body.home-dashboard .dash-history__item:hover {
+  color: #fff;
+}
+
+body.home-dashboard .dash-history__year {
+  flex: 0 0 auto;
+  min-width: 44px;
+  font-weight: 800;
+  font-size: .8rem;
+  line-height: 1.7;
+  color: var(--dash-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+body.home-dashboard .dash-history__text {
+  flex: 1 1 auto;
+  min-width: 0;
+  /* 卡片变宽之后一行能放下很多字，给 2 行更耐读，也把卡片高度用起来 */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 自定义 tooltip（fixed 定位，脱离 overflow:hidden 约束） */
+.dash-history__tip {
+  position: fixed;
+  z-index: var(--z-tooltip);
+  background: var(--card-2);
+  color: var(--fg);
+  border: 1px solid var(--line);
+  border-radius: var(--r-control);
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.5;
+  white-space: normal;
+  width: max-content;
+  max-width: 320px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(12px);
+  pointer-events: none;
+}
+
+/* 翻页小控件 */
+body.home-dashboard .dash-history__nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 18px 14px;
+  font-size: .75rem;
+  opacity: .7;
+}
+
+body.home-dashboard .dash-history__nav button {
+  border: 0;
+  background: var(--dash-accent-soft);
+  color: inherit;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--t-fast) ease;
+}
+
+body.home-dashboard .dash-history__nav button:hover {
+  background: var(--dash-accent);
+  color: var(--accent-fg);
+}
+
+body.home-dashboard .dash-history__dots {
+  display: flex;
+  gap: 5px;
+}
+
+body.home-dashboard .dash-history__dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--dash-line);
+  transition: background var(--t-fast) ease, width var(--t-fast) ease;
+}
+
+body.home-dashboard .dash-history__dot.active {
+  width: 14px;
+  border-radius: 3px;
+  background: var(--dash-accent);
+}
+
+/* ============================================================
+ * ③ 轮播槽位：把主题的 #recent-posts（含 swiper 注入）搬进来
+ * ============================================================ */
+body.home-dashboard .dash-slider {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* #recent-posts 本身变成透明容器，去掉主题给它的间距 */
+body.home-dashboard .dash-slider #recent-posts {
+  flex: 1 1 auto;
+  margin: 0 !important;
+  width: 100% !important;
+  min-height: 0;
+  background: transparent;
+  box-shadow: none;
+  /* ⚠️ 这里必须重置 display：double_row.css 用
+     `#recent-posts:has(> .recent-post-item)` 把首页容器设成 flex + wrap，
+     目的是让文章卡两列排。首页轮播的 .blog-slider 正是一个直接子元素，
+     于是它只拿到 flex-basis:100% 的一行，另一行是高度 0 的 .recent-post-items，
+     两行之间还多出一条行间距 —— 实测 #recent-posts 258 里 .blog-slider 只有
+     231，剩下 27px 空白就出现在轮播卡片底部（看起来像「下面缺一块」）。 */
+  display: block !important;
+}
+
+/* 隐藏原来的文章卡片列表（保留在 DOM 里） */
+body.home-dashboard .dash-slider #recent-posts > .recent-post-items {
+  display: none !important;
+}
+
+/* swiper 外层由插件注入，去掉它的外边距并撑满卡片 */
+body.home-dashboard .dash-slider .recent-post-item {
+  margin: 0 !important;
+  width: 100% !important;
+  /* 高度交给 swiper 容器决定（容器有 min-height 令牌 + 封面 100%）。
+     ⚠️ 这里原来写 height:100%，但「行 → 卡片 → #recent-posts」这条链上
+        没有一处是定高（行 2 现在是 min-height:260 的内容自适应），
+        百分比会一路解析成 auto，实测容器只剩 87px、封面整条塌掉。 */
+  height: auto !important;
+  /* ⚠️ 主题把 .recent-post-item 设成 inline-block，高度按内容收缩：
+     它的子级 #swiper_container 再怎么 height:100% 也没有可解析的基准，
+     实测轮播只到 231，卡片（260）底部留出一条空档。
+     改成 block 并撑满，行 2 的左右两张卡这才等高。 */
+  display: block !important;
+  height: 100% !important;
+  border-radius: var(--dash-radius);
+  overflow: hidden;
+}
+
+/* 插件的 .blog-slider 自带 10px 内边距（为了给外圈留白），
+   首页卡片已经有自己的内边距体系，这层要清零，否则封面会被缩进一圈。 */
+body.home-dashboard .dash-slider .blog-slider {
+  padding: 0 !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  /* ⚠️ 插件给容器留了 20px 内边距（.blog-slider 的 padding:10px）并写成了
+     内联的 width/height，Swiper 会按「容器内容宽 − 20」给幻灯片算宽度。
+     内边距清零后那个内联值就成了「窄 20px 且带滚动条」的源头，这里补回宽度。
+     overflow:hidden 顺手掐掉多出来的 5px 横向滚动条。 */
+  width: 100% !important;
+  overflow: hidden;
+}
+
+body.home-dashboard .dash-slider #swiper_container {
+  /* ⚠️ 这里只给下限，不给 height：height:100% 会沿着「行 → 卡片 →
+     #recent-posts」一路把百分比解析成 auto，实测最后是按内容落成 231，
+     卡片底部就多出一条 29px 的空档。
+     改用「撑满父级 + 不收缩」，与行 2 的 260 对齐。
+     ⚠️ 必须 !important：上面 .blog-slider 的重置规则写了 min-height:0 !important，
+        而 #swiper_container 本身就带 .blog-slider 类，不加 !important 会被压成 0。 */
+  min-height: var(--row2-h) !important;
+  height: 100%;
+  flex: 1 1 auto;
+}
+
+/* 幻灯片本身撑满容器：封面与正文区都用 height:100% 定位，
+   容器矮一点（260）时幻灯片必须同步变矮，否则它会按内容把自己撑回 320+。 */
+body.home-dashboard .dash-slider .blog-slider__wrp,
+body.home-dashboard .dash-slider .blog-slider__item {
+  height: 100% !important;
+  min-height: 0 !important;
+}
+
+/* ------------------------------------------------------------
+ * swiper 内部布局：左图右文，图铺满左半栏
+ * ------------------------------------------------------------
+ * ⚠️ 踩过的坑：插件输出的封面是 <img width="48" height="48">，
+ *    原先只写了 max-height，没约束宽高，图片实际只有 180×180，
+ *    卡片左边空出一大块（截图里那片深色空白就是它）。
+ *    这里用 !important 压掉属性带来的固有尺寸：img 铺满容器、object-fit 裁切。
+ * ------------------------------------------------------------ */
+/* ⚠️ 重影（日期/标题叠 2~3 层）的根因与修法：
+   loop:true 时 swiper 会克隆首尾页（.swiper-slide-duplicate-*），
+   首页接管卡片高度后，这些克隆页与 active 页同时保持 opacity:1，
+   无论怎么调 opacity 都会和 swiper 逐帧写的内联值打架（实测
+   「上一页可见、当前页透明」的错乱）。
+   改用 visibility 做「排他」：swiper 不写 visibility，互不干扰；
+   过渡期间 active 页由 swiper 自己淡入，观感不受影响。 */
+body.home-dashboard .dash-slider .blog-slider__wrp > .blog-slider__item {
+  visibility: hidden;
+}
+
+body.home-dashboard .dash-slider .blog-slider__wrp > .blog-slider__item.swiper-slide-active {
+  visibility: visible;
+}
+
+body.home-dashboard .dash-slider .blog-slider__img {
+  /* 整卡背景图：图片铺满整张卡片，文字叠加在上面 */
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100% !important;
+  height: 100% !important;
+  max-height: none !important;
+  padding: 0 !important;
+  box-sizing: border-box;
+  overflow: hidden;
+  border-radius: var(--dash-radius);
+}
+
+body.home-dashboard .dash-slider .blog-slider__img img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  min-width: 100% !important;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+/* 从下往上压暗渐变：底部文字区暗，顶部图清晰 */
+body.home-dashboard .dash-slider .blog-slider__img::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg,
+    rgba(0,0,0,0) 30%,
+    rgba(0,0,0,.35) 60%,
+    rgba(0,0,0,.75) 100%);
+}
+
+body.home-dashboard .dash-slider .blog-slider__content {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  overflow: hidden;
+  padding: 20px 24px !important;
+  margin-left: 0 !important;
+  box-sizing: border-box;
+  min-height: 100%;
+  position: relative;
+  z-index: 1;
+}
+
+/* ⚠️ 文字会「看不见」，根因在这里：
+   主题靠 .blog-slider__item.swiper-slide-active .blog-slider__content > *
+   把子元素从 opacity:0 淡入（配 transition-delay: .3s）。
+   首页把卡片高度、定位都改过之后，这条「入场动画」在部分时序下不触发，
+   实测标题/日期/摘要全部停在 opacity:0 —— 卡片看起来只有一张图。
+   这里直接给出终态：当前滑块内的文字恒为不透明，不再依赖入场动画。 */
+body.home-dashboard .dash-slider .blog-slider__item.swiper-slide-active .blog-slider__content > *,
+body.home-dashboard .dash-slider .blog-slider__content > * {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+body.home-dashboard .dash-slider .blog-slider__text {
+  /* ⚠️ __text 是 content（flex column）的子项，display:block，默认按内容收缩
+     （实测 353 的父级里只有 309）。align-self:stretch 在这里【无效】：
+     flex 容器的交叉轴是横轴时，stretch 仍需元素自身的 width 为 auto 才生效，
+     而主题给 __text 写过 width（或 max-width）时就会抗掉。
+     直接 !important 撑满，让正文占满文字栏，右侧不留半截空白。
+     ⚠️ 只写 width 还不够：父级是 flex column，__text 的 flex-basis 是 auto，
+        会按 max-content 参与收缩（width 被当成「上限」用），实测仍只给 309。
+        必须同时给出 flex-basis:100%，才是真的「占满一行」。 */
+  width: 100% !important;
+  max-width: none !important;
+  flex: 0 0 100%;
+}
+
+body.home-dashboard .dash-slider .blog-slider__title,
+body.home-dashboard .dash-slider .blog-slider__code,
+body.home-dashboard .dash-slider .blog-slider__text {
+  color: #fff !important;
+  opacity: 1 !important;
+  text-shadow: 0 1px 4px rgba(0,0,0,.4);
+}
+
+/* ============================================================
+ * ④ 网站信息
+ * ============================================================ */
+body.home-dashboard .dash-siteinfo {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: auto;
+}
+
+body.home-dashboard .dash-siteinfo__rows {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  /* ★ 顶部对齐而不是垂直居中：只有 3 行信息时，居中会把它悬在卡片正中，
+     上半片空白看起来像「内容没加载出来」。顶部对齐后留白集中在下方，
+     和参照站「内容贴顶、下方呼吸」的排法一致。 */
+  justify-content: flex-start;
+  /* ★ 行高拉开、上下内边距收紧：3 行信息要「填满」260 高的卡片，
+     靠留白均摊会有「内容浮在上半」的感觉；把行高做大、上下留白压小，
+     视线才会从标题一路均匀落到卡片底部。 */
+  gap: 0;
+  padding: 6px 22px 12px;
+}
+
+body.home-dashboard .dash-siteinfo__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: .85rem;
+  /* 行间用内边距 + 细分隔线，比纯 gap 更像「数据表」 */
+  padding: 15px 0;
+  border-bottom: 1px solid var(--dash-line-soft);
+}
+
+body.home-dashboard .dash-siteinfo__row:last-child {
+  border-bottom: 0;
+}
+
+body.home-dashboard .dash-siteinfo__row:hover .dash-siteinfo__val {
+  color: var(--dash-accent);
+}
+
+body.home-dashboard .dash-siteinfo__key {
+  opacity: .6;
+  flex: 0 0 auto;
+}
+
+body.home-dashboard .dash-siteinfo__val {
+  font-weight: 600;
+  color: var(--dash-accent);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ============================================================
+ * ⑤ AI 日报
+ * ============================================================ */
+body.home-dashboard .dash-ai {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 标题条整个是 <button>：必须清掉浏览器默认的按钮外观，
+   否则会多出一圈灰色边框、居中文字和 Arial 字体。 */
+body.home-dashboard .dash-ai__toggle {
+  width: 100%;
+  margin: 0;
+  padding: 16px 20px 12px;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font: inherit;
+  letter-spacing: .02em;
+  text-align: left;
+  color: var(--dash-ink);
+  cursor: pointer;
+  border-bottom: 1px solid var(--dash-line-soft);
+}
+
+/* 收起时底部不要再留一道分隔线（下面已经没有内容了） */
+body.home-dashboard .dash-ai.is-collapsed .dash-ai__toggle {
+  border-bottom-color: transparent;
+}
+
+body.home-dashboard .dash-ai__toggle:hover .dash-ai__hint-text {
+  color: var(--dash-accent);
+}
+
+body.home-dashboard .dash-ai__toggle:focus-visible {
+  outline: 2px solid var(--dash-accent);
+  outline-offset: -4px;
+}
+
+body.home-dashboard .dash-ai__toggle-label {
+  display: inline-flex;
+  align-items: center;
+}
+
+body.home-dashboard .dash-ai__toggle-label i {
+  margin-right: 7px;
+  color: var(--dash-accent);
+}
+
+/* 右侧「展开今日选刊」 + 圆形 ＋/－（照抄参照站的图标按钮形态） */
+body.home-dashboard .dash-ai__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-left: auto;
+  color: var(--dash-ink-dim);
+}
+
+body.home-dashboard .dash-ai__hint-text {
+  font-size: .76rem;
+  font-weight: 500;
+  transition: color var(--t-base) ease;
+}
+
+/* 图标用纯 CSS 画 ＋ / －，不依赖 fa-plus：换主题/字体加载失败也不会缺图。
+   两根线，横线常驻、竖线在展开时旋转 90° 并入横线 → 视觉上变成「−」。 */
+body.home-dashboard .dash-ai__icon {
+  position: relative;
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--dash-line);
+  background: var(--dash-accent-soft);
+  transition: border-color var(--t-base) ease, background var(--t-base) ease;
+}
+
+body.home-dashboard .dash-ai__icon::before,
+body.home-dashboard .dash-ai__icon::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 11px;
+  height: 1.5px;
+  border-radius: 2px;
+  background: var(--dash-ink);
+  transform: translate(-50%, -50%);
+  transition: transform var(--t-base) ease;
+}
+
+/* 竖线：收起时存在（＋） */
+body.home-dashboard .dash-ai__icon::after {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+
+/* 展开时竖线归零 → 只剩横线（－） */
+body.home-dashboard .dash-ai__toggle[aria-expanded='true'] .dash-ai__icon::after {
+  transform: translate(-50%, -50%) rotate(0deg) scaleX(0);
+}
+
+body.home-dashboard .dash-ai__toggle:hover .dash-ai__icon {
+  border-color: var(--dash-accent);
+  background: var(--dash-accent-soft);
+}
+
+/* 折叠体 */
+body.home-dashboard .dash-ai__body[hidden] {
+  display: none;
+}
+
+/* 三类内容三列并排 */
+body.home-dashboard .dash-ai__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+  padding: 14px 18px 16px;
+}
+
+body.home-dashboard .dash-ai__col {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+body.home-dashboard .dash-ai__colhead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .8rem;
+  font-weight: 600;
+  padding-bottom: 7px;
+  margin-bottom: 7px;
+  border-bottom: 1px solid var(--dash-line);
+  color: var(--dash-ink);
+}
+
+body.home-dashboard .dash-ai__colhead i {
+  color: var(--dash-accent);
+  font-size: .85rem;
+}
+
+body.home-dashboard .dash-ai__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 20px;
+}
+
+body.home-dashboard .dash-ai__item {
+  min-width: 0;
+}
+
+body.home-dashboard .dash-ai__title,
+body.home-dashboard .dash-ai__sum {
+  /* ⚠️ -webkit-box + line-clamp 在整段英文标题上会「吃掉首字母」
+     （实测 "Implementing…" 渲染成 "plementing…"）。
+     加 1px 左内边距即可让首字符回到裁切区域内；
+     同时补上标准 line-clamp 属性，非 WebKit 内核也能正常截断。 */
+  padding-left: 1px;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
+}
+
+body.home-dashboard .dash-ai__title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  font-size: .8rem;
+  line-height: 1.45;
+  font-weight: 600;
+  color: var(--dash-ink);
+  text-decoration: none;
+  transition: color var(--t-fast) ease;
+}
+
+body.home-dashboard .dash-ai__title:hover {
+  color: var(--dash-accent);
+}
+
+body.home-dashboard .dash-ai__sum {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: .72rem;
+  line-height: 1.45;
+  opacity: .55;
+  margin-top: 2px;
+}
+
+/* 加载中骨架 */
+body.home-dashboard .dash-ai__skel {
+  height: 11px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, var(--dash-accent-soft), var(--dash-line-soft), var(--dash-accent-soft));
+  background-size: 200% 100%;
+  animation: dash-shimmer 1.3s linear infinite;
+}
+
+@keyframes dash-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+/* 状态徽标 */
+body.home-dashboard .dash-ai__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 10px;
+  font-size: .7rem;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: var(--r-control);
+  background: var(--dash-accent-soft);
+  opacity: .8;
+}
+
+body.home-dashboard .dash-ai__badge.is-ai {
+  background: rgba(73, 177, 245, .14);
+  color: var(--dash-accent);
+  opacity: 1;
+}
+
+body.home-dashboard .dash-ai__badge.is-stale {
+  background: rgba(240, 173, 78, .16);
+  color: #e6900c;
+  opacity: 1;
+}
+
+/* ============================================================
+ * ⑤ AI 日报 · 海报化收起态 + 两列轮播（2026-10 改版）
+ * ============================================================ */
+
+/* ---- 海报按钮（收起态） ---- */
+body.home-dashboard .dash-ai__poster {
+  position: relative;
+  display: block;
+  width: 100%;
+  min-height: 206px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--dash-radius);
+  background: none;
+  overflow: hidden;
+  text-align: left;
+  cursor: pointer;
+  color: #fff;
+  -webkit-appearance: none;
+}
+body.home-dashboard .dash-ai__poster:focus-visible {
+  outline: 2px solid var(--dash-accent);
+  outline-offset: -4px;
+}
+
+/* 背景图 */
+body.home-dashboard .dash-ai__poster-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 72% 45%;
+  transition: transform 1s ease;
+}
+body.home-dashboard .dash-ai__poster:hover .dash-ai__poster-bg {
+  transform: scale(1.035);
+}
+
+/* 左右渐变遮罩（左重右轻，压暗文字区） */
+body.home-dashboard .dash-ai__veil {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to right,
+    rgba(2, 6, 23, 0.85) 0%,
+    rgba(2, 6, 23, 0.45) 45%,
+    rgba(2, 6, 23, 0.05) 100%);
+  pointer-events: none;
+}
+
+/* 海报内容容器 */
+body.home-dashboard .dash-ai__poster > *:not(.dash-ai__poster-bg):not(.dash-ai__veil) {
+  position: relative;
+  z-index: 1;
+}
+
+/* 顶部行 */
+body.home-dashboard .dash-ai__poster-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 20px 0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: rgba(255, 255, 255, 0.75);
+}
+body.home-dashboard .dash-ai__tag {
+  padding: 4px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
+  letter-spacing: 0.15em;
+}
+body.home-dashboard .dash-ai__date {
+  font-family: ui-monospace, monospace;
+}
+body.home-dashboard .dash-ai__sep {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* 中部标题块 */
+body.home-dashboard .dash-ai__poster-title {
+  padding: 16px 20px;
+  max-width: 77%;
+}
+body.home-dashboard .dash-ai__kicker {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  color: rgba(199, 210, 254, 0.9);
+  margin-bottom: 6px;
+}
+body.home-dashboard .dash-ai__head {
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
+  margin: 0;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+body.home-dashboard .dash-ai__slash {
+  margin: 0 10px;
+  font-weight: 300;
+  color: rgba(255, 255, 255, 0.45);
+}
+body.home-dashboard .dash-ai__sub {
+  margin-top: 8px;
+  font-size: 11px;
+  line-height: 1.6;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* 底部行 */
+body.home-dashboard .dash-ai__poster-bottom {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 20px 18px;
+}
+body.home-dashboard .dash-ai__stats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+}
+body.home-dashboard .dash-ai__num {
+  margin-left: 4px;
+  font-family: ui-monospace, monospace;
+  font-weight: 600;
+  font-size: 13px;
+  color: #fff;
+}
+body.home-dashboard .dash-ai__divider {
+  width: 1px;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.25);
+}
+body.home-dashboard .dash-ai__unread {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #fbcfe8;
+}
+body.home-dashboard .dash-ai__unread i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #f9a8d4;
+}
+body.home-dashboard .dash-ai__expand-hint {
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  color: rgba(255, 255, 255, 0.9);
+}
+/* 右侧：展开提示 + ＋ 按钮 同一行 */
+body.home-dashboard .dash-ai__toggle-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: none;
+}
+body.home-dashboard .dash-ai__plus {
+  position: relative;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(4px);
+  transition: all var(--t-slow) ease;
+}
+body.home-dashboard .dash-ai__plus::before,
+body.home-dashboard .dash-ai__plus::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 12px;
+  height: 1.5px;
+  background: #fff;
+  transform: translate(-50%, -50%);
+  transition: transform var(--t-base) ease;
+}
+body.home-dashboard .dash-ai__plus::after {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+/* 展开时竖线消失 → 只剩横线（－） */
+body.home-dashboard .dash-ai__poster[aria-expanded="true"] .dash-ai__plus::after {
+  transform: translate(-50%, -50%) rotate(0deg) scaleX(0);
+}
+body.home-dashboard .dash-ai__poster:hover .dash-ai__plus {
+  border-color: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ---- 展开体：内部滚动，页面滚动条不动 ---- */
+body.home-dashboard .dash-ai__body[hidden],
+body.home-dashboard .dash-ai__poster[aria-expanded="false"] ~ .dash-ai__body {
+  display: none;
+}
+body.home-dashboard .dash-ai__body {
+  max-height: 420px;
+  overflow-y: auto;
+  /* ★ 不用 contain：面板滚到顶/底后要能连锁滚页面，否则用户看不到页脚。
+     默认 auto 行为：面板内部先滚，滚完自然冒泡给页面。 */
+  scrollbar-width: thin;
+  scrollbar-color: var(--dash-line) transparent;
+  border-radius: 0 0 var(--dash-radius) var(--dash-radius);
+}
+body.home-dashboard .dash-ai__body::-webkit-scrollbar {
+  width: 6px;
+}
+body.home-dashboard .dash-ai__body::-webkit-scrollbar-thumb {
+  background: var(--dash-line);
+  border-radius: 3px;
+}
+
+/* ---- 两列轮播 ---- */
+body.home-dashboard .dash-ai__viewport {
+  overflow: hidden;
+  padding: 14px 18px 8px;
+}
+/* 每次只显示一个栏目，占满整宽；栏目内部 6 条分左右两排 */
+body.home-dashboard .dash-ai__track {
+  display: flex;
+  gap: 18px;
+  transition: transform var(--t-slow) cubic-bezier(0.4, 0, 0.2, 1);
+}
+body.home-dashboard .dash-ai__col {
+  flex: 0 0 100%;
+  min-width: 0;
+}
+/* page=1 显示第二列，page=2 显示第三列 */
+body.home-dashboard .dash-ai__track[data-page="1"] {
+  transform: translateX(calc(-100% - 9px));
+}
+body.home-dashboard .dash-ai__track[data-page="2"] {
+  transform: translateX(calc(-200% - 18px));
+}
+
+/* 轮播导航：箭头 + 圆点 */
+body.home-dashboard .dash-ai__nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 0 18px 14px;
+}
+body.home-dashboard .dash-ai__arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--dash-line);
+  background: var(--dash-card-bg-soft);
+  color: var(--dash-ink);
+  cursor: pointer;
+  transition: all var(--t-fast) ease;
+}
+body.home-dashboard .dash-ai__arrow:hover {
+  border-color: var(--dash-accent);
+  color: var(--dash-accent);
+}
+body.home-dashboard .dash-ai__dots {
+  display: flex;
+  gap: 6px;
+}
+body.home-dashboard .dash-ai__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--dash-line);
+  cursor: pointer;
+  transition: all var(--t-fast) ease;
+}
+body.home-dashboard .dash-ai__dot.active {
+  width: 18px;
+  border-radius: 3px;
+  background: var(--dash-accent);
+}
+
+/* 移动端：一次只显示一列，三屏 */
+@media (max-width: 768px) {
+  body.home-dashboard .dash-ai__poster-title {
+    max-width: 100%;
+  }
+  body.home-dashboard .dash-ai__head {
+    font-size: 22px;
+  }
+  body.home-dashboard .dash-ai__expand-hint {
+    display: none;
+  }
+  body.home-dashboard .dash-ai__track {
+    gap: 18px;
+  }
+  body.home-dashboard .dash-ai__col {
+    flex: 0 0 100%;
+  }
+  body.home-dashboard .dash-ai__items {
+    grid-template-columns: 1fr;
+  }
+  body.home-dashboard .dash-ai__track[data-page="1"] {
+    transform: translateX(calc(-100% - 9px));
+  }
+  body.home-dashboard .dash-ai__track[data-page="2"] {
+    transform: translateX(calc(-200% - 18px));
+  }
+}
+
+/* ============================================================
+ * ⑥ 页脚玻璃卡片
+ * ============================================================ */
+/* ⚠️ 这里必须用 body.home-dashboard.page #footer（比单独一个 id 选择器多两层特异性）：
+   custom.css 里有 #body-wrap, #footer, ... 的 background: transparent !important，
+   两边都带 !important 时按特异度取胜，只写 body.home-dashboard #footer 会被压成透明，
+   页脚就变回「裸星空」。选择器里的 .page 是 #body-wrap 自带的类，稳定存在。
+   ⚠️ 注释里不要写花括号，否则会让后面的规则解析错位。 */
+/* ⚠️ 特异性说明：
+   注意 .page 这个类挂在 #body-wrap 上、不在 body 上（写 body.xxx.page 永远不匹配，
+   实测 matches() 返回 false，规则整条失效），所以不要用 .page 抬特异性。
+   下面 #body-wrap > #footer 那条才是压住 custom.css 里
+   #footer 的 background: transparent !important 的关键。
+   ⚠️ 注释里不要写花括号，否则会让后面的规则解析错位。 */
+/* ★ 页脚 = 与身份卡同一套的玻璃卡片。
+   版心算法必须和 #content-inner 完全一致，否则左右边缘对不齐：
+     ① 宽度 = 版心 1152 里再减去左右内边距（卡片实际占 1072，1440 下卡片 left=212）；
+     ② 宽屏（≥1081px）时整块向右平移 28px —— #content-inner 用的是
+        position:relative + left:28px（给左下浮动按钮让位，见上面的注释），
+        页脚不在那个元素里，只能自己重复一遍，否则会整体偏左 28px。
+     ③ ⚠️ width:100% 不能省：#body-wrap 是 flex 列容器（主题 common.styl），
+        #footer 是它的 flex 项目，默认 flex-basis:auto → 按【内容宽度】算，
+        实测收缩到 658px；加上 width:100% 之后 max-width + auto 外边距才生效。 */
+body.home-dashboard #footer {
+  width: 100%;
+  max-width: calc(var(--dash-max) - var(--dash-pad-x) * 2) !important;
+  box-sizing: border-box;
+  padding: 0 !important;
+
+  /* ⚠️ margin 必须分四条写，且只用「直接取到字面值」的令牌。
+     踩过的坑：写 margin: var(--dash-gap) auto 0 !important —— --dash-gap 本身
+     又是 var(--dash-edge)，而 --dash-edge 定义在 body.home-dashboard 上；
+     Chrome 在解析这条简写时把它判为无效（computed style 里 margin 直接是空白），
+     auto 一起丢掉 → 块级元素宽度收缩到内容宽，页脚就变成一块小卡片飘在右下角。 */
+  margin-top: 0 !important;
+  margin-right: auto !important;
+  /* 版心底边留白 = --dash-edge。内页主题用 body 的 padding-bottom 收尾，
+     首页把页脚做成了卡片，就必须自己留出这一圈，
+     否则卡片底边会直接贴到视口最下面。 */
+  margin-bottom: var(--dash-edge) !important;
+  margin-left: auto !important;
+
+  background: var(--dash-glass);
+  -webkit-backdrop-filter: blur(var(--dash-blur)) saturate(var(--dash-sat));
+  backdrop-filter: blur(var(--dash-blur)) saturate(var(--dash-sat));
+  border: 1px solid var(--dash-line);
+  border-radius: var(--dash-radius);
+  box-shadow: var(--dash-shadow-sm), var(--dash-glow);
+  overflow: hidden;
+  color: var(--dash-ink);
+  transition: background .5s ease, border-color .5s ease;
+}
+
+/* 特异性补位：#body-wrap 是 #footer 的父元素，(1,1,0) 才压得住 custom.css 的 #footer。 */
+body.home-dashboard #body-wrap > #footer {
+  background: var(--dash-glass) !important;
+}
+
+/* 页脚内容层：左右分布，左侧文字三行，右侧图标一排 */
+body.home-dashboard #footer .footer-other {
+  padding: 26px 32px;
+  font-size: 1.12rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  text-align: left;
+  line-height: 1.8;
+}
+
+body.home-dashboard #footer .footer-copyright,
+body.home-dashboard #footer .footer_custom_text {
+  text-align: left;
+}
+
+/* 右侧图标链接那排 <p> */
+body.home-dashboard #footer .footer-other > p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-shrink: 0;
+  font-size: 1.2rem;
+}
+
+/* 页脚背景图（_config 里的 footer_img）压在玻璃上会糊成一片，首页去掉它，让玻璃本身当底。
+   ⚠️ 主题 5.x 的 DOM 里【没有】#footer-wrap（footer-beautify 的 layout.name: footer-wrap
+      只是插件自己找挂载点的名字，找不到就不插），所以这里保留这条只为兼容旧版，
+      真正的「去背景图」靠上面的 background + 内联 style 的 background-image 覆盖。 */
+body.home-dashboard #footer-wrap {
+  border-radius: var(--dash-radius);
+  background-image: none !important;
+  background-color: transparent !important;
+}
+
+/* 主题给 #footer 写了内联 style="background-image: url(...)"（layout.pug 的 footer_bg），
+   内联样式压不过，只能显式清掉；否则 1px 圆角边里会透出星图的一角。 */
+body.home-dashboard #body-wrap > #footer {
+  background-image: none !important;
+  background-attachment: scroll !important;
+}
+
+/* 页脚里的小分隔线（主题 mask.footer 会塞一层 :before 蒙版，卡片里是多余的灰条） */
+body.home-dashboard #footer::before {
+  display: none !important;
+}
+
+body.home-dashboard #footer .footer-separator,
+body.home-dashboard #footer .footer-copyright,
+body.home-dashboard #footer .copyright,
+body.home-dashboard #footer a {
+  color: var(--dash-ink-dim) !important;
+}
+
+body.home-dashboard #footer a:hover {
+  color: var(--dash-accent) !important;
+}
+
+/* ---------- 页脚卡片内的主题色令牌 ---------- */
+/* 主题页脚默认是「深蓝底 + 浅灰字」，放到浅色玻璃卡片上，
+   浅灰字在浅色主题里几乎看不见；这里按昼夜两套给色，
+   并且把 .footer-butterfly 那圈粉蓝相间的小边框收进我们的灰蓝刻度。 */
+body.home-dashboard #footer .footer-butterfly {
+  border-color: var(--dash-line-soft) !important;
+}
+
+body.home-dashboard #footer .framework-info,
+body.home-dashboard #footer .footer-separator {
+  opacity: .85;
+}
+
+[data-theme='dark'] body.home-dashboard #footer a {
+  color: var(--dash-ink-dim) !important;
+}
+
+/* 首页隐藏右侧边栏（四行是整宽布局，不需要 aside） */
+body.home-dashboard #aside-content {
+  display: none !important;
+}
+
+/* 首页不展示文章列表，翻页控件也就没有意义（否则会孤零零挂在最下面） */
+body.home-dashboard #pagination {
+  display: none !important;
+}
+
+/* ============================================================
+ * 响应式
+ * ------------------------------------------------------------
+ * 断点是「列数」的台阶，不是尺寸的换算：
+ *   ≥1440  两列，比例按 --row1/--row2 令牌
+ *   1080   两列但压缩左列，保证 swiper 不被挤扁
+ *   <1080  全部单列堆叠（平板竖屏 / 手机）
+ * ============================================================ */
+
+/* 大屏：版心有上限（1152），这里只放宽行高，不再放大卡片。
+   ⚠️ gap 与左右留白不再单独调整：它们同源于 --dash-edge，
+      一处改另一处不跟，「缝隙与四周一致」立刻被破坏。 */
+@media (min-width: 1600px) {
+  body.home-dashboard {
+    --row2-h: 400px;
+  }
+}
+
+/* 笔记本：栅格比例保持不变（7:5 / 8:4），只把行高按比例收一点。
+   ⚠️ 旧版在这里把比例改回 56:42 / 60:38，与参照站的 7:5 不一致，
+      导致 1440 附近的比例和宽屏看起来「不是一个网站」。 */
+
+/* 平板横屏 / 小笔记本：仍是两列，但整体更紧凑 */
+@media (max-width: 1200px) {
+  body.home-dashboard {
+    --dash-edge: var(--layout-gap);
+    --dash-pad-x: var(--layout-pad-x);
+  }
+
+  /* 卡片内部 padding 已走公共规范（--layout-card-pad-*），这里不再重复 */
+
+  /* 标题条是 <button>，上面的 .dash-card__head 规则会生效，
+     但 button 同样需要重置外观，这里只补内边距随断点收紧。 */
+  body.home-dashboard .dash-ai__toggle {
+    padding: var(--layout-card-pad-head-y) var(--layout-card-pad-x) var(--layout-card-pad-head-bottom);
+  }
+
+  /* 卡片内部 padding 已走公共规范 */
+
+  body.home-dashboard .dash-ai__grid {
+    gap: 14px;
+    padding: 12px 16px 14px;
+  }
+}
+
+/* 平板竖屏 / 手机：一律单列 */
+@media (max-width: 1024px) {
+  body.home-dashboard {
+    /* 单列堆叠后「两卡等高」失去意义，改为内容决定高度 */
+    --row1-h: auto;
+    --row2-h: auto;
+  }
+
+  body.home-dashboard .dash-row--1,
+  body.home-dashboard .dash-row--2,
+  body.home-dashboard .dash-row--23 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* 单列时重置子项的 grid-column / grid-row */
+  body.home-dashboard .dash-row--23 > .dash-slider,
+  body.home-dashboard .dash-row--23 > .dash-weather,
+  body.home-dashboard .dash-row--23 > .dash-bottom-left {
+    grid-column: 1;
+    grid-row: auto;
+  }
+
+  /* 网站信息卡 + 工作日历卡也单列 */
+  body.home-dashboard .dash-row--23 > .dash-bottom-left {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* 单列时 swiper 需要一个具体高度，否则容器 min-height:auto → 塌成 0。
+     ★ 160 而不是 340：行 2 已经按「一半」收过，单列时封面 150px +
+        文字约 90px，320 会多出一条空白。 */
+  body.home-dashboard .dash-slider #swiper_container {
+    min-height: 160px;
+  }
+
+  /* 单列时历史卡不再内部滚动：整列都比一屏长，滚动只会「陷进去出不来」 */
+  body.home-dashboard .dash-history__list {
+    overflow: visible;
+  }
+}
+
+/* 手机 */
+@media (max-width: 768px) {
+  body.home-dashboard {
+    --dash-edge: var(--layout-gap);
+    --dash-pad-x: var(--layout-pad-x);
+     /* 顶栏在 <=768px 收成 54px（custom_nav.css 的 .biko-nav），
+         缝隙仍取 --dash-edge：54 + 12 = 66，与其它缝隙同一把尺子。 */
+     --dash-nav-h: var(--layout-nav-h);
+     --dash-pad-top: var(--layout-pad-top);
+    --dash-radius: var(--layout-radius);
+    --dash-blur: 12px;
+    /* 手机上两行改单列堆叠，行高不能再固定（否则历史卡和 swiper 都被拉长） */
+    --row1-h: auto;
+    --row2-h: auto;
+  }
+
+  body.home-dashboard .dash-ai__grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  /* 窄屏放不下「展开今日选刊」这段文字，只留 ＋/－ 圆钮
+     （参照站同样用 sm:inline 把这段文案在窄屏隐藏）。 */
+  body.home-dashboard .dash-ai__hint-text {
+    display: none;
+  }
+
+  body.home-dashboard .dash-identity {
+    padding: 16px;
+  }
+
+  body.home-dashboard .dash-identity__avatar {
+    width: 52px;
+    height: 52px;
+  }
+
+  body.home-dashboard .dash-identity__name {
+    font-size: 1.1rem;
+  }
+
+  body.home-dashboard .dash-sign .biko-marquee__item {
+    font-size: .82rem;
+    letter-spacing: .02em;
+    padding-right: 40px;
+  }
+
+  body.home-dashboard .dash-stat__num {
+    font-size: 1.2rem;
+  }
+
+  body.home-dashboard .dash-soc {
+    height: 34px;
+  }
+
+  body.home-dashboard .dash-slider #swiper_container {
+    min-height: 0;
+  }
+
+  /* swiper 内部结构在窄屏下主题自带纵向样式，这里兜底 */
+  body.home-dashboard .dash-slider .blog-slider__wrp > .blog-slider__item {
+    flex-direction: column;
+    align-items: stretch;
+    height: auto !important;
+  }
+
+  body.home-dashboard .dash-slider .blog-slider__img {
+    position: relative !important;
+    width: 100% !important;
+    height: 150px !important;
+    /* 插件的 ≤600px 分支会把封面 -50% 上移并叠到文字上，单列排版要归零 */
+    transform: none !important;
+    border-radius: var(--dash-radius) var(--dash-radius) 0 0;
+  }
+
+  /* 封面里的图必须显式铺满这个 150px 高的框：
+     ⚠️ 缺了这行，图会按插件给容器写的高度（100%→221px）撑出框外，
+        超出的部分被 overflow:hidden 裁掉，看起来只剩「半栏有图」。 */
+  body.home-dashboard .dash-slider .blog-slider__img img {
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    object-fit: cover;
+  }
+
+  body.home-dashboard .dash-slider .blog-slider__content {
+    margin-left: 0 !important;
+    margin-top: 0 !important;
+    padding: 12px 16px 16px !important;
+    text-align: left;
+  }
+
+  body.home-dashboard .dash-slider .blog-slider__title {
+    font-size: 1rem !important;
+  }
+
+  body.home-dashboard .dash-history__list {
+    padding: 4px 16px;
+  }
+
+  body.home-dashboard .dash-history__item {
+    padding: 6px 0;
+    font-size: .82rem;
+  }
+
+  body.home-dashboard .dash-history__year {
+    min-width: 38px;
+  }
+
+  body.home-dashboard .dash-history__nav {
+    padding: 6px 16px 12px;
+  }
+}
+
+/* 尊重系统「减少动态效果」：关掉悬停位移与 shimmer */
+@media (prefers-reduced-motion: reduce) {
+  body.home-dashboard .dash-card,
+  body.home-dashboard .dash-card:hover,
+  body.home-dashboard .dash-soc:hover,
+  body.home-dashboard .dash-identity:hover .dash-identity__avatar {
+    transform: none;
+    transition: none;
+  }
+
+  body.home-dashboard .dash-ai__skel {
+    animation: none;
+  }
+
+  /* 签名：不滚动、也不变透明雾 —— 直接换行完整显示整句。
+     侧栏那版在这里退化成 overflow-x:auto（要手动拖），
+     首页是首屏主角，拖拽不如一次读完。 */
+  body.home-dashboard .dash-sign .biko-marquee {
+    overflow: visible;
+    white-space: normal;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  body.home-dashboard .dash-sign .biko-marquee__track {
+    display: block;
+    width: auto;
+    animation: none;
+    transform: none;
+  }
+
+  body.home-dashboard .dash-sign .biko-marquee__item {
+    display: none;
+    animation: none;
+    white-space: normal;
+  }
+
+  /* 只留第一份（第二份是给无缝滚动准备的复制品） */
+  body.home-dashboard .dash-sign .biko-marquee__item:first-child {
+    display: block;
+    padding-right: 0;
+  }
+}
+
+
+
+
+/* 历史卡片"全部"按钮 */
+body.home-dashboard .dash-card__head-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+body.home-dashboard .dash-history__all-btn {
+  background: var(--card);
+  border: 1px solid var(--line);
+  color: var(--fg-mute);
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+body.home-dashboard .dash-history__all-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* 全部事件弹窗 */
+.history-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(6px);
+  z-index: var(--z-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.history-modal {
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  width: 100%;
+  max-width: 720px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+}
+.history-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--line);
+}
+.history-modal__head h3 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--fg-strong);
+}
+.history-modal__close {
+  background: none;
+  border: none;
+  color: var(--fg-mute);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: var(--r-card);
+}
+.history-modal__close:hover {
+  background: var(--card);
+  color: var(--fg-strong);
+}
+.history-modal__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--line);
+}
+.history-modal__chip {
+  padding: 5px 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--fg);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all var(--t-fast);
+}
+.history-modal__chip.active {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: var(--accent);
+}
+.history-modal__list {
+  overflow-y: auto;
+  padding: 12px 24px 20px;
+  flex: 1;
+}
+.history-modal__row {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.history-modal__row:last-child { border-bottom: none; }
+.history-modal__year {
+  flex: 0 0 60px;
+  font-weight: 700;
+  color: var(--accent);
+  font-size: 13px;
+}
+.history-modal__desc {
+  flex: 1;
+  font-size: 13px;
+  color: var(--fg);
+  line-height: 1.5;
+}
+.history-modal__cat {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--fg-mute);
+  background: var(--card);
+  padding: 2px 8px;
+  border-radius: var(--r-control);
+}
+.history-modal__loading, .history-modal__empty {
+  text-align: center;
+  color: var(--fg-mute);
+  padding: 40px 0;
+}

@@ -73,7 +73,7 @@
      （旧版靠 body 锁滚动实现；现在锁在遮罩自己身上，滚动条归属门而非文档）。 */
   overflow: auto;
   overscroll-behavior: contain;
-  transition: opacity 0.36s ease, visibility 0.36s ease;
+  transition: opacity var(--t-slow) ease, visibility var(--t-slow) ease;
 }
 
 .gg-page.gg-gate.is-leaving {
@@ -83,15 +83,15 @@
 }
 
 .gg-panel {
-  width: min(92vw, 480px);
+  width: min(92vw, var(--gate-panel-w));
   padding: clamp(30px, 6vw, 46px);
   text-align: center;
-  border: 1px solid rgba(157, 180, 211, 0.28);
-  border-radius: 26px;
-  background: rgba(20, 27, 40, 0.72);
+  border: 1px solid var(--gate-line);
+  border-radius: var(--gate-radius);
+  background: var(--gate-panel-bg);
   box-shadow: 0 30px 90px rgba(6, 10, 18, 0.55);
-  -webkit-backdrop-filter: blur(20px) saturate(120%);
-  backdrop-filter: blur(20px) saturate(120%);
+  -webkit-backdrop-filter: blur(var(--gate-blur)) saturate(120%);
+  backdrop-filter: blur(var(--gate-blur)) saturate(120%);
 }
 
 /* 锁形徽记：比旧版的「相纸」低调，且不暗示已有内容 */
@@ -138,7 +138,7 @@
 
 .gg-input {
   width: 100%;
-  height: 50px;
+  height: var(--control-h);
   border: 1px solid rgba(157, 180, 211, 0.3);
   border-radius: 14px;
   outline: none;
@@ -166,7 +166,7 @@
 }
 
 .gg-submit {
-  height: 50px;
+  height: var(--control-h);
   border: 0;
   border-radius: 14px;
   color: #fff;
@@ -200,7 +200,7 @@
 .gg-back:hover,
 .gg-back:focus-visible { color: #fff; }
 
-.gg-panel.is-shaking { animation: gg-shake 0.36s ease; }
+.gg-panel.is-shaking { animation: gg-shake var(--t-slow) ease; }
 
 @keyframes gg-shake {
   0%, 100% { transform: translateX(0); }

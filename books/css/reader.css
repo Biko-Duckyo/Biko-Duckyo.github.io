@@ -20,9 +20,9 @@
   --bk-bg-3: #ffffff;                          /* 悬浮层 / 输入框 */
   --bk-line: rgba(126, 150, 184, .30);
   --bk-line-strong: rgba(126, 150, 184, .46);
-  --bk-fg: #1d2836;
-  --bk-fg-dim: #4c5c70;
-  --bk-fg-mute: #7b8a9c;
+  --bk-fg: #22303f;        /* 与主站 --fg 一致 */
+  --bk-fg-dim: #55657a;    /* 与主站 --fg-dim 一致 */
+  --bk-fg-mute: #6b7a8e;   /* 与主站 --fg-mute 接近，略深保证对比度 */
   --bk-accent: #5c7ba6;
   --bk-accent-2: #3f5d86;
   --bk-amber: #b8860b;                         /* 浅底上需压暗才够对比 */

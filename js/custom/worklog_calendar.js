@@ -49,8 +49,14 @@
   if (!grid) return   // 不在本页，直接退出
 
   var monthsEl = $('wl-months')
+  var yearTitle = $('wl-year-title')
+  var prevYearBtn = $('wl-prev-year')
+  var nextYearBtn = $('wl-next-year')
+  var todayBtn = $('wl-today-btn')
   var tipEl = $('wl-tip')
   var modal = $('wl-modal')
+  // 把面板移到 body 下，避免被 article-container 的样式影响导致点击失效
+  document.body.appendChild(modal)
   var inputEl = $('wl-input')
   var countEl = $('wl-count')
   var errEl = $('wl-err')
@@ -68,6 +74,54 @@
   var delYesEl = $('wl-del-yes')
   var delNoEl = $('wl-del-no')
   var saveBtn = $('wl-save')
+  var tagBtns = document.querySelectorAll('.wl-tag')
+  var viewYearBtn = $('wl-view-year')
+  var viewWeekBtn = $('wl-view-week')
+  var yearViewEl = $('wl-year-view')
+  var weekViewEl = $('wl-week-view')
+  var prevWeekBtn = $('wl-prev-week')
+  var nextWeekBtn = $('wl-next-week')
+  var weekTitleEl = $('wl-week-title')
+  var weekDaysEl = $('wl-week-days')
+  var weekOffset = 0  // 周偏移：0=本周，-1=上周，1=下周
+
+  /* ---------- 标签系统 ---------- */
+  var TAGS = ['实验', '写作', '组会', '读论文', '其他']
+  var TAG_COLORS = {
+    '实验': '#4a90d9',
+    '写作': '#5cb85c',
+    '组会': '#f0ad4e',
+    '读论文': '#9b59b6',
+    '其他': '#95a5a6'
+  }
+  var currentTag = '其他'  // 当前选中的标签
+
+  /* 从记录文本中解析标签 */
+  function parseTag(text) {
+    var m = /^\[([^\]]+)\]\s*/.exec(text || '')
+    if (m && TAGS.indexOf(m[1]) >= 0) return m[1]
+    return '其他'
+  }
+
+  /* 去掉文本中的标签前缀 */
+  function stripTag(text) {
+    return (text || '').replace(/^\[[^\]]+\]\s*/, '')
+  }
+
+  /* 设置当前选中标签 */
+  function setCurrentTag(tag) {
+    currentTag = tag
+    tagBtns.forEach(function (btn) {
+      btn.classList.toggle('is-active', btn.dataset.tag === tag)
+    })
+  }
+
+  /* 绑定标签按钮点击 */
+  tagBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      setCurrentTag(btn.dataset.tag)
+    })
+  })
 
   /* ---------- 状态 ---------- */
   var records = {}           // { 'YYYY-MM-DD': [ { t, text } ] }
@@ -225,125 +279,106 @@
    *   ③ max-width 压在格子上：格子固有尺寸变小，grid 判定放得下 → 既溢出也不滚动，
    *      但格子比列窄，视觉参差。 */
   function fitCells() {
-    var boardEl = grid.closest('.wl-board')
-    if (!boardEl) return
-    var host = boardEl.closest('.wl') || boardEl
+    // 自动调整格子尺寸，让四个月刚好填满容器，不出现横向滚动条
+    var board = document.querySelector('.wl-board')
+    if (!board) return
 
-    /* 列数：构建时写入的 --wl-cols（52/53/54，随年份变化） */
-    var cols = Number(boardEl.style.getPropertyValue('--wl-cols')) || WEEKS_DEFAULT
+    var boardStyle = getComputedStyle(board)
+    var paddingX = parseFloat(boardStyle.paddingLeft) + parseFloat(boardStyle.paddingRight)
+    var availableWidth = board.clientWidth - paddingX
 
-    var bcs = getComputedStyle(boardEl)
-    var daysEl = host.querySelector('.wl-days')
-    var canvasEl = host.querySelector('.wl-canvas')
+    // 星期轴宽度
+    var axis = document.querySelector('.wl-axis')
+    var axisWidth = axis ? axis.offsetWidth : 20
+    var gap = 8  // --wl-gap 月内列间距
 
-    /* ---------- 第 1 步：星期轴宽度 ----------
-       周标签（一/三/五）决定轴宽。这里有个必须绕开的自锁：
-         --wl-axis 写在 .wl-canvas 的 grid-template-columns 上 → 轴列宽被它约束
-         → 标签宽被轴列宽约束 → 再量标签就永远得到上一次的值（实测锁死在 10px）。
-       所以量之前先把轴列临时改回 max-content，量完拿到「标签想要的真实宽度」，
-       再把轴列还原（下一帧由 --wl-axis 接管，两者数值一致，不会跳）。
-       标签全部为空（理论上不会）时退回 14px。 */
-    var axisW = 0
-    if (canvasEl && daysEl) {
-      var prevCols = canvasEl.style.gridTemplateColumns
-      canvasEl.style.gridTemplateColumns = 'max-content max-content'
-      for (var i = 0; i < daysEl.children.length; i++) {
-        var sp = daysEl.children[i]
-        if (!sp.textContent) continue
-        var w = sp.getBoundingClientRect().width
-        if (w > axisW) axisW = w
-      }
-      canvasEl.style.gridTemplateColumns = prevCols
-    }
-    if (!(axisW > 0)) axisW = 14
-    axisW = Math.ceil(axisW)
+    // 当前显示几个月（四个月约 17 周）
+    // 总列数 = 四个月列数之和 + 3个月份间隙（每个间隙=1个格子宽）
+    var cols = Math.ceil(cells.length / 7) || 17
+    var monthGaps = 3  // 四个月之间3个间隙
 
-    /* ---------- 第 2 步：可用宽度 ----------
-       取 .wl 的【父元素】内容宽：它没有 zoom、宽度由外层决定、与格子无关。
-       不用 .wl-scroll.clientWidth / .wl.clientWidth —— 那一层的宽度取决于
-       board 里的格子，用它反推格子会自我强化（实测收缩到 246px 并算出负数列宽）。 */
-    var parent = host.parentElement || document.documentElement
-    var pcs = getComputedStyle(parent)
-    var avail = parent.clientWidth -
-      (parseFloat(pcs.paddingLeft) || 0) - (parseFloat(pcs.paddingRight) || 0)
-    if (!(avail > 0)) return
+    // 计算格子宽度：(可用宽度 - 轴宽 - 月内间距 - 月份间隙) / (总列数 + 月份间隙)
+    // 留 20px 余量，防止月份标签和滚动条导致溢出
+    var cellWidth = (availableWidth - axisWidth - (cols - 1) * gap - 20) / (cols + monthGaps)
 
-    /* ---------- 第 3 步：扣掉所有非格子开销 ---------- */
-    var wcs = getComputedStyle(host)
-    var wOuter = (parseFloat(wcs.paddingLeft) || 0) + (parseFloat(wcs.paddingRight) || 0) +
-      (parseFloat(wcs.borderLeftWidth) || 0) + (parseFloat(wcs.borderRightWidth) || 0)
+    // 限制最小最大尺寸
+    cellWidth = Math.max(12, Math.min(24, cellWidth))
 
-    var bpad = (parseFloat(bcs.paddingLeft) || 0) + (parseFloat(bcs.paddingRight) || 0)
-    var bbord = (parseFloat(bcs.borderLeftWidth) || 0) + (parseFloat(bcs.borderRightWidth) || 0)
-
-    /* 画布列间距（轴列与网格列之间） */
-    var ccs = canvasEl ? getComputedStyle(canvasEl) : null
-    var canvasGap = ccs ? (parseFloat(ccs.columnGap) || 0) : 0
-    /* 画布自身边框（有就扣，没有就是 0） */
-    var canvasBord = ccs
-      ? (parseFloat(ccs.borderLeftWidth) || 0) + (parseFloat(ccs.borderRightWidth) || 0)
-      : 0
-
-    /* 横滚条的占位：只有真的出现横滚条时才吃高度，不影响宽度，故不扣 */
-
-    var axisCol = axisW > 0 ? axisW : 14
-
-    var gridAvail = avail - wOuter - bpad - bbord - canvasBord - axisCol - canvasGap
-    if (!(gridAvail > 0)) return
-
-    /* ---------- 第 4 步：由可用宽度反算格子 ---------- */
-    var gapCss = parseFloat(bcs.getPropertyValue('--wl-gap'))
-    if (!isFinite(gapCss) || gapCss < 0) gapCss = 3
-
-    var perCol = (gridAvail - gapCss * (cols - 1)) / cols
-
-    var cell = perCol
-    if (cell < CELL_MIN) cell = CELL_MIN   // 下限：再小就看不清了，交给 .wl-scroll 横滚
-    if (cell > CELL_MAX) cell = CELL_MAX   // 上限：够宽后不再放大
-    cell = Math.round(cell * 100) / 100
-
-    /* 只在真的变了才写：写行内样式会触发布局，而 ResizeObserver 又在监听宽度，
-       不加这道判断，浮点末位抖动会让两者互相触发、空转占 CPU。 */
-    if (cell !== lastCell) {
-      lastCell = cell
-      boardEl.style.setProperty('--wl-cell', cell + 'px')
-    }
-    if (lastCols !== cols) lastCols = cols
-    if (lastAxis !== axisCol) {
-      lastAxis = axisCol
-      boardEl.style.setProperty('--wl-axis', axisCol + 'px')
-    }
+    // 写入 CSS 变量
+    board.style.setProperty('--wl-cell', cellWidth + 'px')
+    board.style.setProperty('--wl-cols', String(cols))
   }
 
-  /* 以「本周」为最后一列：从本周周一铺到本周周日，向前铺满 53 周（对齐 GitHub 的观感）。
-     注意往后不铺，所以今天是周日时网格里没有任何未来格。 */
+  /* 年份状态 */
+  var viewYear = new Date().getFullYear()
+  var quarter = Math.floor(new Date().getMonth() / 4)  // 默认跳到当前月份所在的4个月组
+  var MONTH_NAMES = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
+
+  /* 渲染日历墙：只显示当前组的四个月 */
   function buildGrid() {
-    var t = new Date()
     todayK = today()
-
-    // 本周周一（格子第 0 行是周一）
-    var dow = (t.getDay() + 6) % 7          // 周一=0 … 周日=6
-    var weekStart = new Date(t.getFullYear(), t.getMonth(), t.getDate() - dow)
-
-    var WEEKS = 53
-    var start = new Date(weekStart.getFullYear(), weekStart.getMonth(),
-      weekStart.getDate() - (WEEKS - 1) * 7)
+    cells = []
 
     grid.innerHTML = ''
     monthsEl.innerHTML = ''
-    cells = []
 
-    /* 先按当前可用宽度定好格子尺寸，再铺格子 —— 顺序不能反：
-       格子创建时就按 --wl-cell 定尺寸，晚算会让首帧闪一下错误尺寸。 */
     fitCells()
 
-    var frag = document.createDocumentFragment()
-    var lastMonth = -1
-    var monthMarks = []
+    // 当前组的四个月
+    var startMonth = quarter * 4
+    var endMonth = startMonth + 4
 
-    for (var w = 0; w < WEEKS; w++) {
-      for (var d = 0; d < 7; d++) {
-        var cur = new Date(start.getFullYear(), start.getMonth(), start.getDate() + w * 7 + d)
+    // 先计算每个月的列数，用于按比例分配宽度
+    var monthCols = []
+    for (var m = startMonth; m < endMonth; m++) {
+      var daysInMonth = new Date(viewYear, m + 1, 0).getDate()
+      var firstDay = new Date(viewYear, m, 1)
+      var dow = (firstDay.getDay() + 6) % 7
+      // 这个月占多少列：前导空格 + 天数 + 尾空格，按周数算
+      var totalCells = dow + daysInMonth
+      var cols = Math.ceil(totalCells / 7)
+      monthCols.push(cols)
+    }
+
+    // 外层容器：四个月按列数比例分配宽度
+    var monthsRow = document.createElement('div')
+    monthsRow.className = 'wl-months-row'
+    monthsRow.style.gridTemplateColumns = monthCols.map(function(c) { return c + 'fr' }).join(' ')
+
+    for (var i = 0; i < 4; i++) {
+      var m = startMonth + i
+      var daysInMonth = new Date(viewYear, m + 1, 0).getDate()
+      var firstDay = new Date(viewYear, m, 1)
+      var dow = (firstDay.getDay() + 6) % 7
+
+      // 月份容器
+      var monthEl = document.createElement('div')
+      monthEl.className = 'wl-month'
+
+      // 月份标签（放在每个月容器内部顶部居中）
+      var monthLabel = document.createElement('div')
+      monthLabel.className = 'wl-month-label'
+      monthLabel.textContent = (m + 1) + ' 月'
+      monthEl.appendChild(monthLabel)
+
+      // 这个月的格子grid
+      var monthGrid = document.createElement('div')
+      monthGrid.className = 'wl-month-grid'
+      monthGrid.style.gridTemplateColumns = 'repeat(' + monthCols[i] + ', max-content)'
+      monthGrid.style.gridTemplateRows = 'repeat(7, var(--wl-cell))'
+      monthGrid.style.gridAutoFlow = 'column'  // 按列排列，每列是一周
+
+      // 前导空格
+      for (var d = 0; d < dow; d++) {
+        var empty = document.createElement('div')
+        empty.className = 'wl-cell wl-cell-empty'
+        empty.style.visibility = 'hidden'
+        monthGrid.appendChild(empty)
+      }
+
+      // 这个月的每天
+      for (var day = 1; day <= daysInMonth; day++) {
+        var cur = new Date(viewYear, m, day)
         var k = keyOf(cur)
 
         var el = document.createElement('button')
@@ -352,79 +387,29 @@
         el.setAttribute('data-key', k)
         el.setAttribute('data-lv', '0')
         el.setAttribute('role', 'gridcell')
-        /* 关键：371 个格子不能都进 Tab 序列（要按 371 次才能穿过去）。
-           只让「今天」作为唯一入口，其余靠方向键漫游。 */
         el.tabIndex = (k === todayK) ? 0 : -1
 
         if (k > todayK) el.setAttribute('data-future', '1')
         if (k === todayK) el.setAttribute('data-today', '1')
 
-        frag.appendChild(el)
+        monthGrid.appendChild(el)
         cells.push({ el: el, key: k })
-
-        // 月份轴：每列第 1 天所在月份变化时打点
-        if (d === 0) {
-          var m = cur.getMonth()
-          if (m !== lastMonth) {
-            lastMonth = m
-            monthMarks.push({ col: w, month: m + 1 })
-          }
-        }
       }
-    }
-    grid.appendChild(frag)
 
-    // 月份轴定位：按实际格子步长换算像素，避免文字互相压住。
-    // ⚠️ 历史坑：曾直接从 .wl-board 读 --wl-cell / --wl-gap 算步长。
-    //    ① 不能从 documentElement 读 —— 这两个变量定义在 .wl-board 上，
-    //       :root 上根本没有，getPropertyValue 返回空串 → parseFloat('') = NaN
-    //       → 静默走 || 兜底。桌面端兜底 12+3 恰好等于实际值，所以「看起来没事」，
-    //       但窄屏媒体查询会把 gap 改成 2，兜底值就不再成立，月份标签整体错位。
-    //    ② 曾给 .wl 加过 zoom，Chrome 在缩放上下文里连 getComputedStyle 的 px 值
-    //       一起缩放，读出来的不是 CSS 原值 —— 那个 zoom 已改为 font-size，
-    //       这里不再需要任何缩放换算。
-    //    因此统一用【回读真实布局】：拿第一个格子和它右侧第一个格子的
-    //    offsetLeft 差值作为步长。offset* 是布局单位，永远等于绝对定位 left 的单位。
-    //    这样窄屏 9/2、桌面 12/3、将来再调格子尺寸，这里都无需改动。
-    var boardEl = grid.closest('.wl-board') || grid.parentElement
-    var cssTok = getComputedStyle(boardEl || document.documentElement)
-    var firstCell = grid.firstElementChild
-    var cs = firstCell ? firstCell.offsetWidth : NaN
-    var gp = parseFloat(cssTok.getPropertyValue('--wl-gap'))
-    if (!isFinite(cs) || cs <= 0) cs = 14
-    if (!isFinite(gp) || gp < 0) gp = 3
-    var fallback = cs + gp
-
-    /* 量真实步长：offsetLeft 与绝对定位的 left 同为布局单位，可直接相减。
-       取「起点列首格」与「其后第一格」的横向跨度，即单列步长。
-       ① 按 data-key 升序后 heads[0] 必是第 0 行（某列周一），
-          heads[1] 在正常情况下就是下一列的周一 → 差值可直接当步长；
-       ② 极边界：今天正好是某月 1 号时，下一个「列首」将是一个月后的 1 号，
-          中间隔了几列，差值要除以列数。此时退化为
-          「平均每列步长 = 格子墙总宽 / 列数」，误差 < 1px；
-          这个边界一年只遇到 12 天，且月份标签本身也允许 1px 级偏差。 */
-    var heads = cells.slice().sort(function (a, b) {
-      return a.key < b.key ? -1 : (a.key > b.key ? 1 : 0)
-    })
-    var step = fallback
-    if (heads.length > 1) {
-      var x0 = heads[0].el.offsetLeft
-      var d = heads[1].el.offsetLeft - x0
-      if (d > 0.5) {
-        step = monthsEqual(heads[0].key, heads[1].key)
-          ? d
-          : (grid.offsetWidth / WEEKS)
-      }
+      monthEl.appendChild(monthGrid)
+      monthsRow.appendChild(monthEl)
     }
 
-    monthMarks.forEach(function (mk) {
-      var s = document.createElement('span')
-      s.textContent = mk.month + ' 月'
-      s.setAttribute('data-col', String(mk.col))
-      monthsEl.appendChild(s)
-    })
-    clampMonths(step)
+    // 把格子行放进grid容器（月份标签已在每个月容器里）
+    grid.appendChild(monthsRow)
 
+    // 更新月份轮播标题
+    var quarterTitle = document.getElementById('wl-month-nav-title')
+    if (quarterTitle) {
+      quarterTitle.textContent = MONTH_NAMES[startMonth] + ' - ' + MONTH_NAMES[endMonth - 1]
+    }
+
+    yearTitle.textContent = viewYear + '年'
     paint()
   }
 
@@ -436,20 +421,41 @@
      步长同样用 offsetLeft 差值回读真实布局，与 buildGrid 里那套口径保持一致。 */
   function layoutMonths() {
     if (!monthsEl || !cells.length) return
-    var heads = cells.slice().sort(function (a, b) {
-      return a.key < b.key ? -1 : (a.key > b.key ? 1 : 0)
-    })
-    var step = 0
-    if (heads.length > 1) {
-      var d = heads[1].el.offsetLeft - heads[0].el.offsetLeft
-      if (d > 0.5) {
-        step = monthsEqual(heads[0].key, heads[1].key)
-          ? d
-          : (grid.offsetWidth / (cells.length / 7))
+    
+    // 找到每列的第一个格子（周一），计算列宽
+    var firstColCells = []
+    for (var i = 0; i < cells.length; i++) {
+      // 每列第 0 个格子（第 0 行 = 周一）
+      if (i % 7 === 0) {
+        firstColCells.push(cells[i])
       }
+      if (firstColCells.length >= 2) break
     }
-    if (!step) return
-    clampMonths(step)
+    
+    var step = 0
+    var firstColLeft = 0
+    if (firstColCells.length >= 2) {
+      firstColLeft = firstColCells[0].el.offsetLeft
+      step = firstColCells[1].el.offsetLeft - firstColCells[0].el.offsetLeft
+    }
+    
+    if (!step || step <= 0.5) {
+      // 兜底：用 grid 宽度 / 列数
+      var cols = Math.ceil(cells.length / 7)
+      step = grid.offsetWidth / cols
+    }
+    
+    // 摆放月份标签
+    clampMonths(step, firstColLeft)
+    
+    // 摆放月份虚线
+    var lines = grid.querySelectorAll('.wl-month-line')
+    for (var i = 0; i < lines.length; i++) {
+      var col = Number(lines[i].getAttribute('data-col'))
+      if (!isFinite(col)) continue
+      var left = firstColLeft + col * step
+      lines[i].style.left = left + 'px'
+    }
   }
 
   /* 按步长摆放月份标签，并把右端越界的标签收回网格内。
@@ -461,15 +467,16 @@
    * 越界的标签改为右缘贴齐网格右缘，而不是被裁掉。
    *
    * 每次重排都要重算 —— 窗口一缩放，格子尺寸和步长都变，越界与否也跟着变。 */
-  function clampMonths(step) {
+  function clampMonths(step, firstColLeft) {
     if (!monthsEl) return
     var gridW = grid.offsetWidth
     if (!(gridW > 0)) return
+    firstColLeft = firstColLeft || 0
     var spans = monthsEl.children
     for (var i = 0; i < spans.length; i++) {
       var col = Number(spans[i].getAttribute('data-col'))
       if (!isFinite(col)) continue
-      var left = col * step
+      var left = firstColLeft + col * step
       /* offsetWidth 是当前文字宽度：在 max-content 里标签宽度只由字号决定，
          先设 left 再读宽度也不会变，直接用它做边界判断 */
       var tw = spans[i].offsetWidth
@@ -479,12 +486,33 @@
     }
   }
 
+  /* 获取当天最主要的标签（最多的那个） */
+  function getDominantTag(k) {
+    var list = listOf(k)
+    if (!list.length) return '其他'
+    var counts = {}
+    list.forEach(function (item) {
+      var tag = parseTag(item.text || '')
+      counts[tag] = (counts[tag] || 0) + 1
+    })
+    var maxTag = '其他'
+    var maxCount = 0
+    for (var tag in counts) {
+      if (counts[tag] > maxCount) {
+        maxCount = counts[tag]
+        maxTag = tag
+      }
+    }
+    return maxTag
+  }
+
   /* 把 records 映射到格子颜色 */
   function paint() {
     for (var i = 0; i < cells.length; i++) {
       var c = cells[i]
       var n = listOf(c.key).length
       c.el.setAttribute('data-lv', String(levelOf(n)))
+      c.el.setAttribute('data-tag', getDominantTag(c.key))
 
       var base = tipDate(c.key).replace(/\s+/g, ' ')
       if (c.key === todayK) base += '（今天）'
@@ -511,6 +539,239 @@
     $('wl-total').textContent = total
     $('wl-days').textContent = days
     $('wl-streak').textContent = streak()
+    renderMonthlyChart()
+    renderTodayCard()
+  }
+
+  /* 渲染今日回顾卡片 */
+  function renderTodayCard() {
+    var card = $('wl-today-card')
+    var btn = $('wl-today-add')
+    if (!card || !btn) return
+
+    var todayList = listOf(todayK)
+    var hasRecord = todayList.length > 0
+
+    if (hasRecord || backend !== 'ok') {
+      card.hidden = true
+      return
+    }
+
+    card.hidden = false
+    btn.onclick = function () {
+      openPanel(todayK)
+    }
+  }
+
+  /* ============================================================
+   * 周视图
+   * ============================================================ */
+
+  /* 获取某周的周一日期 */
+  function getMonday(offset) {
+    var d = new Date()
+    var day = d.getDay() || 7  // 周日=0转成7
+    var diff = 1 - day + offset * 7
+    d.setDate(d.getDate() + diff)
+    return d
+  }
+
+  /* 渲染周视图 */
+  function renderWeekView() {
+    if (!weekDaysEl) return
+
+    var monday = getMonday(weekOffset)
+    var weekStart = monday.getMonth() + 1 + '月' + monday.getDate() + '日'
+
+    // 算周日
+    var sunday = new Date(monday)
+    sunday.setDate(sunday.getDate() + 6)
+    var weekEnd = (monday.getMonth() === sunday.getMonth())
+      ? sunday.getDate() + '日'
+      : (sunday.getMonth() + 1) + '月' + sunday.getDate() + '日'
+
+    weekTitleEl.textContent = weekStart + ' - ' + weekEnd
+
+    // 渲染7天
+    var html = ''
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(monday)
+      d.setDate(d.getDate() + i)
+      var k = keyOf(d)
+      var list = listOf(k)
+      var isToday = k === todayK
+      var dayNames = ['一', '二', '三', '四', '五', '六', '日']
+
+      html += '<div class="wl-week-day' + (isToday ? ' is-today' : '') + '">'
+      html += '<div class="wl-week-day-head">'
+      html += '<span class="wl-week-day-name">' + dayNames[i] + '</span>'
+      html += '<span class="wl-week-day-num">' + (d.getMonth() + 1) + '/' + d.getDate() + '</span>'
+      html += '</div>'
+      html += '<div class="wl-week-day-records">'
+
+      if (list.length === 0) {
+        html += '<div class="wl-week-day-empty">无记录</div>'
+      } else {
+        list.forEach(function (item) {
+          var tag = parseTag(item.text || '')
+          var color = TAG_COLORS[tag] || TAG_COLORS['其他']
+          html += '<div class="wl-week-record">'
+          html += '<span class="wl-week-record-dot" style="background:' + color + '"></span>'
+          html += '<span class="wl-week-record-text">' + esc(stripTag(item.text || '')) + '</span>'
+          html += '</div>'
+        })
+      }
+
+      html += '</div>'
+      html += '<button class="wl-week-day-add" data-date="' + k + '" type="button" title="记录这一天">'
+      html += '<i class="fas fa-plus"></i>'
+      html += '</button>'
+      html += '</div>'
+    }
+
+    weekDaysEl.innerHTML = html
+
+    // 绑定添加按钮
+    weekDaysEl.querySelectorAll('.wl-week-day-add').forEach(function (btn) {
+      btn.onclick = function () {
+        openPanel(btn.dataset.date)
+      }
+    })
+  }
+
+  /* 切换视图 */
+  function switchView(view) {
+    if (view === 'year') {
+      yearViewEl.hidden = false
+      weekViewEl.hidden = true
+      viewYearBtn.classList.add('is-active')
+      viewWeekBtn.classList.remove('is-active')
+    } else {
+      yearViewEl.hidden = true
+      weekViewEl.hidden = false
+      viewYearBtn.classList.remove('is-active')
+      viewWeekBtn.classList.add('is-active')
+      renderWeekView()
+    }
+  }
+
+  /* ============================================================
+   * 导出月报
+   * ============================================================ */
+
+  function exportMonthlyReport() {
+    var now = new Date()
+    var yyyy = now.getFullYear()
+    var mm = now.getMonth() + 1
+    var prefix = yyyy + '-' + String(mm).padStart(2, '0')
+
+    // 收集本月所有记录，按日期分组
+    var monthRecords = {}
+    for (var k in records) {
+      if (!Object.prototype.hasOwnProperty.call(records, k)) continue
+      if (k.indexOf(prefix) !== 0) continue
+      monthRecords[k] = listOf(k)
+    }
+
+    // 生成 Markdown
+    var md = '# ' + yyyy + '年' + mm + '月工作记录\n\n'
+    md += '## 统计概览\n\n'
+    var total = 0
+    var days = 0
+    var tagCounts = { '实验': 0, '写作': 0, '组会': 0, '读论文': 0, '其他': 0 }
+
+    for (var k in monthRecords) {
+      var list = monthRecords[k]
+      if (list.length > 0) {
+        days++
+        total += list.length
+        list.forEach(function (item) {
+          var tag = parseTag(item.text || '')
+          tagCounts[tag] = (tagCounts[tag] || 0) + 1
+        })
+      }
+    }
+
+    md += '- 总记录数：' + total + ' 条\n'
+    md += '- 活跃天数：' + days + ' 天\n'
+    md += '- 记录分类：\n'
+    TAGS.forEach(function (tag) {
+      md += '  - ' + tag + '：' + (tagCounts[tag] || 0) + ' 条\n'
+    })
+    md += '\n---\n\n'
+
+    // 按日期倒序排列
+    var sortedKeys = Object.keys(monthRecords).sort().reverse()
+    sortedKeys.forEach(function (k) {
+      var list = monthRecords[k]
+      if (list.length === 0) return
+      md += '## ' + k + '\n\n'
+      list.forEach(function (item) {
+        var tag = parseTag(item.text || '')
+        md += '- [' + tag + '] ' + stripTag(item.text || '') + '\n'
+      })
+      md += '\n'
+    })
+
+    // 下载文件
+    var blob = new Blob([md], { type: 'text/markdown;charset=utf-8' })
+    var url = URL.createObjectURL(blob)
+    var a = document.createElement('a')
+    a.href = url
+    a.download = 'worklog-' + prefix + '.md'
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
+  /* 渲染月度标签分布图表 */
+  function renderMonthlyChart() {
+    var now = new Date()
+    var yyyy = now.getFullYear()
+    var mm = now.getMonth() + 1
+    var prefix = yyyy + '-' + String(mm).padStart(2, '0')
+
+    // 统计本月各标签的记录数
+    var tagCounts = { '实验': 0, '写作': 0, '组会': 0, '读论文': 0, '其他': 0 }
+    var monthTotal = 0
+    for (var k in records) {
+      if (!Object.prototype.hasOwnProperty.call(records, k)) continue
+      if (k.indexOf(prefix) !== 0) continue
+      var list = listOf(k)
+      list.forEach(function (item) {
+        var tag = parseTag(item.text || '')
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1
+        monthTotal++
+      })
+    }
+
+    // 渲染图表
+    var barsEl = $('wl-chart-bars')
+    var titleEl = $('wl-chart-title')
+    if (!barsEl || !titleEl) return
+
+    titleEl.textContent = mm + '月记录分布（共 ' + monthTotal + ' 条）'
+
+    if (monthTotal === 0) {
+      barsEl.innerHTML = '<div class="wl-chart-empty">本月还没有记录</div>'
+      return
+    }
+
+    var html = ''
+    TAGS.forEach(function (tag) {
+      var count = tagCounts[tag] || 0
+      var pct = monthTotal > 0 ? Math.round(count / monthTotal * 100) : 0
+      var color = TAG_COLORS[tag] || TAG_COLORS['其他']
+      html += '<div class="wl-chart-row">' +
+                '<span class="wl-chart-label">' + tag + '</span>' +
+                '<div class="wl-chart-bar-bg">' +
+                  '<div class="wl-chart-bar" style="width:' + pct + '%;background:' + color + '"></div>' +
+                '</div>' +
+                '<span class="wl-chart-num">' + count + '条</span>' +
+              '</div>'
+    })
+    barsEl.innerHTML = html
   }
 
   /* 从今天往回数连续有记录的天数（今天还没记不算断连） */
@@ -631,11 +892,18 @@
     var editing = Number.isInteger(editIndex) && editIndex >= 0 && editIndex < list.length
 
     titleEl.textContent = humanDate(k)
-    inputEl.value = editing ? (list[editIndex].text || '') : ''
+    inputEl.value = editing ? stripTag(list[editIndex].text || '') : ''
     updateCount()
     inputEl.placeholder = editing
       ? '修改这条记录…（Ctrl / ⌘ + Enter 保存）'
       : '今天做了什么…（Ctrl / ⌘ + Enter 保存）'
+
+    // 设置当前标签（修改模式时用原记录的标签）
+    if (editing) {
+      setCurrentTag(parseTag(list[editIndex].text || ''))
+    } else {
+      setCurrentTag('其他')
+    }
 
     // 已有记录作为上下文列出（追加模式，不覆盖）
     existingTitle.textContent = list.length
@@ -645,8 +913,10 @@
     for (var i = 0; i < list.length; i++) {
       var li = document.createElement('li')
       if (editing && i === editIndex) li.className = 'is-editing'
-      li.innerHTML = '<time>' + esc(list[i].t || '') + '</time><p>' +
-                     esc(list[i].text || '') + '</p>'
+      var tag = parseTag(list[i].text || '')
+      li.innerHTML = '<time>' + esc(list[i].t || '') + '</time>' +
+                     '<span class="wl-tag-dot" style="background:' + (TAG_COLORS[tag] || TAG_COLORS['其他']) + '"></span>' +
+                     '<p>' + esc(stripTag(list[i].text || '')) + '</p>'
       if (isEditable(k)) {
         var act = document.createElement('span')
         act.className = 'wl-existing-ops'
@@ -671,6 +941,11 @@
     saveBtn.title = canWrite ? '' : '当前不可写入'
 
     modal.hidden = false
+
+    /* 无障碍：给背景加 inert，防止背景元素被聚焦 */
+    var mainEl = document.getElementById('body-wrap') || document.body
+    if (mainEl && 'inert' in mainEl) mainEl.inert = true
+
     later(function () {
       if (!canWrite) return
       (readToken() ? inputEl : tokenInput).focus()
@@ -683,6 +958,11 @@
     openKey = null
     inputEl.value = ''
     errEl.textContent = ''
+
+    /* 无障碍：移除背景 inert */
+    var mainEl = document.getElementById('body-wrap') || document.body
+    if (mainEl && 'inert' in mainEl) mainEl.inert = false
+
     /* 焦点归还：谁打开的就还给谁 */
     if (lastFocus && typeof lastFocus.focus === 'function' && document.contains(lastFocus)) {
       try { lastFocus.focus({ preventScroll: true }) } catch (e) { lastFocus.focus() }
@@ -747,7 +1027,10 @@
 
     var text = inputEl.value.trim()
     if (!text) { errEl.textContent = '写点什么再保存吧'; inputEl.focus(); return }
-    if (text.length > MAX_TEXT) { errEl.textContent = '超出 ' + MAX_TEXT + ' 字上限'; return }
+
+    // 在文本前加标签前缀
+    var fullText = '[' + currentTag + '] ' + text
+    if (fullText.length > MAX_TEXT) { errEl.textContent = '超出 ' + MAX_TEXT + ' 字上限'; return }
 
     var token = tokenInput.value.trim() || readToken()
     if (!token) { errEl.textContent = '请填写记录口令'; tokenInput.focus(); return }
@@ -918,9 +1201,94 @@
    * 事件绑定
    * ============================================================ */
   function bind() {
+    /* --- 年份切换按钮 --- */
+    if (prevYearBtn) {
+      on(prevYearBtn, 'click', function () {
+        viewYear--
+        buildGrid()
+        reload()
+      })
+    }
+    if (nextYearBtn) {
+      on(nextYearBtn, 'click', function () {
+        viewYear++
+        buildGrid()
+        reload()
+      })
+    }
+    if (todayBtn) {
+      on(todayBtn, 'click', function () {
+        viewYear = new Date().getFullYear()
+        var now = new Date()
+        quarter = Math.floor(now.getMonth() / 4)
+        buildGrid()
+        reload()
+      })
+    }
+
+    /* --- 视图切换按钮 --- */
+    if (viewYearBtn) {
+      on(viewYearBtn, 'click', function () { switchView('year') })
+    }
+    if (viewWeekBtn) {
+      on(viewWeekBtn, 'click', function () { switchView('week') })
+    }
+
+    /* --- 周视图导航按钮 --- */
+    if (prevWeekBtn) {
+      on(prevWeekBtn, 'click', function () {
+        weekOffset--
+        renderWeekView()
+      })
+    }
+    if (nextWeekBtn) {
+      on(nextWeekBtn, 'click', function () {
+        weekOffset++
+        renderWeekView()
+      })
+    }
+
+    /* --- 导出月报按钮 --- */
+    var exportBtn = $('wl-export')
+    if (exportBtn) {
+      on(exportBtn, 'click', function () {
+        if (backend !== 'ok') {
+          alert('当前环境不支持导出（未启用后端）')
+          return
+        }
+        exportMonthlyReport()
+      })
+    }
+
+    /* --- 月份轮播按钮 --- */
+    var prevQuarterBtn = $('wl-prev-quarter')
+    var nextQuarterBtn = $('wl-next-quarter')
+    if (prevQuarterBtn) {
+      on(prevQuarterBtn, 'click', function () {
+        quarter--
+        if (quarter < 0) {
+          quarter = 2
+          viewYear--
+        }
+        buildGrid()
+        reload()
+      })
+    }
+    if (nextQuarterBtn) {
+      on(nextQuarterBtn, 'click', function () {
+        quarter++
+        if (quarter > 2) {
+          quarter = 0
+          viewYear++
+        }
+        buildGrid()
+        reload()
+      })
+    }
+
     /* --- 格子：悬停出卡片；点击决定可写/只读 --- */
     on(grid, 'mouseover', function (e) {
-      if (TOUCH) return                 // 触屏没有 hover，走 tap 分支
+      if (TOUCH) return
       var el = e.target.closest ? e.target.closest('.wl-cell') : null
       if (el && grid.contains(el)) showTip(el)
     })
@@ -947,35 +1315,6 @@
       askDelete(tipKey, Number(del.getAttribute('data-idx')) || 0)
     })
 
-    /* --- 键盘：方向键在 371 个格子里漫游（Tab 只停「今天」这一站） --- */
-    on(grid, 'keydown', function (e) {
-      var el = e.target.closest ? e.target.closest('.wl-cell') : null
-      if (!el || !grid.contains(el)) return
-
-      var idx = cells.findIndex(function (c) { return c.el === el })
-      if (idx < 0) return
-
-      var next = -1
-      switch (e.key) {
-        case 'ArrowLeft':  next = idx - 7; break     // 上一周同一天
-        case 'ArrowRight': next = idx + 7; break     // 下一周同一天
-        case 'ArrowUp':    next = idx - 1; break     // 前一天
-        case 'ArrowDown':  next = idx + 1; break     // 后一天
-        case 'Home':       next = idx - (idx % 7); break            // 本周周一
-        case 'End':        next = idx + (6 - (idx % 7)); break      // 本周周日
-        default: return
-      }
-      if (next < 0 || next >= cells.length) return
-
-      e.preventDefault()
-      cells[next].el.focus()
-      showTip(cells[next].el)
-      /* 焦点卡片跟着键盘走：滚动到可视区，否则盲操作只听到日期看不到内容 */
-      if (cells[next].el.scrollIntoView) {
-        cells[next].el.scrollIntoView({ block: 'nearest', inline: 'nearest' })
-      }
-    })
-
     on(grid, 'click', function (e) {
       var el = e.target.closest ? e.target.closest('.wl-cell') : null
       if (!el) return
@@ -991,14 +1330,6 @@
         return
       }
 
-      // 只读降级：点历史日期至少让人看到内容，并说清为什么不能写
-      if (backend !== 'ok') {
-        showTip(el)
-        note('当前部署未启用在线记录（/api/worklog 不可用），只能查看。',
-          'fa-triangle-exclamation')
-        return
-      }
-
       // 触屏：tap = 选中并钉住卡片（没有 hover 可依赖）
       if (TOUCH) {
         hideTip(true)
@@ -1009,6 +1340,7 @@
       }
 
       // 鼠标：历史日期现在是「可补记」的，不再只是看一眼
+      // 即使没有后端，也打开面板让用户看（和周视图行为一致）
       openPanel(k)
     })
 
@@ -1119,6 +1451,26 @@
 
     // 点遮罩关闭；Esc 关闭（先撤掉删除确认，再关面板）
     on(modal, 'click', function (e) { if (e.target === modal) closePanel() })
+
+    // 无障碍：焦点循环（Tab 在弹层内循环）
+    on(modal, 'keydown', function (e) {
+      if (e.key !== 'Tab' || modal.hidden) return
+      var focusables = modal.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), ' +
+        'select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      )
+      if (!focusables.length) return
+      var first = focusables[0]
+      var last = focusables[focusables.length - 1]
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault()
+        last.focus()
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault()
+        first.focus()
+      }
+    })
+
     on(document, 'keydown', function (e) {
       if (e.key !== 'Escape') return
       if (pendingDel) { cancelDelete(); return }

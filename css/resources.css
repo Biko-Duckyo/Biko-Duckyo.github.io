@@ -1,0 +1,296 @@
+/* ============================================================
+ * Resources page (/resources/) - L2 page-specific layer
+ * Extracted byte-for-byte from inline <style> (docs/theme-architecture.md)
+ * Tokens come from common_layout.css
+ * ============================================================ */
+/* 隐藏主题自动生成的页面标题 */
+.page-title {
+  display: none !important;
+}
+
+/* 压掉多余的 #page-header（资源页不需要 banner，真正的顶栏是 fixed 的 #menu-container） */
+.page.type-resources #page-header {
+  height: 0 !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  transition: none !important;
+  display: none !important;
+  visibility: hidden !important;
+  overflow: hidden !important;
+}
+
+/* 去掉 article-container 的默认 margin-top，避免双重间距 */
+.page.type-resources #article-container {
+  margin-top: 0 !important;
+}
+
+/* 放开主题默认宽度限制 */
+@media screen and (min-width: 900px) {
+  .page.type-resources > main.layout.hide-aside { max-width: 1440px; }
+}
+
+/* 资源页面样式 */
+/* 版心布局由公共规范 #content-inner 统一控制（padding-top、宽度等），这里不重复设置 */
+.resources-page {
+  width: 100%;
+}
+
+/* 顶部标题卡片 */
+.resources-hero {
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  padding: 40px;
+  margin-bottom: 30px;
+  backdrop-filter: blur(10px);
+}
+
+.resources-hero .eyebrow {
+  font-size: 12px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 10px 0;
+}
+
+.resources-hero h1 {
+  font-size: 48px;
+  font-weight: 700;
+  color: var(--fg-strong);
+  margin: 0;
+}
+
+/* 分类导航 chips */
+.resources-chips-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-pill);
+  padding: 12px 20px;
+  margin-bottom: 30px;
+  backdrop-filter: blur(10px);
+}
+
+.resources-chip {
+  padding: 8px 16px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--line);
+  background: var(--card);
+  color: var(--fg);
+  text-decoration: none;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.resources-chip:hover {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: var(--accent);
+}
+
+.chips-toggle {
+  margin-left: auto;
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  border: 1px dashed var(--line);
+  background: transparent;
+  color: var(--fg-mute);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.chips-toggle:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+/* 资源分组区块 */
+.resource-group {
+  background: var(--card-2);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel);
+  padding: 24px;
+  margin-bottom: 24px;
+  backdrop-filter: blur(10px);
+}
+
+.resource-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.resource-group-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.resource-group-title .icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-card);
+  background: var(--accent);
+  color: var(--accent-fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.resource-group-title h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--fg-strong);
+  margin: 0;
+}
+
+.resource-group-title .count {
+  font-size: 14px;
+  color: var(--fg-mute);
+  background: var(--card);
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+}
+
+.resource-group {
+  scroll-margin-top: 90px;
+}
+
+.resource-group-arrow {
+  color: var(--fg-mute);
+  font-size: 18px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: var(--r-control);
+  transition: transform 0.25s ease, background 0.2s, color 0.2s;
+  line-height: 1;
+}
+
+.resource-group-arrow:hover {
+  background: var(--card);
+  color: var(--fg-strong);
+}
+
+.resource-group.is-collapsed .resource-group-arrow {
+  transform: rotate(90deg);
+}
+
+.resource-group.is-collapsed .resource-sub-chips,
+.resource-group.is-collapsed .resource-grid {
+  display: none;
+}
+
+/* 二级分类 chips */
+.resource-sub-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.resource-sub-chip {
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  background: var(--card);
+  border: 1px solid var(--line);
+  font-size: 13px;
+  color: var(--fg);
+}
+
+.resource-sub-chip small {
+  color: var(--fg-mute);
+  margin-left: 4px;
+}
+
+/* 资源卡片网格 */
+.resource-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.resource-item {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r-panel-sm);
+  padding: 16px;
+  text-decoration: none;
+  color: var(--fg);
+  transition: all 0.2s;
+  display: block;
+}
+
+.resource-item:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+  border-color: var(--accent);
+}
+
+.resource-item h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--fg-strong);
+  margin: 0 0 8px 0;
+}
+
+.resource-item p {
+  font-size: 13px;
+  color: var(--fg-mute);
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+}
+
+.resource-item-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+
+/* 网站图标 */
+.resource-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-card);
+  background: var(--card);
+  border: 1px solid var(--line);
+  position: relative;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.resource-icon img {
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+}
+
+.resource-item-url {
+  color: var(--fg-dim);
+}
+
+.resource-item-tag {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  padding: 2px 8px;
+  border-radius: var(--r-control);
+}

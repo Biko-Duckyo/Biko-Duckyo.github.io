@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f2f5fa">
+<title>基金管理 · Biko</title>
+<meta name="description" content="个人基金管理：交易记录、持仓总览、净值走势、资产配置">
+<link rel="stylesheet" href="/css/vendor/fontawesome.min.css">
+<link rel="stylesheet" href="/css/common_layout.css">
+<link rel="stylesheet" href="/css/biko_subpage.css">
+<link rel="stylesheet" href="/css/biko_theme_toggle.css">
+<link rel="stylesheet" href="/finance/css/finance.css">
+<script>
+/* 主题脚本必须在 <head> 同步执行，避免深色偏好下的闪白 */
+(function () {
+  try {
+    /* 兼容 Butterfly 主题的 saveToLocal 格式：{"value":"dark"} */
+    var v = localStorage.getItem('theme');
+    if (v && v.startsWith('{')) {
+      try { v = JSON.parse(v).value; } catch (e) { v = null; }
+    }
+    if (v !== 'dark' && v !== 'light') {
+      v = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', v);
+    var m = document.querySelector('meta[name="theme-color"]');
+    if (m) m.setAttribute('content', v === 'dark' ? '#0d1018' : '#f2f5fa');
+  } catch (e) {
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+})();
+</script>
+</head>
+<body class="fin-page-body">
+
+<!-- ================= 顶栏 ================= -->
+<header class="fin-topbar">
+  <a class="fin-brand" href="/" title="返回首页">
+    <i class="fas fa-arrow-left"></i>
+    <span>返回首页</span>
+  </a>
+
+  <div class="fin-title">
+    <h1>基金管理</h1>
+    <span class="fin-total" id="fin-total">总资产: --</span>
+  </div>
+
+  <div class="fin-actions">
+    <button class="fin-btn" id="fin-add-btn" type="button" title="添加交易">
+      <i class="fas fa-plus"></i>
+      <span>添加交易</span>
+    </button>
+    <button class="fin-btn" id="fin-theme-toggle" type="button" title="切换主题">
+      <i class="fas fa-moon"></i>
+    </button>
+  </div>
+</header>
+
+<!-- ================= 主内容区 ================= -->
+<main class="fin-main">
+
+  <!-- 左侧：基金列表 -->
+  <aside class="fin-sidebar">
+    <div class="fin-card">
+      <h3 class="fin-card-title">
+        <i class="fas fa-list"></i>
+        持仓基金
+      </h3>
+      <div class="fin-fund-list" id="fin-fund-list">
+        <div class="fin-empty">
+          <i class="fas fa-inbox"></i>
+          <p>暂无持仓</p>
+          <p class="fin-hint">点击右上角「添加交易」开始</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="fin-card">
+      <h3 class="fin-card-title">
+        <i class="fas fa-history"></i>
+        最近交易
+      </h3>
+      <div class="fin-tx-list" id="fin-tx-list">
+        <div class="fin-empty">
+          <p>暂无交易记录</p>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 中间：净值走势 + 统计 -->
+  <section class="fin-content">
+    <div class="fin-card">
+      <div class="fin-stat-row">
+        <div class="fin-stat">
+          <div class="fin-stat-label">总市值</div>
+          <div class="fin-stat-value" id="fin-stat-total">--</div>
+        </div>
+        <div class="fin-stat">
+          <div class="fin-stat-label">总收益</div>
+          <div class="fin-stat-value fin-stat-profit" id="fin-stat-profit">--</div>
+        </div>
+        <div class="fin-stat">
+          <div class="fin-stat-label">收益率</div>
+          <div class="fin-stat-value fin-stat-profit" id="fin-stat-rate">--</div>
+        </div>
+        <div class="fin-stat">
+          <div class="fin-stat-label">持仓数量</div>
+          <div class="fin-stat-value" id="fin-stat-count">--</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fin-card">
+      <h3 class="fin-card-title">
+        <i class="fas fa-chart-line"></i>
+        净值走势
+      </h3>
+      <div class="fin-chart" id="fin-chart">
+        <div class="fin-empty">
+          <i class="fas fa-chart-line"></i>
+          <p>暂无数据</p>
+          <p class="fin-hint">添加交易后显示走势</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="fin-card">
+      <h3 class="fin-card-title">
+        <i class="fas fa-pie-chart"></i>
+        资产配置
+      </h3>
+      <div class="fin-allocation" id="fin-allocation">
+        <div class="fin-empty">
+          <p>暂无配置数据</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 右侧：热点面板 -->
+  <aside class="fin-rightbar">
+    <div class="fin-card">
+      <h3 class="fin-card-title">
+        <i class="fas fa-fire"></i>
+        热点追踪
+      </h3>
+      <div class="fin-hot-list" id="fin-hot-list">
+        <div class="fin-empty">
+          <p>暂无热点</p>
+          <p class="fin-hint">后续可接 API 自动获取</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="fin-card">
+      <h3 class="fin-card-title">
+        <i class="fas fa-lightbulb"></i>
+        未来半月预测
+      </h3>
+      <div class="fin-forecast" id="fin-forecast">
+        <div class="fin-empty">
+          <p>暂无预测</p>
+          <p class="fin-hint">基于政策事件日历</p>
+        </div>
+      </div>
+      <div class="fin-disclaimer">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>本页面仅为个人记录工具，不构成投资建议。投资有风险，入市需谨慎。</span>
+      </div>
+    </div>
+  </aside>
+
+</main>
+
+<!-- ================= 添加交易弹层 ================= -->
+<div class="fin-modal" id="fin-modal" hidden>
+  <div class="fin-modal-mask"></div>
+  <div class="fin-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="fin-modal-title">
+    <div class="fin-modal-head">
+      <h3 id="fin-modal-title">添加交易</h3>
+      <button class="fin-modal-close" id="fin-modal-close" aria-label="关闭">×</button>
+    </div>
+    <div class="fin-modal-body">
+      <form id="fin-form">
+        <div class="fin-form-row">
+          <label for="fin-form-type">交易类型</label>
+          <select id="fin-form-type" required>
+            <option value="buy">买入</option>
+            <option value="sell">卖出</option>
+            <option value="dividend">分红</option>
+          </select>
+        </div>
+        <div class="fin-form-row">
+          <label for="fin-form-code">基金代码</label>
+          <input type="text" id="fin-form-code" placeholder="如 000001" required>
+        </div>
+        <div class="fin-form-row">
+          <label for="fin-form-name">基金名称</label>
+          <input type="text" id="fin-form-name" placeholder="如 华夏成长混合" required>
+        </div>
+        <div class="fin-form-row">
+          <label for="fin-form-date">交易日期</label>
+          <input type="date" id="fin-form-date" required>
+        </div>
+        <div class="fin-form-row">
+          <label for="fin-form-amount">金额（元）</label>
+          <input type="number" id="fin-form-amount" step="0.01" placeholder="1000.00" required>
+        </div>
+        <div class="fin-form-row">
+          <label for="fin-form-nav">净值</label>
+          <input type="number" id="fin-form-nav" step="0.0001" placeholder="1.2345" required>
+        </div>
+        <div class="fin-form-row">
+          <label for="fin-form-fee">手续费</label>
+          <input type="number" id="fin-form-fee" step="0.01" placeholder="0.00" value="0">
+        </div>
+        <div class="fin-form-row">
+          <label for="fin-form-note">备注</label>
+          <input type="text" id="fin-form-note" placeholder="可选">
+        </div>
+      </form>
+    </div>
+    <div class="fin-modal-foot">
+      <button class="fin-btn" id="fin-modal-cancel" type="button">取消</button>
+      <button class="fin-btn fin-btn-primary" id="fin-modal-save" type="button">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= 脚本 ================= -->
+<script src="/finance/js/store.js"></script>
+<script src="/finance/js/app.js"></script>
+<script src="/finance/js/charts.js"></script>
+
+</body>
+</html>

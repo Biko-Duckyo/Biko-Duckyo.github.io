@@ -1,0 +1,261 @@
+/* ============================================================
+ * Biko · 全站通用布局规范
+ * ------------------------------------------------------------
+ * 所有页面统一遵循的版心、间距、断点规范。
+ * 新增页面只需引入本文件，再做页面特有微调即可。
+ *
+ * 布局结构（首页 Dashboard 为基准）：
+ *   ┌─────────────────────────────────┐
+ *   │ 顶栏 (fixed, 60px, 悬浮在最上层)  │
+ *   ├─────────────────────────────────┤
+ *   │                                 │
+ *   │  版心容器 (1152px 居中)          │
+ *   │  · padding-top: 84px            │
+ *   │    (顶栏 60px + 间隙 24px)       │
+ *   │  · min-height: 100vh           │
+ *   │  · 内容从 84px 处开始，避开顶栏   │
+ *   │                                 │
+ *   └─────────────────────────────────┘
+ *
+ * 规范数值（大屏 >1200px）：
+ *   · 版心宽度：1152px 居中
+ *   · 左右padding：40px（实质内容 1072px）
+ *   · 顶部padding：84px（顶栏 60px + 间隙 24px）
+ *   · 卡片间隙：24px
+ *   · 卡片圆角：24px
+ *   · 顶栏高度：60px fixed 悬浮
+ * ============================================================ */
+
+/* 规范总览：全站样式分四层（L1 公共模板 / L2 页面专属 / L3 内联补丁 / L4 独立页），
+ * 完整约定、强制规则与迁移路线见 docs/theme-architecture.md。
+ * 本文件 = L1 唯一事实来源：新增颜色 / 圆角 / 尺寸 / 动效 / 层级令牌，一律先在此定义。 */
+
+/* ---------- 布局变量（全站统一） ---------- */
+:root {
+  /* 版心 */
+  --layout-max: 1152px;
+  --layout-pad-x: 40px;
+  --layout-pad-top: 84px;
+  --layout-pad-bottom: 24px;
+
+  /* 间距 */
+  --layout-gap: 24px;
+  --layout-radius: 24px;
+
+  /* 顶栏 */
+  --layout-nav-h: 60px;
+
+  /* 卡片内部 padding */
+  --layout-card-pad-x: 20px;
+  --layout-card-pad-head-y: 16px;
+  --layout-card-pad-head-bottom: 12px;
+  --layout-card-pad-body-bottom: 16px;
+
+  /* 玻璃质感 */
+  --layout-blur: 12px;
+  --layout-sat: 140%;
+}
+
+/* ---------- 设计令牌：圆角 / 字体 / 层级 / 阴影（全站唯一来源） ---------- */
+:root {
+  /* 圆角刻度（禁止再写魔法数字） */
+  --r-pill: 999px;       /* 胶囊：天气 / 时钟 / CTA */
+  --r-control: 10px;     /* 控件：菜单项、图标按钮 */
+  --r-card: 8px;         /* 卡片：侧栏卡、文章卡 */
+  --r-panel: 18px;       /* 浮层面板：音乐面板、聊天面板 */
+  --r-panel-sm: 12px;    /* 浮层面板内嵌块 */
+
+  /* 字体栈：西文 Titillium Web + 中文系统回退 */
+  --font-ui: 'Titillium Web', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+             'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC',
+             'Source Han Sans SC', sans-serif;
+
+  /* z-index 刻度（留白取整十 / 整百，便于在两层之间插入新层） */
+  --z-base: 1;
+  --z-nav: 10;
+  --z-nav-menu: 11;
+  --z-card-float: 40;
+  --z-dropdown: 50;
+  --z-backtop: 60;
+  --z-tooltip: 65;       /* 悬浮提示：高于普通卡片，低于模态遮罩(100) */
+  --z-live2d: 70;
+  --z-live2d-hotspot: 71;
+  --z-rightside: 80;
+  --z-music-panel: 90;
+  --z-overlay: 100;
+  --z-loader: 100;
+  --z-sky: 1100;
+  --z-top: 1200;
+
+  /* 业务浮层语义刻度：数值沿用各页现状，仅做命名归一，不改变既有层叠关系 */
+  --z-fab: 900;        /* 浮动操作按钮（主题切换球等） */
+  --z-tip: 9500;       /* 跟随定位的气泡提示 */
+  --z-scene: 9998;     /* 全屏装饰场景层（星空 / 天空背景） */
+  --z-dialog: 9999;    /* 业务详情弹窗遮罩（追番详情） */
+  --z-gallery: 10050;  /* 相册自定义灯箱遮罩（须高于 vendor fancybox 1050） */
+  --z-modal: 99999;    /* 顶级模态（迹录表单弹窗） */
+
+  /* 阴影（浅色模式） */
+  --shadow: 0 18px 48px rgba(40, 55, 80, 0.16);
+  --shadow-sm: 0 6px 18px rgba(40, 55, 80, 0.10);
+
+  /* 强调色（浅色模式，蓝灰体系） */
+  --accent: #7e96b8;
+  --accent-2: #9db4d3;
+  --accent-strong: #8aa3c2;
+  --accent-soft: rgba(126, 150, 184, 0.14);
+  --accent-fg: #ffffff;
+}
+html[data-theme="dark"] {
+  /* 阴影（深色模式） */
+  --shadow: 0 18px 48px rgba(4, 8, 16, 0.50);
+  --shadow-sm: 0 6px 18px rgba(4, 8, 16, 0.38);
+
+  /* 强调色（深色模式） */
+  --accent: #9db4d3;
+  --accent-2: #b9cbe4;
+  --accent-strong: #c9d8ec;
+  --accent-soft: rgba(157, 180, 211, 0.14);
+  --accent-fg: #10151f;
+}
+
+/* ---------- 语义色：追番状态 / 评分（语义色不随明暗翻转，软底随主题微调） ---------- */
+:root {
+  --status-plan: #3b82f6;
+  --status-plan-bg: rgba(59, 130, 246, 0.14);
+  --status-watching: #22c55e;
+  --status-watching-bg: rgba(34, 197, 94, 0.14);
+  --status-completed: #8b5cf6;
+  --status-completed-bg: rgba(139, 92, 246, 0.14);
+  --status-dropped: #8b8b96;
+  --status-dropped-bg: rgba(113, 113, 122, 0.18);
+
+  --rating-gold: #f59e0b;
+  --rating-orange: #f97316;
+
+  /* 通用操作语义色（成功 / 危险），后台与表单可复用 */
+  --status-success: #10b981;
+  --status-danger: #ef4444;
+
+  /* 控件高度与动效刻度（禁止再写魔法数字） */
+  /* 控件高度档位：只用于可点按控件，勿并入顶栏/面板等结构件高度 */
+  --control-h: 50px;   /* 表单主控件：门控输入框 / 提交按钮（已被两套门引用） */
+  --btn-h: 44px;       /* 普通操作按钮基准；当前为预留令牌，主 CTA 后续迁移时再引用，勿强行铺开 */
+  --t-fast: 0.18s;
+  --t-base: 0.3s;
+  --t-slow: 0.36s;
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* 全屏舞台（3D 视图等）：低于门控 --z-overlay(100)，避免与解锁遮罩抢层 */
+  --z-stage: 90;
+
+  /* 加密门参数：相册门 / 追番门共用一套来源 */
+  --gate-panel-w: 480px;
+  --gate-radius: 26px;
+  --gate-panel-bg: rgba(20, 27, 40, 0.72);
+  --gate-line: rgba(157, 180, 211, 0.28);
+  --gate-blur: 20px;
+}
+
+/* ---------- 玻璃卡工具类：半透明底 + 模糊 + 细边框（深浅自适应） ---------- */
+.glass-card {
+  background: rgba(236, 240, 246, 0.86);
+  border: 1px solid rgba(126, 150, 184, 0.22);
+  border-radius: var(--layout-radius);
+  backdrop-filter: blur(var(--layout-blur)) saturate(var(--layout-sat));
+  -webkit-backdrop-filter: blur(var(--layout-blur)) saturate(var(--layout-sat));
+}
+html[data-theme="dark"] .glass-card {
+  background: rgba(18, 24, 36, 0.82);
+}
+
+/* ---------- 全屏舞台工具类：脱离版心、铺满视口（3D 视图 / 全屏覆盖层） ---------- */
+.viewport-full {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  z-index: var(--z-stage, 90);
+}
+
+/* ---------- 通用版心容器 ---------- */
+/* 用法：给页面主容器加 class="layout-container"
+ * 自动获得：1152px 居中 + 顶部 84px 留空给悬浮顶栏 + 撑满视口高度 */
+.layout-container,
+#content-inner,
+.page #content-inner.layout {
+  width: 100% !important;
+  max-width: var(--layout-max) !important;
+  margin: 0 auto !important;
+  padding: var(--layout-pad-top) var(--layout-pad-x) var(--layout-pad-bottom) !important;
+  min-height: 100vh !important;  /* 版心从视口顶部开始，撑满整个高度 */
+  box-sizing: border-box !important;
+}
+
+/* 去掉 #page 和 #article-container 的默认 padding，避免双重 padding */
+#page,
+#article-container,
+.page-title {
+  padding: 0 !important;
+}
+
+/* 自定义页面容器抵消主题 .container 自带的 16px 上间距，对齐 --layout-pad-top 基线。
+   用法：主容器 class="xxx-page page-offset-fix"，不要再在页面内联写 margin:-16px。 */
+.page-offset-fix { margin-top: 0 !important; }
+
+/* ============================================================
+ * 响应式断点（与首页 Dashboard 一致）
+ * ============================================================ */
+
+/* 平板横屏 / 小笔记本：整体更紧凑 */
+@media (max-width: 1200px) {
+  :root {
+    --layout-pad-x: 16px;
+    --layout-gap: 16px;
+    --layout-radius: 16px;
+    --layout-card-pad-x: 16px;
+    --layout-card-pad-head-y: 14px;
+    --layout-card-pad-head-bottom: 10px;
+    --layout-card-pad-body-bottom: 14px;
+  }
+}
+
+/* 平板竖屏 / 竖屏显示器 */
+@media (max-width: 1024px) {
+  :root {
+    --layout-pad-x: 16px;
+    --layout-gap: 16px;
+  }
+}
+
+/* 手机 */
+@media (max-width: 768px) {
+  :root {
+    --layout-pad-x: 12px;
+    --layout-pad-top: 78px;  /* 顶栏 54px + 间隙 12px */
+    --layout-gap: 12px;
+    --layout-radius: 14px;
+    --layout-nav-h: 54px;
+  }
+}
+
+/* 小屏手机：进一步收紧横向留白与卡片圆角 */
+@media (max-width: 480px) {
+  :root {
+    --layout-pad-x: 10px;
+    --layout-gap: 10px;
+    --layout-radius: 12px;
+  }
+}
+
+/* 无障碍：用户偏好减少动态效果时，关闭过渡与位移动画（门控抖动、视图淡入等） */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

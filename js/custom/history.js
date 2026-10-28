@@ -1,60 +1,26 @@
 // ======================================================
 // 历史上的今天（侧边栏卡片，自动 inject）
+// 数据源：中文维基百科 API（实时，无 key，CORS:*）
 // ======================================================
 (function () {
   function initHistory() {
     var aside = document.getElementById('aside-content');
     if (!aside || document.getElementById('history-card-widget')) return;
+    if (!window.ZhHistory) return;
 
     var myDate = new Date();
-    // ⚠️ 命名陷阱：这里【不能】把变量叫 getMonth / getDate。
-    //   · getDate 是 window（即 globalThis）上的内置方法；
-    //     var getDate = ... 会把它遮蔽掉，且 IIFE 内的 var 会挂到全局，
-    //     等于把整个页面的 Date.prototype.getDate 语义上下文搞脏。
-    //   · 更致命的是第 2 行原本写的是 String(myDate) 而不是 String(myDate.getDate())，
-    //     于是 getDate 变成【一个 Date 对象】，
-    //     `getMonth + getDate` 走字符串拼接 →
-    //       "10Wed Oct 14 2026 18:49:07 GMT+0800 (中国标准时间)"
-    //     永远匹配不到 JSON 里的 "1014" 键，卡片就一直空白。
-    //     （这正是「历史上的今天永远不显示」的真正根因，
-    //       之前只把锅甩给了 S 前缀，其实键没问题，是日期没拼对。）
     var monthKey = myDate.getMonth() + 1;
     var mm = monthKey < 10 ? '0' + monthKey : String(monthKey);
     var dayNum = myDate.getDate();
     var dd = dayNum < 10 ? '0' + dayNum : String(dayNum);
 
-    fetch('/history/json/' + mm + '.json')
-      .then(function (r) { return r.json(); })
-      .then(function (raw) {
-        // ---------------------------------------------------------------
-        // 数据格式兼容：百度百科导出的 JSON 实际为两层结构
-        //   { "10": { "1001": [ {year,title,link,...} ] } }
-        // 即外层键是月份，内层键是「月日」且【没有 S 前缀】。
-        //
-        // 历史教训（两次踩坑，别再退回）：
-        //   ① 最初以为键是 'S' + 月 + 日，写 data['S1011'] → 永远 undefined；
-        //   ② 改成无前缀后仍空白，因为【日期本身就没拼对】：
-        //      var getDate = ... String(myDate) 把 getDate 变成了 Date 对象
-        //      （详见上方命名陷阱注释），拼出来是 "10Wed Oct 14 2026..."。
-        //      所以真正修好需要「正确的键 + 正确的月日字符串」两者同时成立。
-        // 归一化逻辑保留，兼容「有/无 S 前缀」「有/无外层月份」三种形态，
-        // 数据源换版本也不会再静默空白。
-        // ---------------------------------------------------------------
-        var monthBucket = raw && raw[mm] ? raw[mm] : raw;
-        var noPrefix = mm + dd;                 // 例如 1014
-        var withPrefix = 'S' + noPrefix;        // 例如 S1014
-        var events =
-          (monthBucket && (monthBucket[noPrefix] || monthBucket[withPrefix])) ||
-          (raw && (raw[noPrefix] || raw[withPrefix])) ||
-          [];
-        if (!events.length) return;
+    ZhHistory.fetch(8)
+      .then(function (events) {
+        if (!events || !events.length) return;
 
         var card = document.createElement('div');
         card.className = 'card-widget card-history';
         card.id = 'history-card-widget';
-        // 视口高度 / 单条高度不再硬编码 200px、50px、-50px：
-        // 改用 CSS 变量（--bh-item-h / --bh-view-h）由脚本按真实渲染高度写入，
-        // 字号或浏览器缩放变化时滚动步长自动跟随，不会错位。
         card.innerHTML =
           '<div class="item-headline"><i class="fas fa-history"></i><span>历史上的今天</span></div>' +
           '<div id="history-news">' +
@@ -67,16 +33,10 @@
         var viewport = card.querySelector('#history-news');
         events.slice(0, 8).forEach(function (n) {
           var li = document.createElement('li');
-          // 数据自带 link（百度百科词条）与 desc（详细描述），
-          // 给标题挂上原文链接并用 desc 作为 tooltip，信息更完整。
-          var titleHtml = String(n.title == null ? '' : n.title);
           li.innerHTML =
             '<p class="bh-year">A.D.' + (n.year || '') + '</p>' +
-            '<p class="bh-title"' +
-              (n.desc ? ' title="' + String(n.desc).replace(/<[^>]+>/g, '').replace(/"/g, '&quot;') + '"' : '') +
-            '>' + titleHtml + '</p>';
+            '<p class="bh-title">' + String(n.text || '') + '</p>';
           if (n.link) {
-            li.title = String(n.desc || '').replace(/<[^>]+>/g, '');
             li.style.cursor = 'pointer';
             li.addEventListener('click', function () { window.open(n.link, '_blank', 'noopener'); });
           }

@@ -3,7 +3,7 @@
  * 仅首页显示。可见性跟随滚动：顶部显示 / 下滚隐藏 / 回顶部重现；CTA 进入正文。
  * ============================================================ */
 (function () {
-  var START = new Date(2026, 9, 3, 0, 0, 0) // 建站 2026-10-03 本地 0 点
+  var START = new Date(2025, 9, 15, 0, 0, 0) // 建站 2025-10-15 本地 0 点
   var WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
 
   // 当前首屏节点；可见性跟随首页滚动位置（顶部显示 / 下滚隐藏 / 回顶重现）
@@ -26,9 +26,14 @@
     if (y <= 8) applyNav(false)
     else if (y > 12) applyNav(true)
   }
-  // 首次下滚吸附：从欢迎态第一次下滚等同点 CTA，自动补到安全落点；回顶后复位
+  // 首次下滚吸附：从欢迎态第一次下滚等同点 CTA，自动补到安全落点
   var entered = false
+  // 是否已经「落进」仪表盘（点过 CTA 或从欢迎态下滚过）。
+  // 一旦落地就不再回到欢迎页 —— 和站内其它页面的「回到顶部」一致：
+  // 上箭头 / 滚到顶部只要求回到本页内容的最上方，而不是把用户退回首屏。
+  var landed = false
   var currentEnter = null
+  var currentScrollTop = null
   var rafPending = false
   // 滚动/尺寸变化时统一校正：以真实 scrollY 为准，避免滚动同步丢失导致
   // #biko-hub（z-index:200000）残留 .show 遮住正文
@@ -38,7 +43,9 @@
     if (currentHub) {
       if (y <= 8) {
         entered = false
-        setHubVisible(currentHub, true)
+        // 只有「还没走进仪表盘」的初始状态才重现欢迎页；
+        // 落地后回到顶部 = 停在仪表盘最上方（见 home_dashboard.css 的 --dash-pad-top）
+        if (!landed) setHubVisible(currentHub, true)
       } else {
         setHubVisible(currentHub, false)
         if (!entered) { entered = true; if (currentEnter) currentEnter() }
@@ -166,6 +173,11 @@
     cancelFallback()
     currentHub = null
     currentEnter = null
+    currentScrollTop = null
+    // 换页（含 pjax 回首页）一律退回「欢迎态」：landed 是单次访问内的状态，
+    // 不能跨页面残留，否则从内页返回首页会直接看到仪表盘、首屏被跳过。
+    landed = false
+    entered = false
     // 首页标记要在 isHome() 早退之前写入，供 :has() 兜底规则使用
     markHome(isHome())
     if (!isHome()) return
@@ -264,21 +276,68 @@
       return Math.round(r.top + window.scrollY)
     }
 
-    // CTA：进入文章流；瞬时定位（不依赖平滑滚动），让第一张卡片停在固定顶栏下方
-    function enter() {
-      var target = document.querySelector('#recent-posts, .recent-posts') || document.getElementById('content')
-      var navH = 60
-      var GAP = 14
-      var top = target ? Math.max(16, pageYOf(target) - navH - GAP) : window.innerHeight
-      setHubVisible(hub, false)
-      document.body.classList.add('biko-nav-on')
+    // 顶栏高度与留白：落点固定为「内容区上缘」，即 #content-inner 的 --dash-pad-top（76px）。
+    // 不能用 #recent-posts 的文档坐标再减一次 74px —— 它现在是首行卡片里的子节点，
+    // 减一次会把整块仪表盘推到视口外（被顶栏盖住、看起来像空白页）。
+    var NAV_H = 60
+    var GAP = 14
+    function dashTop() {
+      // 首页内容起点就是 #biko-dashboard（#content-inner 的第一个子元素）；
+      // 主题里没有 dashboard 时退回到 #content-inner / #content。
+      var root = document.getElementById('biko-dashboard') ||
+        document.getElementById('content-inner') ||
+        document.getElementById('content')
+      if (!root) return 0
+      return Math.max(0, pageYOf(root) - (NAV_H + GAP))
+    }
+    // 瞬时定位（不依赖平滑滚动），让仪表盘第一张卡片停在固定顶栏下方。
+    // 两种落点：
+    //   · at === 'top'：回到文档最顶（上箭头用）→ 仪表盘落在 --dash-pad-top(76)
+    //   · 默认：让仪表盘上缘停在 #content-inner 预留区上沿（＝页面最顶），
+    //     因此同样归约为 0；保留算式是为了 #content-inner 之上出现其它元素时仍能对齐。
+    // opts.user：用户主动点击（CTA / 上箭头）才允许移动视口；
+    // 首次下滚吸附只负责显隐，绝不把用户正在滚的页面拽回去。
+    function scrollToDashboard(opts) {
+      landed = true
+      if (opts && opts.user === false) return
+      var to = (opts && opts.at === 'top') ? 0 : dashTop()
+      window.scrollTo(0, to)
       // 立即按滚动位置再校正一次，防止滚动事件丢失导致 hub 残留遮挡
       if (window.__bikoSyncHub) window.__bikoSyncHub()
-      setTimeout(function () { window.scrollTo(0, top) }, 50)
-      setTimeout(function () { if (window.__bikoSyncHub) window.__bikoSyncHub() }, 120)
+      setTimeout(function () {
+        window.scrollTo(0, (opts && opts.at === 'top') ? 0 : dashTop())
+        if (window.__bikoSyncHub) window.__bikoSyncHub()
+      }, 50)
     }
-    currentEnter = enter
-    hub.querySelector('#bh-cta').addEventListener('click', function () { entered = true; enter() })
+    // 上箭头：与站内其它页面一致 —— 回到本页最上方（这里是仪表盘首屏，不是欢迎页）
+    currentScrollTop = function () { scrollToDashboard({ user: true, at: 'top' }) }
+
+    // CTA：「翻开我的小世界」＝ 停在首页内容最上方（#content-inner 预留区之上），
+    // 与上箭头同一个落点，避免首屏离场动画期间坐标抖动导致停在半路。
+    function enter(opts) {
+      landed = true
+      setHubVisible(hub, false)
+      document.body.classList.add('biko-nav-on')
+      scrollToDashboard({ user: !(opts && opts.user === false), at: 'top' })
+    }
+    // 首次下滚：只切显隐、不接管滚动（用户本来就在滚）
+    currentEnter = function () { enter({ user: false }) }
+    hub.querySelector('#bh-cta').addEventListener('click', function () { entered = true; enter({ user: true }) })
+
+    // 左下角「回到顶部」（主题 #go-up）：首页里改成回到仪表盘最上方。
+    // 主题默认 scrollToDest(0, 500)，会顺带把欢迎页重新唤出来；这里拦截掉，
+    // 行为与其它页面一致（回到本页内容顶部），只是终点是仪表盘而不是 0。
+    if (!document.__bikoGoUpBound) {
+      document.__bikoGoUpBound = true
+      document.addEventListener('click', function (e) {
+        var btn = e.target && e.target.closest ? e.target.closest('#rightside #go-up') : null
+        if (!btn) return
+        if (!isHome() || !currentHub || !document.getElementById('biko-dashboard')) return
+        e.preventDefault()
+        e.stopPropagation()
+        if (currentScrollTop) currentScrollTop()
+      }, true)
+    }
 
     // 初始：位于首页顶部则显示
     setHubVisible(hub, window.scrollY <= 8)

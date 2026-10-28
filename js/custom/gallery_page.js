@@ -92,6 +92,7 @@
   var keyBytes = null        // 记住最近一次的密钥，用于失败后免重复派生
   var listeners = []         // [target, type, fn, opts]
   var lbState = { open: false, album: -1, photo: 0, returnTo: null }
+  var layoutMode = 'film'    // 布局模式：film（胶片风格） / stack（一摞相纸）
 
   /* ---------- 小工具 ---------- */
   function on (target, type, fn, opts) {
@@ -334,6 +335,57 @@
     return card
   }
 
+  /* 胶片风格卡片 */
+  function buildFilmCard (album, i) {
+    var n = album.photos.length
+    var card = document.createElement('div')
+    card.className = 'gal-film-card'
+
+    // 胶片齿孔
+    var holes = document.createElement('div')
+    holes.className = 'gal-film-card__holes'
+    for (var h = 0; h < 5; h++) {
+      var hole = document.createElement('div')
+      hole.className = 'gal-film-card__hole'
+      holes.appendChild(hole)
+    }
+    card.appendChild(holes)
+
+    // 封面图
+    var cover = document.createElement('div')
+    cover.className = 'gal-film-card__cover'
+    if (album.photos[0] && album.photos[0].thumb) {
+      var img = document.createElement('img')
+      img.src = album.photos[0].thumb
+      img.alt = album.name
+      img.loading = 'lazy'
+      cover.appendChild(img)
+    } else {
+      // 没有封面图时用星空鲸鱼图占位
+      var img2 = document.createElement('img')
+      img2.src = 'https://s2.loli.net/2022/04/11/oDZPBRxHn59rbYO.jpg'
+      img2.alt = album.name
+      img2.loading = 'lazy'
+      cover.appendChild(img2)
+    }
+    card.appendChild(cover)
+
+    // 相册名
+    var name = document.createElement('p')
+    name.className = 'gal-film-card__name'
+    name.textContent = album.name
+    card.appendChild(name)
+
+    // 照片数
+    var count = document.createElement('p')
+    count.className = 'gal-film-card__count'
+    count.textContent = n + ' 张照片'
+    card.appendChild(count)
+
+    on(card, 'click', function () { openLb(i, 0) })
+    return card
+  }
+
   function render () {
     var q = (searchEl && searchEl.value || '').trim().toLowerCase()
     var shown = 0
@@ -344,7 +396,12 @@
     } else {
       albums.forEach(function (album, i) {
         if (!matches(album, q)) return
-        frag.appendChild(buildCard(album, i))
+        // 根据布局模式渲染不同卡片
+        if (layoutMode === 'film') {
+          frag.appendChild(buildFilmCard(album, i))
+        } else {
+          frag.appendChild(buildCard(album, i))
+        }
         shown++
       })
       if (!shown) frag.appendChild(emptyBox('fa-magnifying-glass', '没有找到「' + searchEl.value.trim() + '」相关的照片。'))
@@ -352,6 +409,19 @@
 
     gridEl.textContent = ''
     gridEl.appendChild(frag)
+
+    // 更新统计数字
+    var photoCount = 0
+    albums.forEach(function(album) { photoCount += album.photos.length })
+    var photoCountEl = document.getElementById('gal-photo-count')
+    var albumCountEl = document.getElementById('gal-album-count')
+    if (photoCountEl) photoCountEl.textContent = photoCount
+    if (albumCountEl) albumCountEl.textContent = albums.length
+
+    // 更新 grid 的 class
+    gridEl.classList.toggle('gal-grid--film', layoutMode === 'film')
+    gridEl.classList.toggle('gal-grid', layoutMode === 'stack')
+
     text(countEl, q ? '命中 ' + shown + ' / 共 ' + albums.length + ' 本' : '共 ' + albums.length + ' 本')
     if (searchBox) searchBox.classList.toggle('has-value', !!q)
   }
@@ -510,6 +580,20 @@
     on(searchEl, 'search', onSearchInput)      // 点原生 ✕ 时只触发 search
     on(clearEl, 'click', clearSearch)
     on(window, 'keydown', onKeydown)
+
+    // 布局切换按钮
+    var layoutToggle = document.getElementById('gal-layout-toggle')
+    if (layoutToggle) {
+      on(layoutToggle, 'click', function() {
+        layoutMode = layoutMode === 'film' ? 'stack' : 'film'
+        // 更新按钮文字
+        var span = layoutToggle.querySelector('span')
+        if (span) {
+          span.textContent = layoutMode === 'film' ? '切换回原相册布局' : '切换到胶片风格'
+        }
+        render()
+      })
+    }
 
     on(lbClose, 'click', closeLb)
     on(lbPrev, 'click', function () { stepLb(-1) })
