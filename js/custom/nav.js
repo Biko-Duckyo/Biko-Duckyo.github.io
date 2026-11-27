@@ -2,7 +2,7 @@
 // Biko 自定义顶栏交互（复刻 superq314.github.io）
 // 1) 中间时钟每秒刷新
 // 2) 菜单条鼠标滚轮横向滚动
-// 3) 移动端汉堡 Navvisible() 复用原生抽屉
+// 3) 移动端导航独立于主题节点，与桌面菜单共用构建期数据
 // 4) 统一明暗切换 switchNightMode（星球旋转动画），齿轮/顶栏共用
 // ======================================================
 (function () {
@@ -12,6 +12,7 @@
 
   // 时钟：与左侧天气/定位胶囊同风格，带时钟图标
   function setTime() {
+    if (window.innerWidth <= 768 || document.hidden) return
     var box = document.getElementById('message-date-box')
     if (!box) return
     var t = new Date()
@@ -25,8 +26,8 @@
   // 顶栏右区按钮：改写为「图标 + 文字」结构，文字常规收起、悬停右区展开。
   // 同时兼容原本就是 <i> 图标 的写法（保留原图标作为 glyph）。
   // 注意：只做「视觉包装」，不要动 #search-button / .search 的类名与层级，
-  // 也不要在本文件里给搜索按钮额外绑定 click —— 主题的 local-search.js
-  // 通过 document.querySelector('#search-button > .search') 自行绑定，重复绑定会双开/双关。
+  // 也不要在本文件里给搜索按钮额外绑定 click —— 主题 local_search 已卸载，
+  // 点击由 /js/custom/site-search.js 在 document 上委托接管，重复绑定会双开/双关。
   function decorateIcon(btn, label) {
     if (!btn || btn.__bikoDecorated) return
     btn.__bikoDecorated = true
@@ -61,15 +62,106 @@
   }
 
   // 顶栏搜索按钮：不要在这里绑定！
-  // 主题的 local-search.js 通过 document.querySelector('#search-button > .search')
-  // 自行绑定 openSearch。我们只要保证该选择器能命中（见 _config.butterfly.yml 的
-  // <div id="search-button"><a class="bn-icon social-icon search">…</a></div> 结构）。
-  // 之前这里既 .click() 原生节点又调 btf.search()，若两处都触发会把搜索面板开了又关。
+  // 主题 local_search 已卸载（search.use 置空），#local-search 弹层与
+  // local-search.js 均不再注入；点击由 site-search.js 委托
+  // #search-button > .search 打开自建聚合面板。这里只需保证该选择器
+  // 能命中（结构见 scripts/biko-index.js 拼出的右区 HTML）。
 
-  // 移动端汉堡：点击原生 #toggle-menu 打开 Butterfly 抽屉
+  var pageTools = [
+    ['biko-assistant-load', '多多助手', 'fa-comment'],
+    ['mobile-toc-button', '文章目录', 'fa-list'],
+    ['readmode', '阅读模式', 'fa-book-open'],
+    ['translateLink', '简繁转换', 'fa-language'],
+    ['hide-aside-btn', '切换侧栏', 'fa-columns'],
+    ['music-toggle', '音乐播放器', 'fa-music'],
+    ['go-up', '回到顶部', 'fa-arrow-up']
+  ]
+  function syncMobileTools() {
+    var box = document.getElementById('bn-page-tools')
+    if (!box) return
+    box.textContent = ''
+    pageTools.forEach(function (tool) {
+      if (!document.getElementById(tool[0])) return
+      if (tool[0] === 'go-up' && window.scrollY <= 400) return
+      if (tool[0] === 'music-toggle' && /^\/music\/?$/.test(location.pathname)) return
+      if (tool[0] === 'hide-aside-btn' && window.matchMedia && window.matchMedia('(max-width: 768px)').matches) return
+      var button = document.createElement('button')
+      button.type = 'button'
+      button.dataset.navTool = tool[0]
+      var glyph = document.createElement('i')
+      glyph.className = 'fas ' + tool[2]
+      glyph.setAttribute('aria-hidden', 'true')
+      button.appendChild(glyph)
+      button.appendChild(document.createTextNode(tool[1]))
+      box.appendChild(button)
+    })
+    box.parentElement.hidden = !box.children.length
+  }
+  function closeMobileNav() {
+    var dialog = document.getElementById('bn-mobile-nav')
+    if (dialog && dialog.open) dialog.close()
+  }
   window.Navvisible = function () {
-    var t = document.getElementById('toggle-menu')
-    if (t) t.click()
+    var dialog = document.getElementById('bn-mobile-nav')
+    if (!dialog) return
+    if (dialog.open) { closeMobileNav(); return }
+    syncMobileTools()
+    dialog.showModal()
+    document.body.classList.add('biko-menu-open')
+    var trigger = document.querySelector('.bn-burger')
+    if (trigger) trigger.setAttribute('aria-expanded', 'true')
+  }
+  function bindMobileNav() {
+    var dialog = document.getElementById('bn-mobile-nav')
+    if (!dialog || dialog.__bikoBound) return
+    dialog.__bikoBound = true
+    dialog.addEventListener('close', function () {
+      document.body.classList.remove('biko-menu-open')
+      var trigger = document.querySelector('.bn-burger')
+      if (trigger) trigger.setAttribute('aria-expanded', 'false')
+    })
+    dialog.addEventListener('click', function (event) {
+      var action = event.target.closest('[data-nav-close], [data-nav-tool], a[href]')
+      // Native dialog backdrop clicks target the dialog itself; its inner padding remains usable.
+      var rect = dialog.getBoundingClientRect()
+      var outside = event.target === dialog && (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom)
+      if (!action && !outside) return
+      closeMobileNav()
+      if (action && action.dataset.navTool) {
+        var target = document.getElementById(action.dataset.navTool)
+        if (target) target.click()
+      }
+    })
+  }
+  function syncMobilePage() {
+    var title = document.querySelector('.bn-page-title')
+    var heading = document.querySelector('#content-inner h1, #post-info h1, #page-site-info h1')
+    if (title) title.textContent = location.pathname === '/' ? 'Home' : heading ? heading.textContent : document.title.split(' | ')[0]
+    document.querySelectorAll('.bn-drawer-links a').forEach(function (link) {
+      var path = location.pathname
+      var href = link.getAttribute('href')
+      var active = href === '/' ? path === '/' : path.indexOf(href) === 0
+      if (href === '/archives/' && /^\/(\d{4}\/|tags\/|categories\/)/.test(path)) active = true
+      if (active) link.setAttribute('aria-current', 'page')
+      else link.removeAttribute('aria-current')
+    })
+  }
+  // Persistent listeners use fresh DOM nodes after Pjax, rather than retaining old dialogs.
+  if (!window.__bikoMobileNavEvents) {
+    window.__bikoMobileNavEvents = true
+    window.addEventListener('resize', function () {
+      if (window.innerWidth > 768) closeMobileNav()
+    })
+    window.addEventListener('scroll', function () {
+      document.body.classList.toggle('biko-scrolled', window.scrollY > 400)
+    }, { passive: true })
+    document.addEventListener('pjax:send', closeMobileNav)
+    document.addEventListener('keydown', function (event) {
+      if ((event.key === 'Enter' || event.key === ' ') && event.target.matches('.bn-right [role="button"]')) {
+        event.preventDefault()
+        event.target.click()
+      }
+    })
   }
 
   // 菜单条横向滚轮
@@ -181,6 +273,10 @@
   }
 
   function init() {
+    if (!document.querySelector('#bn-mobile-nav[open]')) document.body.classList.remove('biko-menu-open')
+    document.body.classList.toggle('biko-scrolled', window.scrollY > 400)
+    bindMobileNav()
+    syncMobilePage()
     setTime()
     if (!timer) timer = setInterval(setTime, 1000)
     decorateNavIcons()

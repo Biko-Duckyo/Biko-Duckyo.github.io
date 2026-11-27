@@ -6,15 +6,20 @@ document.addEventListener('DOMContentLoaded', () => {
   let goUpElement = null
   let scrollPercentElement = null
 
+  // biko-patch:menu-safe：原生 #nav 被自定义顶栏替代后 #blog-info / #menus 可能缺失，空值保护避免 refreshFn 中断
   const adjustMenu = init => {
     let hideMenuIndex = false
 
     if (init) {
-      const blogInfoWidth = Array.from(document.querySelector('#blog-info > a').children).reduce((w, i) => w + i.offsetWidth, 0)
-      const menusWidth = Array.from(document.getElementById('menus').children).reduce((w, i) => w + i.offsetWidth, 0)
+      const blogInfoEl = document.querySelector('#blog-info > a')
+      const menusEl = document.getElementById('menus')
+      const blogInfoWidth = blogInfoEl ? Array.from(blogInfoEl.children).reduce((w, i) => w + i.offsetWidth, 0) : 0
+      const menusWidth = menusEl ? Array.from(menusEl.children).reduce((w, i) => w + i.offsetWidth, 0) : 0
       headerContentWidth = blogInfoWidth + menusWidth
       $nav = document.getElementById('nav')
     }
+
+    if (!$nav) return
 
     hideMenuIndex = window.innerWidth <= 768 || headerContentWidth > $nav.offsetWidth - 120
 
@@ -26,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 初始化header
   const initAdjust = () => {
     adjustMenu(true)
-    $nav.classList.add('show')
+    if ($nav) $nav.classList.add('show')
   }
 
   // sidebar menus

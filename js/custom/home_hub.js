@@ -8,10 +8,28 @@
 
   // 当前首屏节点；可见性跟随首页滚动位置（顶部显示 / 下滚隐藏 / 回顶重现）
   var currentHub = null
+  function guardBackground(hub, on) {
+    if (on && !hub._bikoBackground) {
+      hub._bikoBackground = []
+      Array.prototype.forEach.call(document.body.children, function (node) {
+        if (node === hub || /^(SCRIPT|STYLE|LINK)$/.test(node.tagName)) return
+        hub._bikoBackground.push([node, !!node.inert])
+        node.inert = true
+      })
+    } else if (!on && hub._bikoBackground) {
+      hub._bikoBackground.forEach(function (entry) { entry[0].inert = entry[1] })
+      hub._bikoBackground = null
+    }
+  }
   function setHubVisible(hub, v) {
     if (!hub) return
+    var wasVisible = hub.classList.contains('show')
     if (v) { hub.classList.remove('leaving'); hub.classList.add('show') }
     else { hub.classList.remove('show'); hub.classList.add('leaving') }
+    hub.setAttribute('aria-hidden', String(!v))
+    hub.setAttribute('aria-modal', String(!!v))
+    guardBackground(hub, v)
+    if (wasVisible && !v) document.dispatchEvent(new Event('biko:home-entered'))
   }
   // 顶栏编排：仅切换 body.biko-nav-on；具体显示由 custom_nav.css 的 #menu-container 规则完成
   function applyNav(on) {
@@ -106,23 +124,14 @@
   function rand(min, max) { return min + Math.random() * (max - min) }
 
   function uptimeText() {
-    var n = new Date()
-    var months = (n.getFullYear() - START.getFullYear()) * 12 + (n.getMonth() - START.getMonth())
-    var anchor = new Date(START)
-    anchor.setMonth(START.getMonth() + months)
-    if (anchor > n) { months--; anchor = new Date(START); anchor.setMonth(START.getMonth() + months) }
-    var ms = n - anchor
-    var days = Math.floor(ms / 86400000); ms -= days * 86400000
-    var hours = Math.floor(ms / 3600000); ms -= hours * 3600000
-    var mins = Math.floor(ms / 60000); ms -= mins * 60000
-    var secs = Math.floor(ms / 1000)
-    return months + ' 个月 ' + days + ' 天 ' + hours + ' 小时 ' + mins + ' 分 ' + secs + ' 秒'
+    return Math.max(0, Math.floor((Date.now() - START.getTime()) / 86400000)) + ' 天'
   }
 
   function spawnFall(layer) {
     var mobile = window.innerWidth <= 768
-    var starCount = mobile ? 16 : 30
-    var bubbleCount = mobile ? 8 : 15
+    if (mobile || window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    var starCount = 12
+    var bubbleCount = 4
     var i, el
     for (i = 0; i < starCount; i++) {
       el = document.createElement('span')
@@ -159,6 +168,7 @@
   // ------------------------------------------------------------
   function teardownHub(hub) {
     if (!hub) return
+    guardBackground(hub, false)
     if (hub._bikoTimer) { clearInterval(hub._bikoTimer); hub._bikoTimer = null }
     if (hub._bikoPlaceEars) {
       window.removeEventListener('resize', hub._bikoPlaceEars)
@@ -180,17 +190,20 @@
     entered = false
     // 首页标记要在 isHome() 早退之前写入，供 :has() 兜底规则使用
     markHome(isHome())
-    if (!isHome()) return
+    if (!isHome()) { window.BikoHomeEntry?.ready(); return }
+    if (window.BikoHomeEntry?.pending) window.scrollTo({ top: 0, behavior: 'instant' })
 
     var hub = document.createElement('div')
     hub.id = 'biko-hub'
+    hub.classList.add('biko-hub-initial')
     hub.setAttribute('role', 'dialog')
     hub.setAttribute('aria-label', '欢迎来到 Biko 的个人小站')
+    hub.setAttribute('aria-describedby', 'bh-intro')
     hub.innerHTML =
-      '<div class="biko-hub-bg"></div>' +
-      '<div class="biko-hub-fall"></div>' +
+      '<div class="biko-hub-bg" aria-hidden="true"></div>' +
+      '<div class="biko-hub-fall" aria-hidden="true"></div>' +
       '<div class="biko-hub-inner">' +
-        '<span class="biko-pill"><i class="fas fa-cat"></i>很高兴在这里遇见你</span>' +
+        '<span class="biko-pill"><i class="fas fa-cat"></i>鸭喵屋 · 很高兴在这里遇见你</span>' +
         '<h1 class="biko-hub-title">Biko<span class="biko-heart">♡</span></h1>' +
         '<div class="biko-hub-sub">的个人小站</div>' +
         '<div class="biko-hub-clock">' +
@@ -199,10 +212,10 @@
           '<span class="biko-time-box" id="bh-mm">00</span><span class="biko-colon">:</span>' +
           '<span class="biko-time-box" id="bh-ss">00</span>' +
         '</div>' +
-        '<div class="biko-hub-date"><span id="bh-date"></span><span class="biko-weekday" id="bh-week"></span></div>' +
-        '<span class="biko-pill"><i class="fas fa-star"></i>小站已经陪你走过<b id="bh-uptime"></b></span>' +
-        '<p class="biko-hub-tagline">把问题写清楚，也把生活慢慢记下</p>' +
-        '<button class="biko-hub-cta" id="bh-cta" type="button">翻开我的小世界 <i class="fas fa-arrow-down"></i></button>' +
+        '<div class="biko-hub-date"><time id="bh-date"></time><span class="biko-weekday" id="bh-week"></span></div>' +
+        '<span class="biko-hub-uptime">小站相伴 <b id="bh-uptime"></b></span>' +
+        '<p class="biko-hub-tagline" id="bh-intro">把问题写清楚，也把生活慢慢记下</p>' +
+        '<button class="biko-hub-cta" id="bh-cta" type="button">翻开我的小世界 <i class="fas fa-arrow-right"></i></button>' +
       '</div>'
     document.body.appendChild(hub)
     spawnFall(hub.querySelector('.biko-hub-fall'))
@@ -227,11 +240,8 @@
       var last = boxes[2].getBoundingClientRect()
       // 耳朵中心对准第 1 / 第 3 个时间盒的约 1/4 与 3/4 处
       var earW = parseFloat(getComputedStyle(clockEl).fontSize) * 0.27 || 12
-      // 整体左移 10px：左耳、右耳都减同一个量，两只耳朵一起平移、间距不变。
-      // 若只改其中一只，间距就会变（会看出左右不对称），所以务必用同一个 EAR_SHIFT。
-      var EAR_SHIFT = 10
-      var l = (first.left - clockRect.left) + first.width * 0.25 - earW - EAR_SHIFT
-      var r = (last.left - clockRect.left) + last.width * 0.75 - earW - EAR_SHIFT
+      var l = (first.left - clockRect.left) + first.width * 0.25 - earW - 10
+      var r = (last.left - clockRect.left) + last.width * 0.75 - earW - 10
       clockEl.style.setProperty('--bh-ear-l', Math.round(l) + 'px')
       clockEl.style.setProperty('--bh-ear-r', Math.round(r) + 'px')
     }
@@ -249,6 +259,7 @@
       mm.textContent = pad(d.getMinutes())
       ss.textContent = pad(d.getSeconds())
       dateEl.textContent = d.getFullYear() + ' 年 ' + (d.getMonth() + 1) + ' 月 ' + d.getDate() + ' 日'
+      dateEl.setAttribute('datetime', d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()))
       weekEl.textContent = WEEK[d.getDay()]
       upEl.textContent = uptimeText()
     }
@@ -258,12 +269,13 @@
     // 注意：这个 setInterval 必须在 teardownHub 里 clearInterval，
     // 否则 pjax 换页后旧计时器会持有已移除的节点持续空转。
     hub._bikoTimer = setInterval(function () {
-      if (document.hidden) return
+      if (document.hidden || !hub.classList.contains('show')) return
       tick()
     }, 1000)
     if (!document.__bikoHubVisibilityBound) {
       document.__bikoHubVisibilityBound = true
       document.addEventListener('visibilitychange', function () {
+        if (currentHub) currentHub.toggleAttribute('data-page-hidden', document.hidden)
         if (document.hidden) return
         if (currentHub && currentHub.isConnected && currentHub._bikoTick) currentHub._bikoTick()
       })
@@ -319,10 +331,19 @@
       setHubVisible(hub, false)
       document.body.classList.add('biko-nav-on')
       scrollToDashboard({ user: !(opts && opts.user === false), at: 'top' })
+      if (hub.contains(document.activeElement)) {
+        var dashboard = document.getElementById('biko-dashboard') || document.getElementById('content-inner')
+        if (dashboard) { dashboard.setAttribute('tabindex', '-1'); dashboard.focus({ preventScroll: true }) }
+      }
     }
     // 首次下滚：只切显隐、不接管滚动（用户本来就在滚）
     currentEnter = function () { enter({ user: false }) }
     hub.querySelector('#bh-cta').addEventListener('click', function () { entered = true; enter({ user: true }) })
+    hub.addEventListener('keydown', function (e) {
+      if (!hub.classList.contains('show')) return
+      if (e.key === 'Escape') { e.preventDefault(); entered = true; enter({ user: true }) }
+      if (e.key === 'Tab') { e.preventDefault(); hub.querySelector('#bh-cta').focus({ preventScroll: true }) }
+    })
 
     // 左下角「回到顶部」（主题 #go-up）：首页里改成回到仪表盘最上方。
     // 主题默认 scrollToDest(0, 500)，会顺带把欢迎页重新唤出来；这里拦截掉，
@@ -342,6 +363,8 @@
     // 初始：位于首页顶部则显示
     setHubVisible(hub, window.scrollY <= 8)
     syncNav(window.scrollY)
+    window.BikoHomeEntry?.ready()
+    ;(window.requestAnimationFrame || function (fn) { setTimeout(fn, 16) })(function () { hub.classList.remove('biko-hub-initial') })
   }
 
   function boot() {
@@ -350,5 +373,6 @@
     else build()
   }
   boot()
-  document.addEventListener('pjax:complete', function () { setTimeout(build, 350) })
+  window.__bikoShowWelcome = function () { window.scrollTo({ top: 0, behavior: 'instant' }); build() }
+  document.addEventListener('pjax:complete', build)
 })()

@@ -461,11 +461,11 @@
     const drawer = document.createElement('section')
     drawer.className = 'nanaly-voice-settings'; drawer.hidden = true
     drawer.setAttribute('aria-label', '声音与朗读设置')
-    const title = document.createElement('h3'); title.textContent = '听听娜娜莉的声音'
+    const title = document.createElement('h3'); title.textContent = '听听多多的声音'
     const close = document.createElement('button'); close.type = 'button'; close.className = 'nanaly-voice-close'; close.textContent = '×'; close.setAttribute('aria-label', '关闭声音设置')
     const intro = document.createElement('p'); intro.textContent = 'AI 合成女声 · 清甜一点，嘴硬心软一点。'
     const label = (text, control) => { const wrap = document.createElement('label'); const span = document.createElement('span'); span.textContent = text; wrap.append(span, control); return wrap }
-    const style = document.createElement('select'); style.setAttribute('aria-label', '娜娜莉的声线')
+    const style = document.createElement('select'); style.setAttribute('aria-label', '多多的声线')
     Object.entries(STYLES).forEach(([value, item]) => { const option = document.createElement('option'); option.value = value; option.textContent = item.name; style.append(option) })
     const speed = document.createElement('input'); speed.type = 'range'; speed.min = '.8'; speed.max = '1.3'; speed.step = '.02'; speed.setAttribute('aria-label', '朗读语速')
     const speedValue = document.createElement('output')

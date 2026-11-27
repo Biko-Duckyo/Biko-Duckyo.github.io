@@ -1,17 +1,50 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <meta name="theme-color" content="#f2f5fa">
+  <script>
+  /* 研思是手写页：没有 Butterfly 的主题脚本，这里同步读取主站同一份偏好
+     （Butterfly 的 saveToLocal 存的是 {"value":"dark"}），避免进站先闪一下浅色。 */
+  (function () {
+    try {
+      var v = localStorage.getItem('theme');
+      if (v && v.charAt(0) === '{') {
+        try { v = (JSON.parse(v) || {}).value; } catch (e) { v = null; }
+      }
+      if (v !== 'dark' && v !== 'light') {
+        v = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+      }
+      document.documentElement.setAttribute('data-theme', v);
+      var m = document.querySelector('meta[name="theme-color"]');
+      if (m) m.setAttribute('content', v === 'dark' ? '#0d1018' : '#f2f5fa');
+    } catch (e) {
+      document.documentElement.setAttribute('data-theme', 'light');
+    }
+  })();
+  </script>
+  <link rel="stylesheet" href="/css/adaptive-tools.css">
+  <script defer src="/js/custom/adaptive-tools.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>答学 - 学术工作台</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='14' fill='%230F766E' stroke='%230F766E' stroke-width='2'/><circle cx='16' cy='16' r='5' fill='%230F766E'/></svg>">
-  <link rel="stylesheet" href="/css/academic-workbench/style.css">
-  <link rel="stylesheet" href="/css/academic-workbench/reader.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="/css/academic-workbench/style.css?reader=2.2">
+  <link rel="stylesheet" href="/css/academic-workbench/reader.css?paper=1">
+  <link rel="stylesheet" href="/css/vendor/fontawesome.min.css">
+  <link rel="stylesheet" href="/css/academic-workbench/scholar-ui.css?ui=2">
+  <link rel="stylesheet" href="/css/desktop-shell-sample.css">
+  <link rel="stylesheet" href="/css/desktop-shell-workspaces.css">
+  <link rel="stylesheet" href="/css/foundation-tokens.css">
+  <link rel="stylesheet" href="/css/visual-foundations.css">
+  <link rel="stylesheet" href="/css/workspace-hierarchy.css">
+  <link rel="stylesheet" href="/css/ui-controls.css">
+<link rel="stylesheet" href="/css/interaction-feedback.css">
+<script src="/js/custom/interaction-feedback.js"></script>
+  <script defer src="/js/custom/desktop-shell-sample.js"></script>
   <link rel="stylesheet" href="https://miaoda.feishu.cn/fonts/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script defer src="/js/scholar/navigation.js"></script>
 </head>
-<body>
+<body class="bss-workspace bss-scholar">
 
 <!-- ===== 背景层：AI 光场 + 色晕 ===== -->
 <div class="bg-layer" aria-hidden="true">
@@ -27,7 +60,7 @@
 <div class="app">
 
   <!-- ===== 侧边栏 ===== -->
-  <aside class="sidebar">
+  <aside class="sidebar" id="scholar-navigation" inert>
     <div class="sidebar-brand">
       <div class="brand-mark">
         <svg viewBox="0 0 32 32" fill="none">
@@ -55,24 +88,18 @@
         </button>
       </div>
       <div class="nav-group">
-        <div class="nav-group-label">文献 · 转写</div>
+        <div class="nav-group-label">文献（只读）</div>
+        <button class="nav-item" data-panel="reader">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          <span>文献阅读</span>
+        </button>
         <button class="nav-item" data-panel="literature">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h6M9 11h4"/></svg>
           <span>文献工具</span>
         </button>
-        <button class="nav-item" data-panel="translations">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M8 7h8M8 11h5"/></svg>
-          <span>译文库</span>
-          <span class="nav-badge" id="navTransBadge" hidden></span>
-        </button>
-        <button class="nav-item" data-panel="readings">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-          <span>原文精读</span>
-          <span class="nav-badge" id="navReadingBadge" hidden></span>
-        </button>
-        <button class="nav-item" data-panel="wenzhai">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M9 7h6M9 11h4M9 15h6"/></svg>
-          <span>文斋开拓</span>
+        <button class="nav-item nav-desktop-link" id="desktopOpenLink" title="标注 / 翻译 / 笔记整理等写操作请在桌面端完成">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          <span>在桌面端编辑</span>
         </button>
       </div>
       <div class="nav-group">
@@ -104,14 +131,11 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
           <span>文件夹</span>
         </button>
-        <button class="nav-item" data-panel="journal">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
-          <span>研究日志</span>
-        </button>
       </div>
     </nav>
 
     <div class="sidebar-footer">
+      <small data-scholar-version></small>
       <div class="phd-mini">
         <div class="phd-mini-head">
           <span class="phd-mini-label" id="phdMiniLabel">学业进度</span>
@@ -124,7 +148,10 @@
   </aside>
 
   <!-- 右侧触发区域：鼠标移上去展开侧边栏 -->
-  <div class="sidebar-trigger"></div>
+  <button class="sidebar-trigger" type="button" aria-label="导航" aria-controls="scholar-navigation" aria-expanded="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 6h14M5 12h14M5 18h14"/></svg>
+    <span>导航</span>
+  </button>
 
   <!-- ===== 主内容区 ===== -->
   <main class="main">
@@ -132,24 +159,19 @@
     <!-- 顶部状态栏 -->
     <header class="topbar">
       <div class="topbar-left">
+        <p class="bss-eyebrow">Scholar · 研思</p>
         <h1 class="panel-title" id="panelTitle">概览</h1>
         <span class="topbar-date" id="panelDate"></span>
       </div>
       <div class="topbar-right">
-        <button class="topbar-search" id="cmdkOpen" title="打开命令面板">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-          <span>搜索 · 跳转</span>
-          <kbd>⌘K</kbd>
-        </button>
+        <a class="btn-home" href="/" title="返回博客首页" aria-label="返回博客首页">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5"/></svg>
+        </a>
         <button class="theme-toggle" id="themeToggle" aria-label="切换主题">
           <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
           <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         </button>
-        <div class="weather-chip" id="weatherChip">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
-          <span id="weatherText">加载中…</span>
-        </div>
-        <button class="btn-refresh" id="refreshBtn">
+        <button class="btn-refresh" id="refreshBtn" aria-label="更新资讯" title="更新资讯">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
           <span>更新资讯</span>
         </button>
@@ -161,7 +183,21 @@
 
       <!-- ===== 面板：概览 ===== -->
       <section class="panel active" id="panel-dashboard">
+        <nav class="scholar-start" aria-label="研思常用操作">
+          <button class="btn-goto" data-goto="reader" type="button"><i class="fas fa-book-open" aria-hidden="true"></i><span>文献阅读<small>查看原文与中文对照</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></button>
+          <button class="btn-goto" data-goto="literature" type="button"><i class="fas fa-magnifying-glass" aria-hidden="true"></i><span>文献工具<small>检索与文献整理</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></button>
+          <a href="/calendar/"><i class="fas fa-calendar-check" aria-hidden="true"></i><span>待办与记录<small>前往迹寻管理</small></span><i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+        </nav>
         <div class="today-board" id="todayBoard"></div>
+        <!-- 未完成待办（研思只读；增删改、勾选完成统一在迹寻 /calendar/ 操作） -->
+        <div class="card card-todos-dashboard">
+          <div class="card-dot"></div>
+          <div class="card-label">全部未完成待办 · 只读</div>
+          <div class="todo-mini todo-mini-wide" id="dashboardTodos"></div>
+          <a class="btn-goto" href="/calendar/" title="在迹寻页勾选完成或新增待办">前往迹寻管理待办</a>
+        </div>
+
+        <details class="workspace-support scholar-support"><summary>学业与资料概况<span>进度、毕业条件、统计与日志</span></summary>
         <div class="grid-2">
           <div class="card card-phd">
             <div class="card-dot"></div>
@@ -200,14 +236,6 @@
           </div>
         </div>
 
-        <!-- 今日待办（占满宽度） -->
-        <div class="card card-todos-dashboard">
-          <div class="card-dot"></div>
-          <div class="card-label">今日待办</div>
-          <div class="todo-mini todo-mini-wide" id="dashboardTodos"></div>
-          <button class="btn-goto" data-goto="todos">查看全部待办</button>
-        </div>
-
         <div class="grid-3">
           <div class="card stat-card">
             <div class="stat-num" id="statFiles">0</div>
@@ -228,6 +256,7 @@
           <div class="card-label">最新研究日志</div>
           <div class="journal-mini" id="dashboardJournal"></div>
         </div>
+        </details>
       </section>
 
       <!-- ===== 面板：资讯 ===== -->
@@ -284,16 +313,44 @@
         </div>
       </section>
 
-      <!-- ===== 面板：译文库 ===== -->
-      <section class="panel" id="panel-translations">
+      <!-- ===== 面板：文献阅读（只读） ===== -->
+      <section class="panel scholar-ui" id="panel-reader">
+        <div class="reader-tabs" id="readerTabs">
+          <button class="reader-tab active" data-readerview="annot">全部文献</button>
+          <button class="reader-tab" data-readerview="trans">历史译文</button>
+          <button class="reader-tab" data-readerview="read">精读</button>
+        </div>
+
+        <!-- 视图：原文 / 标注本（只读文献目录；标注由桌面端完成并上云） -->
+        <div class="reader-view active" id="reader-view-annot">
+          <div class="reader-masthead">
+            <div>
+              <div class="reader-masthead-title">全部文献</div>
+              <div class="reader-masthead-sub">按 DOI 查看同步正文、中文译文和旧版归档。</div>
+            </div>
+            <button class="hs-btn" id="readerDesktopBtnAnnot">前往桌面端编辑</button>
+          </div>
+          <form id="scholar-reading-access" class="scholar-reading-access">
+            <label>同步口令 <input name="token" type="password" autocomplete="off" required></label>
+            <button class="hs-btn hs-btn-primary" type="submit">读取同步文献</button>
+          </form>
+          <p id="scholar-reading-status" role="status"></p>
+          <div id="scholar-reading-list" class="scholar-reading-list"></div>
+          <button id="scholar-reading-more" class="hs-btn" hidden>加载更多</button>
+          <article id="scholar-reading-detail" hidden></article>
+        </div>
+
+        <!-- 视图：译文（只读） -->
+        <div class="reader-view" id="reader-view-trans">
+      <section class="reader-sub" id="panel-translations">
         <div id="translationsListView">
           <div class="hs-masthead">
             <div class="hs-masthead-left">
-              <div class="hs-masthead-title">译文库</div>
-              <div class="hs-masthead-sub">存过的全文翻译都在这儿，按保存时间排列 · 点开一篇读译文</div>
+              <div class="hs-masthead-title">历史译文</div>
+              <div class="hs-masthead-sub">这里保留暂时无法确认 DOI 的旧译文。</div>
             </div>
             <div class="hs-masthead-actions">
-              <button class="hs-btn" id="transFolderBtn" title="在 Finder 中打开译文库目录">保存目录</button>
+              <button class="hs-btn readonly-hidden" id="transFolderBtn" title="本地目录操作由桌面端完成">保存目录</button>
               <button class="hs-btn hs-btn-primary" id="transRefreshBtn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
                 <span>刷新列表</span>
@@ -308,31 +365,30 @@
           </div>
           <div class="trans-list" id="transList"></div>
           
-          <!-- 译文库管理 -->
-          <div id="transLibStats"></div>
-          <div id="transLibToolbar"></div>
-          <div id="transLibGrid"></div>
-          
+          <!-- 译文本地写库管理界面已移除（网页只读，增删/导出/标签在桌面端） -->
+
           <div class="sum-empty" id="transEmpty" hidden>
             <div class="sum-empty-icon"><svg class="ico-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
-            <div class="sum-empty-title">译文库还是空的</div>
-            <div class="sum-empty-desc">在 PDF 转写的「译文」标签翻译完全文后，点「存入译文库」，译文就会归档到这里</div>
+            <div class="sum-empty-title">暂无待核对的历史译文</div>
+            <div class="sum-empty-desc">已确认 DOI 的归档可在「全部文献」查看。</div>
           </div>
         </div>
         <div id="translationsDetailView" style="display:none;">
           <div class="hs-detail-head">
             <button class="hs-btn" id="transBackBtn">← 返回译文列表</button>
             <div class="hs-detail-title" id="transDetailTitle"></div>
-            <button class="hs-btn" id="transDeleteBtn" title="从译文库移除（不影响转写任务里的原文）">删除</button>
+            <button class="hs-btn readonly-hidden" id="transDeleteBtn" title="删除操作由桌面端完成">删除</button>
           </div>
           <div class="trans-detail-meta" id="transDetailMeta"></div>
           <div class="xref-bar" id="transXref"></div>
           <div class="sum-detail-body" id="transDetailContent"></div>
         </div>
-      </section>
+        </section>
+        </div><!-- /reader-view-trans -->
 
-      <!-- ===== 面板：原文精读库 ===== -->
-      <section class="panel" id="panel-readings">
+        <!-- 视图：精读（只读） -->
+        <div class="reader-view" id="reader-view-read">
+        <section class="reader-sub" id="panel-readings">
         <div id="readingsListView">
           <div class="hs-masthead">
             <div class="hs-masthead-left">
@@ -340,7 +396,7 @@
               <div class="hs-masthead-sub">逐段对照的精读长文 · 原文一段、译文一段、重点处附解读 · 按生成时间排列</div>
             </div>
             <div class="hs-masthead-actions">
-              <button class="hs-btn" id="readFolderBtn" title="在 Finder 中打开精读库目录">保存目录</button>
+              <button class="hs-btn readonly-hidden" id="readFolderBtn" title="本地目录操作由桌面端完成">保存目录</button>
               <button class="hs-btn hs-btn-primary" id="readRefreshBtn">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
                 <span>刷新列表</span>
@@ -355,12 +411,8 @@
           </div>
           <div class="trans-list" id="readList"></div>
           
-          <!-- 文献库管理 -->
-          <div id="readingLibStats"></div>
-          <div id="readingLibFilters" style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;"></div>
-          <div id="readingLibToolbar"></div>
-          <div id="readingLibGrid"></div>
-          
+          <!-- 精读本地写库管理界面已移除（网页只读，增删/导出/标签在桌面端） -->
+
           <div class="sum-empty" id="readEmpty" hidden>
             <div class="sum-empty-icon"><svg class="ico-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
             <div class="sum-empty-title">精读库还是空的</div>
@@ -371,212 +423,15 @@
           <div class="hs-detail-head">
             <button class="hs-btn" id="readBackBtn">← 返回精读列表</button>
             <div class="hs-detail-title" id="readDetailTitle"></div>
-            <button class="hs-btn" id="readDeleteBtn" title="从精读库移除（不影响转写任务里的原文件）">删除</button>
+            <button class="hs-btn readonly-hidden" id="readDeleteBtn" title="删除操作由桌面端完成">删除</button>
           </div>
           <div class="trans-detail-meta" id="readDetailMeta"></div>
           <div class="xref-bar" id="readXref"></div>
           <div class="sum-detail-body reading-body" id="readDetailContent"></div>
         </div>
-      </section>
-
-      <!-- ===== 面板：文斋开拓（文献阅读工作台） ===== -->
-      <section class="panel" id="panel-wenzhai">
-        <div class="wenzhai-workspace">
-          
-          <!-- 顶栏 -->
-          <div class="wenzhai-topbar">
-            <div class="wenzhai-topbar-left">
-              <label class="wenzhai-file-btn" for="wenzhai-file" tabindex="0">
-                <i class="fas fa-folder-open"></i><span>本地 PDF</span>
-              </label>
-              <input id="wenzhai-file" type="file" accept="application/pdf,.pdf" hidden>
-              <div class="wenzhai-input-wrap">
-                <input type="text" id="wenzhai-source" placeholder="粘贴 DOI 或 PDF 链接…">
-              </div>
-              <button class="wenzhai-open-btn" id="wenzhai-open" title="打开">
-                <i class="fas fa-arrow-right"></i>
-              </button>
-              
-              <span class="wenzhai-sep"></span>
-              
-              <button class="wenzhai-tool-btn" id="wenzhaiExportMd" title="导出 Markdown">
-                <i class="fas fa-file-download"></i>
-              </button>
-              <button class="wenzhai-tool-btn" id="wenzhaiExportImg" title="导出长图">
-                <i class="fas fa-image"></i>
-              </button>
-              <button class="wenzhai-tool-btn" id="wenzhaiHelp" title="使用说明">
-                <i class="fas fa-question"></i>
-              </button>
-            </div>
-            <div class="wenzhai-topbar-right">
-              <button class="wenzhai-mode-btn" id="wenzhaiModeBtn" title="切换对照模式">
-                <i class="fas fa-columns"></i><span>对照模式</span>
-              </button>
-              
-              <span class="wenzhai-sep"></span>
-              
-              <!-- 翻页功能 -->
-              <button class="wenzhai-tool-btn" id="wenzhaiPrevPage" title="上一页">
-                <i class="fas fa-chevron-up"></i>
-              </button>
-              <span class="wenzhai-page-label" id="wenzhaiPageLabel">— / —</span>
-              <button class="wenzhai-tool-btn" id="wenzhaiNextPage" title="下一页">
-                <i class="fas fa-chevron-down"></i>
-              </button>
-              
-              <span class="wenzhai-sep"></span>
-              
-              <!-- 缩放功能 -->
-              <button class="wenzhai-tool-btn" id="wenzhaiZoomOut" title="缩小">
-                <i class="fas fa-magnifying-glass-minus"></i>
-              </button>
-              <span class="wenzhai-zoom-label" id="wenzhaiZoomLabel">100%</span>
-              <button class="wenzhai-tool-btn" id="wenzhaiZoomIn" title="放大">
-                <i class="fas fa-magnifying-glass-plus"></i>
-              </button>
-              <button class="wenzhai-tool-btn" id="wenzhaiFitWidth" title="适宽">
-                <i class="fas fa-arrows-left-right"></i>
-              </button>
-              <button class="wenzhai-tool-btn" id="wenzhaiFitPage" title="整页">
-                <i class="fas fa-expand"></i>
-              </button>
-              
-              <span class="wenzhai-sep"></span>
-              
-              <!-- 面板功能 -->
-              <button class="wenzhai-tool-btn" id="wenzhaiOutline" title="目录">
-                <i class="fas fa-list-ul"></i>
-              </button>
-              <button class="wenzhai-tool-btn" id="wenzhaiSearch" title="全文搜索">
-                <i class="fas fa-magnifying-glass"></i>
-              </button>
-              <button class="wenzhai-tool-btn" id="wenzhaiRegionZoom" title="图区放大">
-                <i class="fas fa-magnifying-glass-chart"></i>
-              </button>
-              <button class="wenzhai-tool-btn" id="wenzhaiAnnotRegion" title="图区批注">
-                <i class="fas fa-object-group"></i>
-              </button>
-              
-              <span class="wenzhai-sep"></span>
-              
-              <button class="wenzhai-tool-btn" id="wenzhaiHighlight" title="高亮">
-                <i class="fas fa-highlighter"></i>
-              </button>
-              <button class="wenzhai-tool-btn" id="wenzhaiUnderline" title="划线">
-                <i class="fas fa-underline"></i>
-              </button>
-              <button class="wenzhai-tool-btn" id="wenzhaiAnnot" title="批注">
-                <i class="fas fa-sticky-note"></i>
-              </button>
-              
-              <span class="wenzhai-sep"></span>
-              
-              <button class="wenzhai-tool-btn" id="wenzhaiSummary" title="生成摘要">
-                <i class="fas fa-clipboard-list"></i>
-              </button>
-              <button class="wenzhai-tool-btn" id="wenzhaiTranslate" title="生成中文翻译">
-                <i class="fas fa-language"></i>
-              </button>
-              <button class="wenzhai-tool-btn" id="wenzhaiNotePanel" title="笔记面板">
-                <i class="fas fa-pen"></i>
-              </button>
-              <button class="wenzhai-tool-btn" id="wenzhaiFullscreen" title="全屏">
-                <i class="fas fa-expand-arrows-alt"></i>
-              </button>
-              <button class="wenzhai-tool-btn" id="wenzhaiMore" title="更多">
-                <i class="fas fa-ellipsis"></i>
-              </button>
-            </div>
-          </div>
-
-          <!-- 空状态 -->
-          <div class="wenzhai-empty" id="wenzhaiEmpty">
-            <div class="wenzhai-empty-icon">
-              <i class="fas fa-book-open"></i>
-            </div>
-            <div class="wenzhai-empty-title">拖拽 PDF 到此处，或点击「本地 PDF」选择文件</div>
-            <div class="wenzhai-empty-desc">
-              支持 PDF 上传、DOI 解析、中文对照、笔记标注<br>
-              所有功能都在这一个界面完成
-            </div>
-          </div>
-
-          <!-- 进度 -->
-          <div class="wenzhai-progress" id="wenzhaiProgress" hidden>
-            <div class="wenzhai-progress-stage" id="wenzhaiProgressStage">排队中…</div>
-            <div class="wenzhai-progress-bar">
-              <div class="wenzhai-progress-fill" id="wenzhaiProgressFill" style="width: 0%"></div>
-            </div>
-            <div class="wenzhai-progress-pct" id="wenzhaiProgressPct">0%</div>
-          </div>
-
-          <!-- 主内容区 -->
-          <div class="wenzhai-main" id="wenzhaiMain">
-            <!-- PDF 预览区 -->
-            <div class="wenzhai-pdf-viewer" id="wenzhaiPdfViewer">
-              <canvas id="wenzhaiCanvas"></canvas>
-            </div>
-            
-            <!-- 编辑区（右侧） -->
-            <div class="wenzhai-editor" id="wenzhaiEditor">
-              <div class="wenzhai-doc-title" id="wenzhaiDocTitle"></div>
-              <div class="wenzhai-editor-body markdown-body" id="wenzhaiEditorBody" contenteditable="true"></div>
-            </div>
-            
-            <!-- 翻译区（左侧，对照模式时显示） -->
-            <div class="wenzhai-translation" id="wenzhaiTranslation" hidden>
-              <div class="wenzhai-translation-title">中文翻译（只读）</div>
-              <div class="wenzhai-translation-body markdown-body" id="wenzhaiTranslationBody"></div>
-            </div>
-          </div>
-
-          <!-- 操作按钮 -->
-          <div class="wenzhai-actions" id="wenzhaiActions" hidden>
-            <button class="wenzhai-action-btn" id="wenzhaiSaveBtn">
-              <i class="fas fa-save"></i><span>存入文献库</span>
-            </button>
-            <button class="wenzhai-action-btn" id="wenzhaiCopyBtn">
-              <i class="fas fa-copy"></i><span>复制</span>
-            </button>
-            <button class="wenzhai-action-btn" id="wenzhaiDownloadBtn">
-              <i class="fas fa-download"></i><span>下载</span>
-            </button>
-          </div>
-
-          <!-- 浮动笔记面板 -->
-          <div class="wenzhai-note-panel" id="wenzhaiNotePanel" hidden>
-            <div class="wenzhai-note-header">
-              <span>笔记</span>
-              <button class="wenzhai-note-close" id="wenzhaiNoteClose">×</button>
-            </div>
-            <div class="wenzhai-note-body" contenteditable="true"></div>
-          </div>
-
-          <!-- 浮动目录面板 -->
-          <div class="wenzhai-outline-panel" id="wenzhaiOutlinePanel" hidden>
-            <div class="wenzhai-note-header">
-              <span>目录</span>
-              <button class="wenzhai-note-close" id="wenzhaiOutlineClose">×</button>
-            </div>
-            <div class="wenzhai-outline-body" id="wenzhaiOutlineBody"></div>
-          </div>
-
-          <!-- 浮动搜索面板 -->
-          <div class="wenzhai-search-panel" id="wenzhaiSearchPanel" hidden>
-            <div class="wenzhai-note-header">
-              <span>全文搜索</span>
-              <button class="wenzhai-note-close" id="wenzhaiSearchClose">×</button>
-            </div>
-            <div class="wenzhai-search-input">
-              <input type="text" id="wenzhaiSearchInput" placeholder="输入搜索关键词...">
-            </div>
-            <div class="wenzhai-search-results" id="wenzhaiSearchResults"></div>
-          </div>
-
-        </div>
-      </section>
-
+        </section>
+        </div><!-- /reader-view-read -->
+      </section><!-- /panel-reader -->
       <!-- ===== 面板：文件夹 ===== -->
       <section class="panel" id="panel-sections">
         <div class="sections-grid" id="sectionsGrid"></div>
@@ -585,7 +440,8 @@
       <!-- ===== 面板：研究日志 ===== -->
       <section class="panel" id="panel-journal">
         <div class="week-review" id="weekReview" hidden></div>
-        <div class="card">
+        <!-- 研思只读：原「快速记录」写卡已下线（写入统一在迹寻 /calendar/），节点保留并隐藏，避免脚本选择器空引用 -->
+        <div class="card" hidden>
           <div class="card-dot"></div>
           <div class="card-label">快速记录</div>
           <div class="journal-input-row">
@@ -598,10 +454,11 @@
               </select>
               <span style="font-size:12px;color:var(--text-muted);">选择日志类型</span>
             </div>
-            <textarea id="journalInput" class="journal-input" placeholder="今天的研究进展、想法、卡住的地方…&#10;写 [[card:论文标题]] 能链到摘要卡片，点一下就跳过去" rows="3"></textarea>
-            <button class="btn-primary" id="journalAddBtn">记录</button>
+            <textarea id="journalInput" class="journal-input" placeholder="今天的研究进展、想法、卡住的地方…" rows="3" disabled></textarea>
+            <button class="btn-primary" id="journalAddBtn" disabled>记录</button>
           </div>
         </div>
+        <div class="journal-readonly-tip">工作记录与待办请在「迹寻」页面统一录入与勾选；此处仅按日期只读展示近期记录。</div>
         <div class="journal-filters" id="journalTypeFilters"></div>
         <div class="journal-timeline" id="journalTimeline"></div>
       </section>
@@ -632,21 +489,8 @@
   </div>
 </div>
 
-<!-- 番茄钟专注计时浮条 -->
-<div class="pomo-timer" id="pomoTimer" hidden>
-  <svg class="pomo-ring" viewBox="0 0 48 48">
-    <circle class="pomo-ring-bg" cx="24" cy="24" r="20"/>
-    <circle class="pomo-ring-fg" id="pomoRingFg" cx="24" cy="24" r="20"/>
-  </svg>
-  <div class="pomo-info">
-    <div class="pomo-clock" id="pomoClock">25:00</div>
-    <div class="pomo-task" id="pomoTask"></div>
-  </div>
-  <div class="pomo-btns">
-    <button class="pomo-btn" id="pomoPauseBtn" title="暂停 / 继续">暂停</button>
-    <button class="pomo-btn pomo-btn-stop" id="pomoStopBtn" title="放弃本次专注">放弃</button>
-  </div>
-</div>
+<!-- 未完成待办只读状态条（替代旧番茄计时浮条）：整体点击跳迹寻页处理 -->
+<div class="todo-status-bar" id="todoStatusBar" hidden></div>
 
 <!-- 原文精读生成进度：浮动进度卡，任何面板都能看到（生成在服务端跑，切走/关标签都不中断） -->
 <div class="read-task" id="readTaskBar" hidden>
@@ -873,509 +717,10 @@
   </div>
 </div>
 
-<!-- 文斋开拓主控制器（内联脚本，避免文件加载问题） -->
-<script>
-(() => {
-  'use strict'
 
-  // 设置 PDF.js worker
-  if (window.pdfjsLib) {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js'
-  }
-
-  const state = {
-    file: null,
-    fileName: '',
-    pdfDoc: null,
-    pageCount: 0,
-    activePage: 1,
-    scale: 1,
-    notes: [],
-    transcription: ''
-  }
-
-  const el = {}
-  const cache = id => { el[id] = el[id] || document.getElementById(id); return el[id] }
-
-  const toast = (msg, type = 'info', ms = 2500) => {
-    console.log('[wenzhai] ' + msg)
-  }
-
-  const renderPage = async (pageNum) => {
-    if (!state.pdfDoc) return
-    try {
-      const page = await state.pdfDoc.getPage(pageNum)
-      const viewport = page.getViewport({ scale: state.scale })
-      const canvas = cache('wenzhaiCanvas')
-      if (!canvas) return
-      const ctx = canvas.getContext('2d')
-      canvas.height = viewport.height
-      canvas.width = viewport.width
-      await page.render({ canvasContext: ctx, viewport: viewport }).promise
-    } catch (err) {
-      console.error('[wenzhai] render error:', err)
-    }
-  }
-
-  const loadPdf = async (file) => {
-    try {
-      const arrayBuffer = await file.arrayBuffer()
-      state.pdfDoc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
-      state.pageCount = state.pdfDoc.numPages
-      state.activePage = 1
-      state.file = file
-      state.fileName = file.name
-      
-      // 隐藏空状态，显示主内容区
-      const emptyEl = cache('wenzhaiEmpty')
-      if (emptyEl) emptyEl.style.display = 'none'
-      const mainEl = cache('wenzhaiMain')
-      if (mainEl) mainEl.style.display = 'flex'
-      
-      updatePageLabel()
-      renderPage(state.activePage)
-      toast('PDF 加载成功：' + file.name + '，共 ' + state.pageCount + ' 页')
-    } catch (err) {
-      toast('PDF 加载失败：' + err.message)
-    }
-  }
-
-  const bindEvents = () => {
-    const fileInput = cache('wenzhai-file')
-    if (fileInput) fileInput.addEventListener('change', e => {
-      const file = e.target.files[0]
-      if (file) loadPdf(file)
-    })
-
-    const openBtn = cache('wenzhai-open')
-    if (openBtn) openBtn.addEventListener('click', submit)
-
-    const sourceInput = cache('wenzhai-source')
-    if (sourceInput) sourceInput.addEventListener('keydown', e => { if (e.key === 'Enter') submit() })
-
-    const prevBtn = cache('wenzhaiPrevPage')
-    if (prevBtn) prevBtn.addEventListener('click', prevPage)
-
-    const nextBtn = cache('wenzhaiNextPage')
-    if (nextBtn) nextBtn.addEventListener('click', nextPage)
-
-    const zoomOutBtn = cache('wenzhaiZoomOut')
-    if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => zoomBy(-0.1))
-
-    const zoomInBtn = cache('wenzhaiZoomIn')
-    if (zoomInBtn) zoomInBtn.addEventListener('click', () => zoomBy(0.1))
-
-    const exportMdBtn = cache('wenzhaiExportMd')
-    if (exportMdBtn) exportMdBtn.addEventListener('click', exportMd)
-
-    // 笔记面板
-    const notePanelBtn = cache('wenzhaiNotePanelBtn')
-    if (notePanelBtn) notePanelBtn.addEventListener('click', toggleNotePanel)
-    const noteCloseBtn = cache('wenzhaiNoteClose')
-    if (noteCloseBtn) noteCloseBtn.addEventListener('click', () => {
-      const panel = cache('wenzhaiNotePanel')
-      if (panel) panel.style.display = 'none'
-    })
-
-    // 目录面板
-    const outlineBtn = cache('wenzhaiOutline')
-    if (outlineBtn) outlineBtn.addEventListener('click', toggleOutlinePanel)
-    const outlineCloseBtn = cache('wenzhaiOutlineClose')
-    if (outlineCloseBtn) outlineCloseBtn.addEventListener('click', () => {
-      const panel = cache('wenzhaiOutlinePanel')
-      if (panel) panel.style.display = 'none'
-    })
-
-    // AI 摘要和中文翻译
-    const summaryBtn = cache('wenzhaiSummary')
-    if (summaryBtn) summaryBtn.addEventListener('click', generateSummary)
-    const translateBtn = cache('wenzhaiTranslate')
-    if (translateBtn) translateBtn.addEventListener('click', generateTranslation)
-
-    // 标注功能
-    const highlightBtn = cache('wenzhaiHighlight')
-    if (highlightBtn) highlightBtn.addEventListener('click', () => addAnnotation('highlight'))
-    const underlineBtn = cache('wenzhaiUnderline')
-    if (underlineBtn) underlineBtn.addEventListener('click', () => addAnnotation('underline'))
-    const annotBtn = cache('wenzhaiAnnot')
-    if (annotBtn) annotBtn.addEventListener('click', () => addAnnotation('annot'))
-
-    // 搜索面板
-    const searchBtn = cache('wenzhaiSearch')
-    if (searchBtn) searchBtn.addEventListener('click', toggleSearchPanel)
-    const searchCloseBtn = cache('wenzhaiSearchClose')
-    if (searchCloseBtn) searchCloseBtn.addEventListener('click', () => {
-      const panel = cache('wenzhaiSearchPanel')
-      if (panel) panel.style.display = 'none'
-    })
-    const searchInput = cache('wenzhaiSearchInput')
-    if (searchInput) searchInput.addEventListener('input', debounce(handleSearch, 300))
-  }
-
-  const submit = () => {
-    const url = cache('wenzhai-source')
-    if (!url || !url.value.trim()) {
-      toast('请输入 DOI 或 PDF 链接')
-      return
-    }
-    toast('正在打开：' + url.value.trim())
-  }
-
-  const prevPage = () => {
-    if (state.activePage > 1) {
-      state.activePage--
-      updatePageLabel()
-      renderPage(state.activePage)
-    }
-  }
-
-  const nextPage = () => {
-    if (state.activePage < state.pageCount) {
-      state.activePage++
-      updatePageLabel()
-      renderPage(state.activePage)
-    }
-  }
-
-  const updatePageLabel = () => {
-    const label = cache('wenzhaiPageLabel')
-    if (label) label.textContent = state.activePage + ' / ' + (state.pageCount || '—')
-  }
-
-  const zoomBy = (delta) => {
-    state.scale = Math.max(0.5, Math.min(3, state.scale + delta))
-    updateZoomLabel()
-    renderPage(state.activePage)
-  }
-
-  const updateZoomLabel = () => {
-    const label = cache('wenzhaiZoomLabel')
-    if (label) label.textContent = Math.round(state.scale * 100) + '%'
-  }
-
-  // 笔记面板功能
-  const toggleNotePanel = () => {
-    const panel = cache('wenzhaiNotePanel')
-    if (!panel) return
-    if (panel.style.display === 'none' || !panel.style.display) {
-      panel.style.display = 'flex'
-      loadNote()
-    } else {
-      saveNote()
-      panel.style.display = 'none'
-    }
-  }
-
-  const loadNote = () => {
-    const body = document.querySelector('#wenzhaiNotePanel .wenzhai-note-body')
-    if (!body) return
-    const key = 'wenzhai-note-' + (state.fileName || 'default')
-    body.textContent = localStorage.getItem(key) || ''
-  }
-
-  const saveNote = () => {
-    const body = document.querySelector('#wenzhaiNotePanel .wenzhai-note-body')
-    if (!body) return
-    const key = 'wenzhai-note-' + (state.fileName || 'default')
-    localStorage.setItem(key, body.textContent)
-    toast('笔记已保存')
-  }
-
-  // 目录面板功能
-  const toggleOutlinePanel = async () => {
-    const panel = cache('wenzhaiOutlinePanel')
-    if (!panel) return
-    if (panel.style.display === 'none' || !panel.style.display) {
-      panel.style.display = 'flex'
-      await loadOutline()
-    } else {
-      panel.style.display = 'none'
-    }
-  }
-
-  const loadOutline = async () => {
-    const body = cache('wenzhaiOutlineBody')
-    if (!body || !state.pdfDoc) return
-    try {
-      const outline = await state.pdfDoc.getOutline()
-      if (!outline || outline.length === 0) {
-        body.innerHTML = '<div style="padding: 20px; color: #999; text-align: center;">暂无目录</div>'
-        return
-      }
-      body.innerHTML = outline.map(item => 
-        `<div class="outline-item" data-page="${item.dest[0]?.num || 1}">
-          <i class="fas fa-bookmark"></i> ${item.title}
-        </div>`
-      ).join('')
-      
-      // 点击目录项跳转到对应页面
-      body.querySelectorAll('.outline-item').forEach(item => {
-        item.addEventListener('click', () => {
-          const pageNum = parseInt(item.dataset.page)
-          if (pageNum) {
-            state.activePage = pageNum
-            updatePageLabel()
-            renderPage(state.activePage)
-          }
-        })
-      })
-    } catch (err) {
-      body.innerHTML = '<div style="padding: 20px; color: #999; text-align: center;">目录加载失败</div>'
-    }
-  }
-
-  // AI 摘要和中文翻译
-  const generateSummary = async () => {
-    if (!state.pdfDoc) {
-      toast('请先打开 PDF 文件')
-      return
-    }
-    toast('正在生成摘要...')
-    try {
-      // 提取第一页的文本作为示例
-      const page = await state.pdfDoc.getPage(1)
-      const textContent = await page.getTextContent()
-      const text = textContent.items.map(item => item.str).join(' ')
-      
-      const response = await fetch('/api/wenzhai/summary', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: text.substring(0, 1000) }) // 只发送前 1000 个字符
-      })
-      const result = await response.json()
-      
-      if (result.error) {
-        toast('摘要生成失败：' + (result.message || result.error))
-      } else {
-        toast('摘要生成完成')
-        // TODO: 在笔记面板中显示摘要
-      }
-    } catch (err) {
-      toast('摘要生成失败：' + err.message)
-    }
-  }
-
-  const generateTranslation = async () => {
-    if (!state.pdfDoc) {
-      toast('请先打开 PDF 文件')
-      return
-    }
-    toast('正在生成中文翻译...')
-    try {
-      // 提取第一页的文本作为示例
-      const page = await state.pdfDoc.getPage(1)
-      const textContent = await page.getTextContent()
-      const text = textContent.items.map(item => item.str).join(' ')
-      
-      const response = await fetch('/api/wenzhai/translate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: text.substring(0, 1000) }) // 只发送前 1000 个字符
-      })
-      const result = await response.json()
-      
-      if (result.error) {
-        toast('中文翻译生成失败：' + (result.message || result.error))
-      } else {
-        const translationPanel = cache('wenzhaiTranslation')
-        if (translationPanel) {
-          translationPanel.hidden = false
-          const translationBody = document.getElementById('wenzhaiTranslationBody')
-          if (translationBody) {
-            translationBody.textContent = result.translation
-          }
-        }
-        toast('中文翻译生成完成')
-      }
-    } catch (err) {
-      toast('中文翻译生成失败：' + err.message)
-    }
-  }
-
-  // 标注功能
-  const addAnnotation = (type) => {
-    const selection = window.getSelection()
-    if (!selection || selection.isCollapsed) {
-      toast('请先选中要标注的文本')
-      return
-    }
-    
-    const selectedText = selection.toString()
-    if (!selectedText) return
-    
-    // 创建标注
-    const annotation = {
-      id: Date.now(),
-      type: type, // highlight | underline | annot
-      text: selectedText,
-      page: state.activePage,
-      timestamp: new Date().toISOString()
-    }
-    
-    // 保存标注到 localStorage
-    const key = 'wenzhai-annotations-' + (state.fileName || 'default')
-    const annotations = JSON.parse(localStorage.getItem(key) || '[]')
-    annotations.push(annotation)
-    localStorage.setItem(key, JSON.stringify(annotations))
-    
-    // 高亮选中的文本
-    if (type === 'highlight') {
-      highlightSelection(selectedText, 'yellow')
-    } else if (type === 'underline') {
-      highlightSelection(selectedText, 'transparent', 'underline')
-    }
-    
-    toast('标注已添加')
-  }
-  
-  const highlightSelection = (text, color = 'yellow', style = 'background') => {
-    const selection = window.getSelection()
-    if (!selection.rangeCount) return
-    
-    const range = selection.getRangeAt(0)
-    const span = document.createElement('span')
-    if (style === 'background') {
-      span.style.backgroundColor = color
-    } else {
-      span.style.textDecoration = 'underline'
-      span.style.textDecorationColor = 'red'
-    }
-    span.className = 'wenzhai-annotation'
-    span.appendChild(range.extractContents())
-    range.insertNode(span)
-    
-    selection.removeAllRanges()
-  }
-
-  // 搜索面板功能
-  const toggleSearchPanel = () => {
-    const panel = cache('wenzhaiSearchPanel')
-    if (!panel) return
-    if (panel.style.display === 'none' || !panel.style.display) {
-      panel.style.display = 'flex'
-      const input = cache('wenzhaiSearchInput')
-      if (input) input.focus()
-    } else {
-      panel.style.display = 'none'
-    }
-  }
-
-  const handleSearch = async (e) => {
-    const keyword = e.target.value.trim()
-    const resultsContainer = cache('wenzhaiSearchResults')
-    if (!resultsContainer) return
-    
-    if (!keyword) {
-      resultsContainer.innerHTML = ''
-      return
-    }
-    
-    if (!state.pdfDoc) {
-      resultsContainer.innerHTML = '<div style="padding: 20px; color: #999; text-align: center;">请先打开 PDF 文件</div>'
-      return
-    }
-    
-    resultsContainer.innerHTML = '<div style="padding: 20px; color: #999;">正在搜索...</div>'
-    
-    try {
-      const results = []
-      for (let i = 1; i <= state.pageCount; i++) {
-        const page = await state.pdfDoc.getPage(i)
-        const textContent = await page.getTextContent()
-        const pageText = textContent.items.map(item => item.str).join(' ')
-        
-        if (pageText.toLowerCase().includes(keyword.toLowerCase())) {
-          // 提取匹配位置的上下文
-          const index = pageText.toLowerCase().indexOf(keyword.toLowerCase())
-          const start = Math.max(0, index - 50)
-          const end = Math.min(pageText.length, index + keyword.length + 50)
-          const context = '...' + pageText.substring(start, end) + '...'
-          
-          results.push({
-            page: i,
-            context: context
-          })
-        }
-      }
-      
-      if (results.length === 0) {
-        resultsContainer.innerHTML = '<div style="padding: 20px; color: #999; text-align: center;">未找到匹配结果</div>'
-      } else {
-        resultsContainer.innerHTML = results.map(r => 
-          `<div class="search-result-item" data-page="${r.page}">
-            <div class="search-result-page">第 ${r.page} 页</div>
-            <div class="search-result-context">${r.context}</div>
-          </div>`
-        ).join('')
-        
-        // 点击搜索结果跳转到对应页面
-        resultsContainer.querySelectorAll('.search-result-item').forEach(item => {
-          item.addEventListener('click', () => {
-            const pageNum = parseInt(item.dataset.page)
-            if (pageNum) {
-              state.activePage = pageNum
-              updatePageLabel()
-              renderPage(state.activePage)
-            }
-          })
-        })
-      }
-    } catch (err) {
-      resultsContainer.innerHTML = '<div style="padding: 20px; color: #999; text-align: center;">搜索失败</div>'
-    }
-  }
-
-  // 防抖函数
-  const debounce = (func, wait) => {
-    let timeout
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout)
-        func(...args)
-      }
-      clearTimeout(timeout)
-      timeout = setTimeout(later, wait)
-    }
-  }
-
-  const exportMd = () => {
-    if (!state.transcription) {
-      toast('没有可导出的内容')
-      return
-    }
-    const blob = new Blob([state.transcription], { type: 'text/markdown' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = (state.fileName || 'document').replace('.pdf', '.md')
-    a.click()
-    URL.revokeObjectURL(url)
-    toast('已导出 Markdown 文件')
-  }
-
-  const init = () => {
-    bindEvents()
-    console.log('[wenzhai] reader initialized')
-  }
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init)
-  } else {
-    init()
-  }
-
-  console.log('[wenzhai] about to expose window.WENZHAI_READER')
-  window.WENZHAI_READER = { state, init }
-  console.log('[wenzhai] window.WENZHAI_READER exposed successfully')
-})()
-</script>
-
-<!-- 原文精读文献库管理模块 -->
-<script src="/js/academic-workbench/reading-library.js"></script>
-
-<!-- 译文库管理模块 -->
-<script src="/js/academic-workbench/translation-library.js"></script>
-
-<script src="/js/academic-workbench/app.js"></script>
+<!-- 网页端为只读门户：本地 IndexedDB 写库（增删 / 批量操作 / 导出 / 编辑标签）由桌面端 scholar-local 承接，此处不再加载这两个管理脚本；对应 js 文件保留供桌面端复用。 -->
+<script defer src="/js/scholar/baseline.js?sync=4"></script>
+<script defer src="/js/academic-workbench/app.js?desktop=1"></script>
+<script defer src="/js/scholar/reading.js?desktop=1"></script>
 </body>
 </html>

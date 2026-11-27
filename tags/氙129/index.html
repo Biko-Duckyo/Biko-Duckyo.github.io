@@ -1,0 +1,397 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>标签: 氙129 | Biko的个人小站</title><meta name="author" content="Biko"><meta name="copyright" content="Biko"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0d1018"><meta name="description" content="多学技术 提升自己">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Biko的个人小站">
+<meta property="og:url" content="https://biko-duckyo.pages.dev/tags/%E6%B0%99129/index.html">
+<meta property="og:site_name" content="Biko的个人小站">
+<meta property="og:description" content="多学技术 提升自己">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://biko-duckyo.pages.dev/img/avatar.jpg">
+<meta property="article:author" content="Biko">
+<meta property="article:tag" content="web前端 html css js vue hexo nodejs">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://biko-duckyo.pages.dev/img/avatar.jpg"><script type="application/ld+json"></script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://biko-duckyo.pages.dev/tags/%E6%B0%99129/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="manifest" href="/manifest.json"><meta name="msapplication-TileColor" content="#0d1018"><link rel="apple-touch-icon" sizes="180x180" href="/img/pwa/apple-touch-icon-180.png"><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="/css/vendor/fontawesome.min.css?v=188eaf469afe"><link rel="stylesheet" href="/css/vendor/snackbar.min.css?v=a9fb1d56a55e" media="print" onload="this.media='all'"><link rel="stylesheet" href="/css/vendor/fancybox.min.css?v=0384c834d6c6" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!true && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d1018')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', 'f2f5fa')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#7E96B8","bgDark":"#1a2030","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '标签: 氙129',
+  isHighlightShrink: false,
+  isToc: false,
+  pageType: 'tag'
+}</script><script src="/js/custom/home-entry.js?v=e8c73227429d"></script><script src="/js/custom/chrome-glass.js?v=5c2fbc17cb59"></script><link rel="stylesheet" href="/css/access-gates.css?v=e190abb0720e"><script src="/js/custom/access-gates.js?v=7ee1fae5be52"></script><script>(function(){try{var p=location.pathname.replace(/\/?$/,"/");var s=new URLSearchParams(location.search).get("shell");if(s==="classic"||/^\/(image-editor|books|nanaly)\//.test(p))return;var d=document.documentElement;d.classList.add("bss-early");setTimeout(function(){if(!window.__bikoShellSample)d.classList.remove("bss-early")},3000)}catch(e){}})()</script><link rel="stylesheet" href="/css/common_layout.css?v=9c849f948849"><link rel="stylesheet" href="/css/custom.css?v=2f3c21063883"><link rel="stylesheet" href="/css/custom_nav.css?v=c6b098771e46"><link rel="stylesheet" href="/css/custom_article.css?v=1f228c9f97ba"><link rel="stylesheet" href="/css/workspace-hierarchy.css?v=b5b5b887b628"><link rel="stylesheet" href="/css/interaction-feedback.css?v=2bb562afecce"><script src="/js/custom/interaction-feedback.js?v=7360cdf2c1d3"></script><link rel="stylesheet" href="/css/home_dashboard.css?v=7e3409ffad74"><link rel="stylesheet" href="/css/home_hub.css?v=788a182be6c6"><link rel="stylesheet" href="/css/music_panel.css?v=4eea1c3056c9"><link rel="stylesheet" href="/css/music_page.css?v=bd461e49c67e"><link rel="stylesheet" href="/css/biko_subpage.css?v=894bd3d4aa91"><link rel="stylesheet" href="/css/biko_theme_toggle.css?v=0b64cf3a6076"><link rel="stylesheet" href="/css/worklog_calendar.css?v=ca6de81ba9e4"><link rel="stylesheet" href="/css/anime.css?v=86fe320e234e"><link rel="stylesheet" href="/css/resources.css?v=ab84ffbc3a84"><link rel="stylesheet" href="/css/gallery_page.css?v=d1216271bcc1"><link rel="stylesheet" href="/css/gallery_gate.css?v=cd4df8585731"><link rel="stylesheet" href="/css/tag-link.css?v=f526c58dc0cf"><link rel="stylesheet" href="/css/og-card.css?v=165af189fa1b"><link rel="stylesheet" href="/css/rightmenu.css?v=a53b93e0396b"><link rel="stylesheet" href="https://at.alicdn.com/t/c/font_3764468_7jp6rqh1vde.css"><script src="/js/custom/fontawesome-guard.js?v=dd8f042c449a"></script><link rel="stylesheet" href="/css/error404.css?v=4d31e0d0af1f"><script defer="" src="/js/error404.js?v=38276536fb44"></script><link rel="stylesheet" href="/css/site-search.css?v=3494bc6513e9"><link rel="stylesheet" href="/css/loading-rolling.css?v=48e5a3e27113"><meta name="apple-mobile-web-app-title" content="鸭喵屋"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-double-row-display@1.00/cardlistpost.min.css">
+<style>#recent-posts > .recent-post-item >.recent-post-info > .article-meta-wrap > .tags:before {content:"\A";
+  white-space: pre;}#recent-posts > .recent-post-item >.recent-post-info > .article-meta-wrap > .tags > .article-meta__separator{display:none}</style>
+<link rel="stylesheet" href="/clock/clock.css?v=da21df19eae8"><link rel="stylesheet" href="/footer-beautify/runtime.min.css?v=a2c75d72ca5b" media="print" onload="this.media='all'"><link rel="stylesheet" href="/swiper/swiper.min.css?v=8087679cf0f7" media="print" onload="this.media='all'"><link rel="stylesheet" href="/swiper/swiperstyle.css?v=312c2f99bbbe" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-butterfly-wowjs/lib/animate.min.css" media="print" onload="this.media='screen'"><link rel="stylesheet" href="/css/vendor/font-awesome-animation.min.css?v=10fa38d6f20b" media="defer" onload="this.media='all'"><link rel="stylesheet" href="/css/vendor/tag_plugins.css?v=4657dc7b7cbc" media="defer" onload="this.media='all'"><script src="/js/vendor/carousel-touch.js?v=92a0dea503b2"></script><!-- hexo injector head_end end --><meta name="generator" content="Hexo 8.1.2"><link rel="alternate" href="/atom.xml" title="Biko的个人小站" type="application/atom+xml">
+<link rel="stylesheet" href="/css/adaptive-tools.css?v=36e1ac6a9bac"><script defer="" src="/js/custom/adaptive-tools.js?v=ed3e1b84047e"></script></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (true) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" decoding="async" loading="eager"></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">67</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">252</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly/"><i class="fa-fw fas fa-heart"></i><span> butterfly主题</span></a></div></div></div></div><div class="page" id="body-wrap"><header class="not-home-page fixed" id="page-header" style="background-image: url(/img/banner.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Biko的个人小站</span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly/"><i class="fa-fw fas fa-heart"></i><span> butterfly主题</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="page-site-info"><h1 id="site-title">氙129</h1></div></header><main class="layout" id="content-inner"><div id="tag"><div class="article-sort-title">标签 - 氙129</div><div class="article-sort"><div class="article-sort-item year">2026</div><div class="article-sort-item"><a class="article-sort-item-img" href="/2026/11/26/%E5%89%8D%E6%B2%BF%E8%AE%B2%E4%B9%8908-%E8%82%BA%E6%B0%99MRI%E4%B8%8E%E5%BF%83%E8%84%8F%E5%BB%B6%E8%BF%9F%E5%BC%BA%E5%8C%96/" title="前沿讲义 08 · 肺氙 MRI 与心脏延迟强化：气体交换的三层读出与 PSIR"><img src="/img/banner.jpg" alt="前沿讲义 08 · 肺氙 MRI 与心脏延迟强化：气体交换的三层读出与 PSIR" onerror="this.onerror=null;this.src='/img/404.jpg'" decoding="async" loading="lazy"></a><div class="article-sort-item-info"><div class="article-sort-item-time"><i class="far fa-calendar-alt"></i><time class="post-meta-date-created" datetime="2026-11-25T23:10:00.000Z" title="发表于 2026-11-26 07:10:00">2026-11-26</time></div><a class="article-sort-item-title" href="/2026/11/26/%E5%89%8D%E6%B2%BF%E8%AE%B2%E4%B9%8908-%E8%82%BA%E6%B0%99MRI%E4%B8%8E%E5%BF%83%E8%84%8F%E5%BB%B6%E8%BF%9F%E5%BC%BA%E5%8C%96/" title="前沿讲义 08 · 肺氙 MRI 与心脏延迟强化：气体交换的三层读出与 PSIR">前沿讲义 08 · 肺氙 MRI 与心脏延迟强化：气体交换的三层读出与 PSIR</a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" decoding="async" loading="lazy"></div><div class="author-info-name">Biko</div><div class="author-info-description">一只努力学习的菜鸟甜甜圈～</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">67</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">252</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/Biko-Duckyo"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/Biko-Duckyo" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:1078857679@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a><a class="social-icon" href="tencent://AddContact/?fromId=50&amp;fromSubId=1&amp;subcmd=all&amp;uin=1078857679" target="_blank" title="QQ"><i class="iconfont icon-qq" style="color: #12b7f5;"></i></a><a class="social-icon" href="https://www.zhihu.com/people/qin-chao-10-90" target="_blank" title="Zhihu"><i class="iconfont icon-zhihu" style="color: #0084ff;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">Biko的个人小站！
+一只全面发展的菜鸟甜甜圈~
+<span class="biko-marquee" role="marquee" aria-label="双手合十成为自己的神，自己所信念的即是信仰"><span class="biko-marquee__track"><span class="biko-marquee__item">双手合十成为自己的神，自己所信念的即是信仰</span><span class="biko-marquee__item" aria-hidden="true">双手合十成为自己的神，自己所信念的即是信仰</span></span></span>微信号：15651005256
+QQ号：1078857679</div></div><div class="sticky_layout"><div class="card-widget card-categories"><div class="item-headline"><i class="fas fa-folder-open"></i><span>分类</span></div>
+          <ul class="card-category-list" id="aside-cat-list">
+            <li class="card-category-list-item "><a class="card-category-list-link" href="/categories/Hexo-%E6%95%99%E7%A8%8B/"><span class="card-category-list-name">Hexo 教程</span><span class="card-category-list-count">17</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/MRI%E5%AF%B9%E6%AF%94%E5%89%82%E4%B8%8E%E5%88%86%E5%AD%90%E5%BD%B1%E5%83%8F/"><span class="card-category-list-name">MRI对比剂与分子影像</span><span class="card-category-list-count">4</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/NMR%E7%9F%A5%E8%AF%86%E5%9B%BE%E8%B0%B1/"><span class="card-category-list-name">NMR知识图谱</span><span class="card-category-list-count">10</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/PhD%E4%B9%8B%E8%B7%AF/"><span class="card-category-list-name">PhD之路</span><span class="card-category-list-count">2</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/%E4%BC%9A%E8%AE%AE%E7%AC%94%E8%AE%B0/"><span class="card-category-list-name">会议笔记</span><span class="card-category-list-count">13</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/%E5%89%8D%E6%B2%BF%E7%9F%A5%E8%AF%86%E8%AE%B2%E4%B9%89/"><span class="card-category-list-name">前沿知识讲义</span><span class="card-category-list-count">17</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/%E7%A3%81%E6%80%A7%E7%BA%B3%E7%B1%B3%E6%9D%90%E6%96%99%E4%B8%8E%E7%A3%81%E5%AD%A6%E5%9F%BA%E7%A1%80/"><span class="card-category-list-name">磁性纳米材料与磁学基础</span><span class="card-category-list-count">3</span></a></li><li class="card-category-list-item "><a class="card-category-list-link" href="/categories/%E8%B5%84%E6%BA%90%E5%A4%87%E4%BB%BD/"><span class="card-category-list-name">资源备份</span><span class="card-category-list-count">1</span></a></li>
+          </ul></div><div class="card-widget card-tags"><div class="item-headline"><i class="fas fa-tags"></i><span>标签</span></div><div class="card-tag-cloud"><a href="/tags/%E8%B6%85%E9%A1%BA%E7%A3%81%E6%B0%A7%E5%8C%96%E9%93%81/" style="font-size: 1.1em; color: #999">超顺磁氧化铁</a> <a href="/tags/GRASE/" style="font-size: 1.1em; color: #999">GRASE</a> <a href="/tags/TR/" style="font-size: 1.1em; color: #999">TR</a> <a href="/tags/%E7%A5%9E%E7%BB%8F%E4%BB%A3%E8%B0%A2%E7%89%A9/" style="font-size: 1.1em; color: #999">神经代谢物</a> <a href="/tags/%E5%A4%9A%E5%8F%82%E6%95%B0%E5%AE%9A%E9%87%8FMRI/" style="font-size: 1.1em; color: #999">多参数定量MRI</a> <a href="/tags/%E6%B7%B1%E9%83%A8%E8%84%91%E5%88%BA%E6%BF%80/" style="font-size: 1.1em; color: #999">深部脑刺激</a> <a href="/tags/TE/" style="font-size: 1.1em; color: #999">TE</a> <a href="/tags/%E5%BB%B6%E8%BF%9F%E5%BC%BA%E5%8C%96/" style="font-size: 1.1em; color: #999">延迟强化</a> <a href="/tags/PDFF/" style="font-size: 1.1em; color: #999">PDFF</a> <a href="/tags/T1%E5%8A%A0%E6%9D%83/" style="font-size: 1.1em; color: #999">T1加权</a> <a href="/tags/POCT/" style="font-size: 1.37em; color: #99a4b2">POCT</a> <a href="/tags/%E8%82%BAMRI/" style="font-size: 1.1em; color: #999">肺MRI</a> <a href="/tags/%E5%8D%9A%E5%AE%A2%E4%BC%98%E5%8C%96/" style="font-size: 1.1em; color: #999">博客优化</a> <a href="/tags/%E5%BC%A5%E6%95%A3%E6%88%90%E5%83%8F/" style="font-size: 1.23em; color: #999ea6">弥散成像</a> <a href="/tags/%E9%AB%98%E6%A2%AF%E5%BA%A6MRI/" style="font-size: 1.37em; color: #99a4b2">高梯度MRI</a> <a href="/tags/SV2A/" style="font-size: 1.1em; color: #999">SV2A</a> <a href="/tags/%E9%94%B0%E5%9F%BA%E5%AF%B9%E6%AF%94%E5%89%82/" style="font-size: 1.23em; color: #999ea6">锰基对比剂</a> <a href="/tags/EPTI/" style="font-size: 1.23em; color: #999ea6">EPTI</a> <a href="/tags/%E5%BF%83%E8%84%8FLGE/" style="font-size: 1.1em; color: #999">心脏LGE</a> <a href="/tags/%E5%B7%A5%E7%A8%8B%E5%8C%96/" style="font-size: 1.23em; color: #999ea6">工程化</a> <a href="/tags/%E8%87%AA%E5%8A%A8%E5%8C%96/" style="font-size: 1.1em; color: #999">自动化</a> <a href="/tags/TMS%E5%AF%BC%E8%88%AA/" style="font-size: 1.1em; color: #999">TMS导航</a> <a href="/tags/%E5%A3%B0%E5%8A%A8%E5%8A%9B%E6%B2%BB%E7%96%97/" style="font-size: 1.23em; color: #999ea6">声动力治疗</a> <a href="/tags/Butterfly/" style="font-size: 1.5em; color: #99a9bf">Butterfly</a> <a href="/tags/%E7%94%9F%E7%89%A9%E6%A0%87%E5%BF%97%E7%89%A9/" style="font-size: 1.1em; color: #999">生物标志物</a> <a href="/tags/%E7%A7%91%E5%AD%A6%E4%B8%8A%E7%BD%91/" style="font-size: 1.1em; color: #999">科学上网</a> <a href="/tags/%E4%B9%B3%E8%85%BA%E7%99%8C/" style="font-size: 1.1em; color: #999">乳腺癌</a> <a href="/tags/%E5%A4%96%E7%90%83%E5%BC%9B%E8%B1%AB%E7%90%86%E8%AE%BA/" style="font-size: 1.1em; color: #999">外球弛豫理论</a> <a href="/tags/AI%E5%8A%A0%E9%80%9F%E6%88%90%E5%83%8F/" style="font-size: 1.1em; color: #999">AI加速成像</a> <a href="/tags/%E9%98%BB%E6%8A%97%E5%8C%B9%E9%85%8D/" style="font-size: 1.1em; color: #999">阻抗匹配</a> <a href="/tags/K%E7%A9%BA%E9%97%B4/" style="font-size: 1.1em; color: #999">K空间</a> <a href="/tags/PhD/" style="font-size: 1.23em; color: #999ea6">PhD</a> <a href="/tags/%E6%A0%A1%E5%86%85%E8%BD%AC%E8%B4%A6/" style="font-size: 1.1em; color: #999">校内转账</a> <a href="/tags/%E7%A3%81%E5%8C%96%E4%BC%A0%E9%80%92/" style="font-size: 1.1em; color: #999">磁化传递</a> <a href="/tags/%E8%AF%8A%E7%96%97%E4%B8%80%E4%BD%93%E5%8C%96/" style="font-size: 1.37em; color: #99a4b2">诊疗一体化</a> <a href="/tags/%E9%BB%91%E8%A1%80%E6%88%90%E5%83%8F/" style="font-size: 1.1em; color: #999">黑血成像</a> <a href="/tags/%E6%9C%BA%E5%9C%BA/" style="font-size: 1.1em; color: #999">机场</a> <a href="/tags/MRI%E5%AF%B9%E6%AF%94%E5%89%82/" style="font-size: 1.23em; color: #999ea6">MRI对比剂</a> <a href="/tags/%E7%A3%81%E6%B5%81%E4%BD%93%E7%83%AD%E7%96%97/" style="font-size: 1.1em; color: #999">磁流体热疗</a> <a href="/tags/XAFS/" style="font-size: 1.1em; color: #999">XAFS</a></div></div><div class="card-widget card-archives">
+    <div class="item-headline"><i class="fas fa-archive"></i><span>归档</span></div>
+  
+    <ul class="card-archive-list">
+      
+        <li class="card-archive-list-item">
+          <a class="card-archive-list-link" href="/archives/2026/11/">
+            <span class="card-archive-list-date">
+              十一月 2026
+            </span>
+            <span class="card-archive-list-count">42</span>
+          </a>
+        </li>
+      
+        <li class="card-archive-list-item">
+          <a class="card-archive-list-link" href="/archives/2026/10/">
+            <span class="card-archive-list-date">
+              十月 2026
+            </span>
+            <span class="card-archive-list-count">25</span>
+          </a>
+        </li>
+      
+    </ul>
+  </div><div class="card-widget card-webinfo"><div class="item-headline"><i class="fas fa-chart-line"></i><span>网站信息</span></div><div class="webinfo"><div class="webinfo-item"><div class="item-name">文章数目 :</div><div class="item-count">67</div></div><div class="webinfo-item"><div class="item-name">运行时间 :</div><div class="item-count" id="runtimeshow" data-publishdate="2026-10-03T00:00:00.000Z"><i class="fa-solid fa-spinner fa-spin"></i></div></div><div class="webinfo-item"><div class="item-name">本站总字数 :</div><div class="item-count">134.2k</div></div><div class="webinfo-item"><div class="item-name">本站访客数 :</div><div class="item-count" id="busuanzi_value_site_uv"><i class="fa-solid fa-spinner fa-spin"></i></div></div><div class="webinfo-item"><div class="item-name">本站总浏览量 :</div><div class="item-count" id="busuanzi_value_site_pv"><i class="fa-solid fa-spinner fa-spin"></i></div></div><div class="webinfo-item"><div class="item-name">最后更新时间 :</div><div class="item-count" id="last-push-date" data-lastpushdate="2026-11-27T04:29:15.292Z"><i class="fa-solid fa-spinner fa-spin"></i></div></div></div></div></div></div></main><footer id="footer" style="background-image: url(/img/banner.jpg);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2022 - 2026 By Biko</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.7.0</a></span></div><div class="footer_custom_text">Hi, welcome to my <a target="_blank" rel="noopener" href="https://biko-duckyo.github.io/">blog</a>!<p><a target="_blank" href="https://hexo.io/"><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" title="博客框架为Hexo" decoding="async" loading="lazy"></a>&nbsp;<a target="_blank" href="https://butterfly.js.org/"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" title="主题采用butterfly" decoding="async" loading="lazy"></a>&nbsp;<a target="_blank" href="https://www.jsdelivr.com/"><img src="https://img.shields.io/badge/CDN-jsDelivr-orange?style=flat&amp;logo=jsDelivr" title="本站使用JsDelivr为静态资源提供CDN加速" decoding="async" loading="lazy"></a>&nbsp;<a target="_blank" href="https://github.com/"><img src="https://img.shields.io/badge/Source-Github-d021d6?style=flat&amp;logo=GitHub" title="本站项目由Gtihub托管" decoding="async" loading="lazy"></a>&nbsp;<a target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=Claris" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可" decoding="async" loading="lazy"></a></p></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><script src="/js/tw_cn.js?v=5.7.0"></script><script src="/js/vendor/fancybox.umd.min.js?v=d4a6e2d6f476"></script><script src="/js/vendor/instantpage.min.js?v=8e4c6f7c8015" type="module"></script><script src="/js/vendor/snackbar.min.js?v=34eaac416486"></script><div class="js-pjax"></div><script defer="" data-pjax="">(function(){function rm(){var n=document.getElementById('nav');if(n&&n.parentNode)n.parentNode.removeChild(n)}if(document.readyState!=='loading')rm();else document.addEventListener('DOMContentLoaded',rm);document.addEventListener('pjax:complete',rm)})()</script><script defer="" data-pjax="" src="/js/custom/footer_butterfly.js?v=efac2e01dd43"></script><script defer="" data-pjax="" src="/js/custom/fireflies.js?v=ffb55c2208cc"></script><div id="menu-container" class="menu-container"><div class="biko-nav"><button class="bn-burger" type="button" onclick="Navvisible()" aria-label="打开菜单" aria-controls="bn-mobile-nav" aria-expanded="false"><i class="fas fa-bars"></i></button><span class="bn-page-title">Home</span><div class="bn-left"><span class="bn-weather" id="he-plugin-simple"></span><span class="bn-clock" id="message-date-box"></span></div><ul class="bn-menu"><li class="menu-item-main"><a class="site-page" href="/"><i class="fas fa-home fa-fw"></i><span>鸭喵屋</span></a></li><li class="menu-item-main"><a class="site-page" href="/calendar/"><i class="fas fa-calendar-day fa-fw"></i><span>迹录</span></a></li><li class="menu-item-main is-active"><a class="site-page" href="/archives/"><i class="fas fa-list fa-fw"></i><span>随笔</span></a></li><li class="menu-item-main has-child"><span class="menu-item-parent"><a class="site-page" href="javascript:void(0);"><i class="fas fa-heartbeat fa-fw"></i><span>闲趣</span></a></span><a class="site-page menu-item-child" href="/galleryGroup/"><i class="fas fa-images fa-fw"></i><span>相册</span></a><a class="site-page menu-item-child" href="/music/"><i class="fas fa-music fa-fw"></i><span>音乐</span></a><a class="site-page menu-item-child" href="/anime/"><i class="fas fa-tv fa-fw"></i><span>追番</span></a></li><li class="menu-item-main"><a class="site-page" href="/scholar/"><i class="fas fa-book fa-fw"></i><span>研思</span></a></li><li class="menu-item-main"><a class="site-page" href="/finance/"><i class="fas fa-wallet fa-fw"></i><span>金库</span></a></li><li class="menu-item-main"><a class="site-page" href="/resources/"><i class="fas fa-bookmark fa-fw"></i><span>百宝箱</span></a></li></ul><div class="bn-right"><div id="search-button"><a class="bn-icon social-icon search" title="搜索" role="button" tabindex="0" aria-label="搜索" data-bn-label="搜索"><i class="fas fa-search"></i></a></div><a class="bn-icon icon-V" data-bn-no-label="true" onclick="switchNightMode()" title="浅色/深色模式切换" role="button" tabindex="0" aria-label="明暗切换" data-bn-label="明暗"><svg width="23" height="23" viewBox="0 0 1024 1024" aria-hidden="true"><use id="modeicon" xlink:href="#icon-sun"></use></svg><svg width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true"><defs><symbol id="icon-sun" viewBox="0 0 1024 1024"><path d="M960 512l-128 128v192h-192l-128 128-128-128H192v-192l-128-128 128-128V192h192l128-128 128 128h192v192z" fill="#FFD878"></path><path d="M736 512a224 224 0 1 0-448 0 224 224 0 1 0 448 0z" fill="#FFE4A9"></path><path d="M512 320c105.888 0 192 86.112 192 192s-86.112 192-192 192-192-86.112-192-192 86.112-192 192-192m0-32a224 224 0 1 0 0 448 224 224 0 0 0 0-448z" fill="#4D5152"></path></symbol><symbol id="icon-moon" viewBox="0 0 1024 1024"><path d="M611.37 167.08a445.01 445.01 0 0 1-38.4 161.83 477.82 477.82 0 0 1-244.74 244.4 445.14 445.14 0 0 1-161.1 38.06 85.08 85.08 0 0 0-65.07 135.72A462.08 462.08 0 1 0 747.09 102.06 85.08 85.08 0 0 0 611.37 167.08z" fill="#FFB531"></path></symbol></defs></svg></a></div></div></div><dialog id="bn-mobile-nav" aria-labelledby="bn-mobile-nav-title"><header class="bn-drawer-head"><h2 id="bn-mobile-nav-title">网站导航</h2><button type="button" data-nav-close="" aria-label="关闭菜单"><i class="fas fa-times" aria-hidden="true"></i></button></header><nav class="bn-drawer-links" aria-label="全站导航"><a href="/"><i class="fas fa-home fa-fw"></i><span>鸭喵屋</span></a><a href="/calendar/"><i class="fas fa-calendar-day fa-fw"></i><span>迹录</span></a><a href="/archives/" aria-current="page"><i class="fas fa-list fa-fw"></i><span>随笔</span></a><a href="/galleryGroup/"><i class="fas fa-images fa-fw"></i><span>相册</span></a><a href="/music/"><i class="fas fa-music fa-fw"></i><span>音乐</span></a><a href="/anime/"><i class="fas fa-tv fa-fw"></i><span>追番</span></a><a href="/scholar/"><i class="fas fa-book fa-fw"></i><span>研思</span></a><a href="/finance/"><i class="fas fa-wallet fa-fw"></i><span>金库</span></a><a href="/resources/"><i class="fas fa-bookmark fa-fw"></i><span>百宝箱</span></a></nav><section class="bn-drawer-tools" aria-label="页面工具"><h3>页面工具</h3><div id="bn-page-tools"></div></section></dialog><script defer="" data-pjax="" src="/js/custom/nav.js?v=df6c5f2262d8"></script><link rel="stylesheet" href="/css/desktop-shell-sample.css?v=b5b1c909c371"><link rel="stylesheet" href="/css/desktop-shell-pages.css?v=46015b4c32e2"><link rel="stylesheet" href="/css/desktop-shell-media.css?v=2bde3138b84e"><link rel="stylesheet" href="/css/desktop-shell-workspaces.css?v=1e13c1ba77c5"><link rel="stylesheet" href="/css/visual-foundations.css?v=17ef00efcd9f"><link rel="stylesheet" href="/css/chrome-glass.css?v=b047e4697776"><link rel="stylesheet" href="/css/qrcode-electric.css?v=e7e41300b03a"><script defer="" data-pjax="" src="/js/custom/tool-electric.js?v=2e882b6277aa"></script><link rel="stylesheet" href="/css/private-workspaces.css?v=7e57a57db49a"><link rel="stylesheet" href="/css/ui-controls.css?v=2635b7900c6e"><script defer="" data-pjax="" src="/js/custom/desktop-shell-sample.js?v=83415f5b274d"></script><script defer="" data-pjax="" src="/js/custom/site-search.js?v=9e5231775ae5"></script><link rel="stylesheet" href="/css/code-image.css?v=56f632087fb7"><script defer="" data-pjax="" src="/js/custom/code-image.js?v=15172ee558ae"></script><script defer="" data-pjax="" src="/js/custom/article-reading.js?v=e35c8cdbb5da"></script><script defer="" data-pjax="" src="/js/custom/music_button.js?v=a0478c111163"></script><script defer="" data-pjax="" src="/js/custom/page_footer.js?v=3f1476b66eef"></script><script defer="" data-pjax="" src="/js/custom/music_page.js?v=2fcce2f6668c"></script><script defer="" data-pjax="" src="/js/custom/worklog_calendar.js?v=467bc6d05227"></script><script defer="" data-pjax="" src="/js/custom/gallery_seal.js?v=60c724a36cfb"></script><script defer="" data-pjax="" src="/js/custom/gallery_page.js?v=bd3f225f51d6"></script><script defer="" data-pjax="" src="/js/custom/home_hub.js?v=eedc35c702a5"></script><script defer="" data-pjax="" src="/js/custom/banner_parallax.js?v=72e7f2c0aac0"></script><script>function endStalledPreloader(){var lb=document.querySelector('#loading-box:not(.loaded)');if(lb){lb.classList.add('loaded');document.body.style.overflow='';}}setTimeout(endStalledPreloader,3000);document.addEventListener('pjax:complete',function(){setTimeout(endStalledPreloader,1500);});</script><script defer="" data-pjax="" src="/js/custom/loading_rolling.js?v=725eea86c5d9"></script><script data-pjax="" defer="" src="/js/custom/fixed_card_widget.js?v=05efec571ba4"></script><script data-pjax="" defer="" src="/js/custom/title_hover.js?v=779ec4e8c707"></script><script>function injectWechatCapsule(){var icons=document.getElementById('site_social_icons');if(icons&&!document.getElementById('wechat-capsule')){var w=document.createElement('div');w.id='wechat-capsule';w.innerHTML='<i class=\"fab fa-weixin\"></i><span>微信：15651005256</span>';icons.parentNode.insertBefore(w,icons.nextSibling);}}if(document.readyState!=='loading'){injectWechatCapsule();}else{document.addEventListener('DOMContentLoaded',injectWechatCapsule);}document.addEventListener('pjax:complete',function(){setTimeout(injectWechatCapsule,300);});</script><script data-pjax="" defer="" src="/js/custom/runtime_fallback.js?v=d4020843a29c"></script><link rel="stylesheet" href="/css/vendor/qweather-icons.css?v=2e83ca49dc74"><script defer="" data-pjax="" src="/js/custom/weather.js?v=2a94ec386b66"></script><script defer="" data-pjax="" src="/js/custom/article_title_move.js?v=7d80c2438748"></script><script defer="" data-pjax="" src="/js/custom/auto_cover.js?v=b5169e86f8b1"></script><script defer="" data-pjax="" src="/js/custom/zh-history.js?v=1d9353be537b"></script><script defer="" data-pjax="" src="/js/custom/history.js?v=6d9f6baa7f8c"></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1/dist/APlayer.min.css" media="print" onload="this.media='all'"><script defer="" src="https://cdn.jsdelivr.net/npm/aplayer@1/dist/APlayer.min.js"></script><script defer="" src="/js/custom/aplayer_wrap.js?v=9a2442d869c8"></script><script>window.meting_api='https://api.injahow.cn/meting/?server=:server&type=:type&id=:id&r=:r';</script><script defer="" src="https://cdn.jsdelivr.net/gh/metowolf/MetingJS@1.2/dist/Meting.min.js"></script><div class="aplayer no-destroy" data-id="2120966270" data-server="netease" data-type="playlist" data-fixed="true" data-mini="true" data-autoplay="false" data-preload="none" data-listfolded="true"> </div><script src="/nanaly/js/nanaly-backup-entry.js?v=6425a2fdf4c2"></script><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward" title="后退"><i class="fas fa-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward" title="前进"><i class="fas fa-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh" title="刷新"><i class="fas fa-arrow-rotate-right"></i></div><div class="rightMenu-item" id="menu-home" title="回首页"><i class="fas fa-house"></i></div></div><div class="rightMenu-group rightMenu-line"><div class="rightMenu-item" id="menu-radompage"><i class="fas fa-shoe-prints"></i><span>随便逛逛</span></div><div class="rightMenu-item" id="menu-darkmode"><i class="fas fa-moon"></i><span>切换模式</span></div><div class="rightMenu-item" id="menu-translate"><i class="fas fa-earth-asia"></i><span>繁简切换</span></div></div></div><div id="rightmenu-mask"></div><script defer="" src="/js/custom/rightmenu.js?v=1b665d53a4ac"></script><script defer="" src="/js/home_dashboard.js?v=530a651d1412"></script><script src="/js/vendor/pjax.min.js?v=c9819844d18c" defer="defer"></script><script>document.addEventListener('DOMContentLoaded', () => {
+  const pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+  window.pjax = new Pjax({
+    elements: 'a:not([target="_blank"]):not([data-fancybox]):not([href="/scholar/"]):not([href="/books/"]):not([href="/admin/"]):not([href="/finance/"]):not([href="/image-editor/"]):not([href="/tools/qrcode/"]):not([href="/tools/images/"]):not([href="/tools/knowledge/"]):not([href="/tools/math/"]):not([href="/tools/periodic/"])',
+    selectors: pjaxSelectors,
+    cacheBust: false,
+    analytics: false,
+    scrollRestoration: false
+  })
+
+  const triggerPjaxFn = (val) => {
+    if (!val) return
+    Object.values(val).forEach(fn => {
+      try {
+        fn()
+      } catch (err) {
+        console.debug('Pjax callback failed:', err)
+      }
+    })
+  }
+
+  document.addEventListener('pjax:send', () => {
+    // removeEventListener
+    btf.removeGlobalFnEvent('pjaxSendOnce')
+    btf.removeGlobalFnEvent('themeChange')
+
+    // reset readmode
+    const $bodyClassList = document.body.classList
+    if ($bodyClassList.contains('read-mode')) $bodyClassList.remove('read-mode')
+
+    triggerPjaxFn(window.globalFn.pjaxSend)
+  })
+
+  document.addEventListener('pjax:complete', () => {
+    btf.removeGlobalFnEvent('pjaxCompleteOnce')
+    document.querySelectorAll('script[data-pjax]').forEach(item => {
+      if (!item.parentNode) return
+      const newScript = document.createElement('script')
+      const content = item.text || item.textContent || ''
+      Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+      newScript.appendChild(document.createTextNode(content))
+      item.parentNode.replaceChild(newScript, item)
+    })
+
+    triggerPjaxFn(window.globalFn.pjaxComplete)
+  })
+
+  document.addEventListener('pjax:error', e => {
+    const responseURL = e.request && e.request.responseURL
+    if (e.request && e.request.status === 404) {
+      true
+        ? pjax.loadUrl('/404.html')
+        : responseURL && (window.location.href = responseURL)
+    } else if (responseURL) {
+      window.location.href = responseURL
+    }
+  })
+})</script><script async="" data-pjax="" src="/js/vendor/busuanzi-local.js?v=d55de7ff7338"></script></div><!-- hexo injector body_end start --><script data-pjax="">
+  function butterfly_clock_injector_config(){/*biko-guard*/if(!document.getElementsByClassName('sticky_layout').length)return;
+    var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+    var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img class="entered loading" id="card-clock-loading" src="/clock/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading"/></div></div></div></div></div>';
+    console.log('已挂载butterfly_clock')
+    parent_div_git.insertAdjacentHTML("afterbegin",item_html)
+    }
+  var elist = '/posts/'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_clock_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_clock_injector_config();
+  }
+  </script><script src="/js/vendor/noop.js?v=89ad880bb506"></script><script data-pjax="" src="/clock/clock.js?v=dbe65add9be4"></script><script data-pjax="">
+  function butterfly_footer_beautify_injector_config(){/*biko-guard*/if(!document.getElementById('footer-wrap'))return;
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><p id="ghbdages"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" data-title="博客框架为 Hexo" title=""><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" data-title="主题 Butterfly" title=""><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="https://pages.github.com/" style="margin-inline:5px" data-title="本站托管于 GitHub Pages" title=""><img src="https://img.shields.io/badge/Hosted-GitHub_Pages-181717?style=flat&amp;logo=github" alt=""/></a><a class="github-badge" target="_blank" href="https://github.com/Biko-Duckyo/Biko-Duckyo.github.io" style="margin-inline:5px" data-title="本站项目由 GitHub 托管" title=""><img src="https://img.shields.io/badge/Source-Github-d021d6?style=flat&amp;logo=GitHub" alt=""/></a><a class="github-badge" target="_blank" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" data-title="本站采用 CC BY-NC-SA 4.0 协议" title=""><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=creativecommons" alt=""/></a></p>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'undefined'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async="" src="/footer-beautify/runtime.js?v=65c2bad2478d"></script><script data-pjax="">
+  function butterfly_swiper_injector_config(){
+    var parent_div_git = document.getElementById('recent-posts');
+    var item_html = '<div class="recent-post-item" style="height: auto;width: 100%"><div class="blog-slider swiper-container-fade swiper-container-horizontal" id="swiper_container"><div class="blog-slider__wrp swiper-wrapper" style="transition-duration: 0ms;"><div class="blog-slider__item swiper-slide" style="width: 750px; opacity: 1; transform: translate3d(0px, 0px, 0px); transition-duration: 0ms;"><a class="blog-slider__img" onclick="pjax.loadUrl(&quot;2026/10/03/hello-world/&quot;);" href="javascript:void(0);" alt=""><img width="48" height="48" src="/img/banner.jpg" alt="" onerror="this.src=https://unpkg.zhimg.com/akilar-candyassets/image/loading.gif; this.onerror = null;"/></a><div class="blog-slider__content"><span class="blog-slider__code">2026-10-03</span><a class="blog-slider__title" onclick="pjax.loadUrl(&quot;2026/10/03/hello-world/&quot;);" href="javascript:void(0);" alt="">这个站怎么用：一览、功能与全部指令</a><div class="blog-slider__text">鸭喵屋的页面入口与常用操作：网页和本地工作台分工、文献与追番同步、文章写作、统一预览及候选包发布流程。</div><a class="blog-slider__button" onclick="pjax.loadUrl(&quot;2026/10/03/hello-world/&quot;);" href="javascript:void(0);" alt="">详情       </a></div></div><div class="blog-slider__item swiper-slide" style="width: 750px; opacity: 1; transform: translate3d(0px, 0px, 0px); transition-duration: 0ms;"><a class="blog-slider__img" onclick="pjax.loadUrl(&quot;2026/10/06/Hexo+GitHub搭建指南/&quot;);" href="javascript:void(0);" alt=""><img width="48" height="48" src="/img/banner.jpg" alt="" onerror="this.src=https://unpkg.zhimg.com/akilar-candyassets/image/loading.gif; this.onerror = null;"/></a><div class="blog-slider__content"><span class="blog-slider__code">2026-10-06</span><a class="blog-slider__title" onclick="pjax.loadUrl(&quot;2026/10/06/Hexo+GitHub搭建指南/&quot;);" href="javascript:void(0);" alt="">Hexo + GitHub 搭建个人博客完整指南</a><div class="blog-slider__text">区分源码管理、静态托管与本站 Cloudflare 发布流程，给出新建和维护两条路径及常见排查。</div><a class="blog-slider__button" onclick="pjax.loadUrl(&quot;2026/10/06/Hexo+GitHub搭建指南/&quot;);" href="javascript:void(0);" alt="">详情       </a></div></div><div class="blog-slider__item swiper-slide" style="width: 750px; opacity: 1; transform: translate3d(0px, 0px, 0px); transition-duration: 0ms;"><a class="blog-slider__img" onclick="pjax.loadUrl(&quot;2026/10/25/博客魔改总览/&quot;);" href="javascript:void(0);" alt=""><img width="48" height="48" src="/img/banner.jpg" alt="" onerror="this.src=https://unpkg.zhimg.com/akilar-candyassets/image/loading.gif; this.onerror = null;"/></a><div class="blog-slider__content"><span class="blog-slider__code">2026-10-25</span><a class="blog-slider__title" onclick="pjax.loadUrl(&quot;2026/10/25/博客魔改总览/&quot;);" href="javascript:void(0);" alt="">博客魔改总览：所有定制功能一览</a><div class="blog-slider__text">鸭喵屋的功能地图：页面入口、网页与本地工作台分工、相册与追番、文献同步、基金与股票模拟，以及数据边界。</div><a class="blog-slider__button" onclick="pjax.loadUrl(&quot;2026/10/25/博客魔改总览/&quot;);" href="javascript:void(0);" alt="">详情       </a></div></div><div class="blog-slider__item swiper-slide" style="width: 750px; opacity: 1; transform: translate3d(0px, 0px, 0px); transition-duration: 0ms;"><a class="blog-slider__img" onclick="pjax.loadUrl(&quot;2026/10/11/东南大学境外参会办理清单/&quot;);" href="javascript:void(0);" alt=""><img width="48" height="48" src="/img/banner.jpg" alt="" onerror="this.src=https://unpkg.zhimg.com/akilar-candyassets/image/loading.gif; this.onerror = null;"/></a><div class="blog-slider__content"><span class="blog-slider__code">2026-10-11</span><a class="blog-slider__title" onclick="pjax.loadUrl(&quot;2026/10/11/东南大学境外参会办理清单/&quot;);" href="javascript:void(0);" alt="">东南大学 · 境外参加国际会议办理清单</a><div class="blog-slider__text">境外参会的会前审批、行前准备和归国报销清单；附官方来源与核验边界，未出境费用须单独确认。</div><a class="blog-slider__button" onclick="pjax.loadUrl(&quot;2026/10/11/东南大学境外参会办理清单/&quot;);" href="javascript:void(0);" alt="">详情       </a></div></div><div class="blog-slider__item swiper-slide" style="width: 750px; opacity: 1; transform: translate3d(0px, 0px, 0px); transition-duration: 0ms;"><a class="blog-slider__img" onclick="pjax.loadUrl(&quot;2026/10/11/VPN与机场笔记/&quot;);" href="javascript:void(0);" alt=""><img width="48" height="48" src="/img/banner.jpg" alt="" onerror="this.src=https://unpkg.zhimg.com/akilar-candyassets/image/loading.gif; this.onerror = null;"/></a><div class="blog-slider__content"><span class="blog-slider__code">2026-10-11</span><a class="blog-slider__title" onclick="pjax.loadUrl(&quot;2026/10/11/VPN与机场笔记/&quot;);" href="javascript:void(0);" alt="">VPN &amp; 机场笔记（资料备份）</a><div class="blog-slider__text">网络连接排查与资料归档：区分网络、TLS、Git 认证和本地服务，不再保留过时的套餐与服务商排名。</div><a class="blog-slider__button" onclick="pjax.loadUrl(&quot;2026/10/11/VPN与机场笔记/&quot;);" href="javascript:void(0);" alt="">详情       </a></div></div></div><div class="blog-slider__pagination swiper-pagination-clickable swiper-pagination-bullets"></div></div></div>';
+    console.log('已挂载butterfly_swiper')
+    parent_div_git.insertAdjacentHTML("afterbegin",item_html)
+    }
+  var elist = 'undefined'.split(',');
+  var cpage = location.pathname;
+  var epage = '/';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_swiper_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_swiper_injector_config();
+  }
+  </script><script defer="" src="/swiper/swiper.min.js?v=f2ce7eb089bb"></script><script defer="" data-pjax="" src="/swiper/swiper_init.js?v=9f0814c4ab99"></script><div class="js-pjax"><script async="async">var arr = document.getElementsByClassName('recent-post-item');
+for(var i = 0;i<arr.length;i++){
+    arr[i].classList.add('wow');
+    arr[i].classList.add('animate__zoomIn');
+    arr[i].setAttribute('data-wow-duration', '1s');
+    arr[i].setAttribute('data-wow-delay', '');
+    arr[i].setAttribute('data-wow-offset', '');
+    arr[i].setAttribute('data-wow-iteration', '');
+  }</script><script async="async">var arr = document.getElementsByClassName('card-widget');
+for(var i = 0;i<arr.length;i++){
+    arr[i].classList.add('wow');
+    arr[i].classList.add('animate__slideInRight');
+    arr[i].setAttribute('data-wow-duration', '1s');
+    arr[i].setAttribute('data-wow-delay', '');
+    arr[i].setAttribute('data-wow-offset', '');
+    arr[i].setAttribute('data-wow-iteration', '');
+  }</script></div><script async="" src="https://at.alicdn.com/t/font_2032782_8d5kxvn09md.js"></script><!-- hexo injector body_end end --><script type="application/json" id="biko-optional-assets">{"chat":[{"css":"/nanaly/css/noimpty-ai.css?v=8013747c1eaf"},{"css":"/nanaly/css/nanaly-workspace.css?v=aff49c810c39"},{"css":"/nanaly/css/nanaly-notes.css?v=292bbd903418"},{"css":"/nanaly/css/nanaly-delight.css?v=aa17e83e4625"},{"css":"/nanaly/css/nanaly-voice.css?v=fc9bad4184b2"},{"css":"/nanaly/css/nanaly-agent.css?v=dc885c80d503"},{"css":"/nanaly/css/nanaly-shell.css?v=d307e7c1dcb5"},{"css":"/nanaly/css/nanaly-biko-theme.css?v=e166a42fbda3"},{"src":"/nanaly/js/nanaly-identity.js?v=c87436d34ca3"},{"src":"/nanaly/js/nanaly-knowledge.js?v=6fada32a632d"},{"src":"/nanaly/js/nanaly-provider.js?v=05dc61255020"},{"src":"/nanaly/js/nanaly-agent.js?v=15a9f2752f22"},{"src":"/nanaly/js/nanaly-workspace.js?v=17dfff6e219f"},{"src":"/nanaly/js/nanaly-files.js?v=41adfba03a53"},{"src":"/nanaly/js/nanaly-vision.js?v=20c48faa459d"},{"src":"/nanaly/js/nanaly-research.js?v=55f94d964d68"},{"src":"/nanaly/js/nanaly-tasks.js?v=6203ae099d2f"},{"src":"/nanaly/js/nanaly-audio.js?v=918da14f3454"},{"src":"/nanaly/js/nanaly-prosody.js?v=beeaae9626a7"},{"src":"/nanaly/js/nanaly-voice.js?v=7807eaa90c79"},{"src":"/nanaly/js/nanaly-shell.js?v=32b743356927"},{"src":"/nanaly/js/noimpty-ai.js?v=276f4257085f"},{"src":"/nanaly/js/nanaly-agent-ui.js?v=943853d39e8d"},{"src":"/nanaly/js/nanaly-cat-trigger.js?v=1a50ad02bba8"}],"model":[{"src":"https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/dist/click-heart.min.js","attrs":{"id":"click-heart","mobile":"true"}},{"src":"https://cdn.jsdelivr.net/npm/hexo-butterfly-wowjs/lib/wow.min.js"},{"src":"https://cdn.jsdelivr.net/npm/hexo-butterfly-wowjs/lib/wow_init.js"},{"src":"https://cdn.jsdelivr.net/npm/live2d-widget@^3.1.3/lib/L2Dwidget.min.js"},{"code":"L2Dwidget.init({\"pluginRootPath\":\"live2dw/\",\"pluginModelPath\":\"assets/\",\"tagMode\":false,\"log\":false,\"model\":{\"jsonPath\":\"/live2dw/assets/hijiki.model.json\"},\"display\":{\"position\":\"left\",\"width\":150,\"height\":300},\"mobile\":{\"show\":false},\"pluginJsPath\":\"lib/\"});"}]}</script></body></html>

@@ -16,7 +16,9 @@
 /* 文章主体容器：毛玻璃卡片 */
 #post {
   /* ★ 映射到公共规范 */
-  background: var(--layout-glass, rgba(20, 30, 50, 0.5));
+  background: var(--ui-surface, #f9fbfe);
+  background: color-mix(in srgb, var(--ui-surface, #f9fbfe) 96%, transparent);
+  color: var(--ui-ink, #203249);
   -webkit-backdrop-filter: blur(var(--layout-blur, 12px)) saturate(var(--layout-sat, 140%));
   backdrop-filter: blur(var(--layout-blur, 12px)) saturate(var(--layout-sat, 140%));
   border-radius: var(--layout-radius, 24px);
@@ -29,6 +31,10 @@
 }
 
 /* 标题区：隐藏封面背景，只保留标题 */
+#article-container :is(h2, h3, h4)[id] {
+  scroll-margin-top: 96px;
+}
+
 #page-header.post-bg {
   background: transparent !important;
   background-image: none !important;
@@ -60,7 +66,7 @@
 /* 正文内容 */
 #article-container {
   line-height: 1.8;
-  font-size: 15px;
+  font-size: var(--ui-text-body, 16px);
   margin-top: var(--layout-card-pad-head-y, 16px);
   min-width: 0; /* 防止 flex 溢出 */
 }
@@ -69,6 +75,14 @@
 #article-container pre,
 #article-container code {
   border-radius: 8px;
+}
+#article-container figure.highlight .code pre {
+  color: var(--ui-ink, #203249);
+}
+#article-container figure.highlight .gutter pre,
+#article-container figure.highlight .comment,
+#article-container figure.highlight .quote {
+  color: var(--ui-muted, #52657d);
 }
 
 /* 引用块 */
@@ -79,9 +93,73 @@
   border-radius: 0 8px 8px 0;
 }
 
+/* 标签外挂沿用公共视觉变量，避免深色文章里出现亮白折叠标题。 */
+#article-container details.toggle {
+  margin: 1.25em 0;
+  border: 1px solid var(--ui-border, #c3cfdc);
+  border-radius: var(--ui-radius-inset, 12px);
+  overflow: hidden;
+  color: var(--ui-ink, #203249);
+}
+#article-container details.toggle > summary {
+  min-height: 44px;
+  padding: 12px 16px;
+  box-sizing: border-box;
+  background: var(--ui-inset, #e9eff6);
+  color: var(--ui-ink, #203249);
+  font-weight: var(--ui-weight-label, 500);
+  line-height: var(--ui-leading, 1.65);
+  overflow-wrap: anywhere;
+}
+#article-container details.toggle > summary:hover {
+  background: var(--ui-hover, #dde7f2);
+}
+#article-container details.toggle > summary:focus-visible,
+#article-container .tabs > .nav-tabs > button.tab:focus-visible {
+  outline: 2px solid var(--ui-focus, #235c9a);
+  outline-offset: -3px;
+}
+#article-container details.toggle > .toggle-content {
+  padding: 16px;
+  overflow-wrap: anywhere;
+}
+#article-container .tabs {
+  border-color: var(--ui-border, #c3cfdc);
+  border-radius: var(--ui-radius-inset, 12px);
+  overflow: hidden;
+  min-width: 0;
+}
+#article-container .tabs > .nav-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  background: var(--ui-inset, #e9eff6);
+}
+#article-container .tabs > .nav-tabs > button.tab {
+  min-height: 44px;
+  padding: 10px 16px;
+  background: transparent;
+  color: var(--ui-muted, #52657d);
+  font: inherit;
+  line-height: var(--ui-leading, 1.65);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+#article-container .tabs > .nav-tabs > button.tab.active {
+  background: var(--ui-selection, #dce9f7);
+  color: var(--ui-ink, #203249);
+}
+
 /* ============================================================
  * 响应式断点（与全站公共规范一致）
  * ============================================================ */
+
+/* 侧栏属于阅读功能，不依赖 WOW 是否触发入场；后台打开或 Pjax 返回也应可见。
+ * 学校清单以 aside:false 使用独立导航，且不在本规则范围内。
+ */
+#content-inner:has(> #post):not(.hide-aside) > #aside-content .card-widget {
+  visibility: visible !important;
+  animation: none !important;
+}
 
 /* ≥1024px：保持双列 */
 @media (min-width: 1024px) {
@@ -91,6 +169,10 @@
     gap: var(--layout-gap, 24px);
   }
   #article-container {
+    flex: 1;
+    min-width: 0;
+  }
+  #content-inner:has(> #post):not(.hide-aside) > #post {
     flex: 1;
     min-width: 0;
   }
@@ -110,6 +192,13 @@
     width: 100%;
     margin-top: var(--layout-gap, 24px);
   }
+  /* 全站 mobile:false 仍用于其他页面；文章页将侧栏放到正文下方。 */
+  html:not(.hide-aside) #content-inner:has(> #post):not(.hide-aside) > #aside-content {
+    display: block;
+  }
+  #content-inner:has(> #post):not(.hide-aside) > #aside-content .card-widget:not(.card-history):not(#card-toc) {
+    display: block;
+  }
 }
 
 /* 平板横屏 / 小笔记本：整体更紧凑 */
@@ -120,6 +209,14 @@
 }
 
 /* 手机 */
+/* 中等宽度的文章版心已接近左侧浮层，收起装饰看板，助手仍可由导航进入。 */
+@media (max-width: 1399px) {
+  body:has(#post) #live2d-widget,
+  body:has(#post) #nanaly-cat-hotspot {
+    display: none !important;
+  }
+}
+
 @media (max-width: 768px) {
   #post {
     padding: var(--layout-card-pad-x, 12px);
@@ -127,4 +224,72 @@
   #post-info .post-title {
     font-size: 24px;
   }
+  #post .table-wrap {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  #post .table-wrap :is(th, td):first-child { min-width: 5em; }
+}
+.article-equation {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 20px 12px;
+  margin: 18px 0;
+  border: 1px solid var(--ui-border, #8795a54d);
+  border-radius: 12px;
+  color: var(--ui-ink, var(--font-color));
+}
+.article-equation math { font-size: 1.08em; min-width: max-content; }
+
+/* Shared reading rhythm; excludes the independently structured school checklists. */
+#post #post-info .post-title { line-height: 1.4; border-bottom: 0; overflow-wrap: anywhere; }
+#post #post-info .post-meta { line-height: 1.8; gap: 4px 12px; color: var(--ui-muted); }
+#post #article-container:not(:has(.seu-page)) {
+  font-family: var(--ui-font, system-ui); font-size: 16px; line-height: 1.9;
+  overflow-wrap: anywhere; color: var(--ui-ink, var(--font-color));
+}
+#post #article-container :is(h2,h3,h4)[id] { scroll-margin-top: 100px; line-height: 1.5; }
+#post #article-container:not(:has(.seu-page)) h2 { font-size: 24px; margin: 1.8em 0 .75em; }
+#post #article-container:not(:has(.seu-page)) h3 { font-size: 20px; margin: 1.5em 0 .65em; }
+#post #article-container:not(:has(.seu-page)) h4 { font-size: 17px; }
+#post #article-container:not(:has(.seu-page)) p { margin: 0 0 1.15em; }
+#post #article-container :is(img,video,iframe) { max-width: 100%; }
+#post #article-container img { height: auto; }
+#post #article-container .article-image { margin: 24px 0; text-align: center; }
+#post #article-container .article-image > a { display: block; }
+#post #article-container .article-image figcaption,
+#post #article-container p:has(> em:only-child) { font-size: 13px; line-height: 1.7; color: var(--ui-muted); }
+#post #article-container .article-image figcaption { margin-top: 10px; }
+#post #article-container .table-wrap { max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; margin: 20px 0; }
+#post #article-container .table-wrap table { font-size: 14px; line-height: 1.75; margin: 0; }
+#post #article-container .table-wrap :is(th,td) { padding: 10px 12px; vertical-align: top; }
+#post #article-container .table-wrap th { background: var(--ui-inset); color: var(--ui-ink); }
+#post #article-container .article-table-hint { margin: 14px 0 6px; color: var(--ui-muted); font-size: 12px; }
+#post #article-container .article-table-hint[hidden] { display: none; }
+#post #article-container :is(figure.highlight,pre,mjx-container[display="true"]) { max-width: 100%; overflow-x: auto; }
+#post #article-container .article-scroll-region:focus-visible,
+#post .article-mobile-nav :is(summary,a):focus-visible { outline: 2px solid var(--ui-focus,#235c9a); outline-offset: 3px; }
+#post .article-mobile-nav { display: none; }
+@media (max-width: 1023px) {
+  #post .article-mobile-nav { display: block; margin: 8px 0 22px; border-bottom: 1px solid var(--ui-separator,var(--ui-border)); }
+  #post #article-container .article-inline-nav { display: none; }
+  #post .article-mobile-nav summary { cursor: pointer; padding: 12px 0; min-height: 44px; box-sizing: border-box; font-size: 14px; font-weight: 600; }
+  #post .article-mobile-nav summary span { font-size: 12px; font-weight: 400; color: var(--ui-muted); margin-left: 12px; }
+  #post .article-mobile-nav__links { max-height: 50vh; overflow: auto; padding: 0 0 12px; }
+  #post .article-mobile-nav ol { list-style: none; margin: 0; padding-left: 12px; }
+  #post .article-mobile-nav > details > div > ol { padding-left: 0; }
+  #post .article-mobile-nav a { display: block; padding: 9px 4px; line-height: 1.6; font-size: 14px; color: var(--ui-ink); overflow-wrap: anywhere; }
+  #content-inner:has(.article-mobile-nav) #aside-content #card-toc { display: none !important; }
+}
+@media (max-width: 768px) {
+  #post #post-info .post-title { font-size: 24px; margin-bottom: 10px; }
+  #post #post-info .post-meta { font-size: 12px; }
+  #post #article-container:not(:has(.seu-page)) h2 { font-size: 21px; }
+  #post #article-container:not(:has(.seu-page)) h3 { font-size: 18px; }
+  #post #article-container .table-wrap:has(th:nth-child(3)) table { min-width: 520px; }
+  #post #article-container .table-wrap:has(th:nth-child(4)) table { min-width: 640px; }
+}
+@media (max-width: 600px) {
+  .article-equation { padding: 16px 8px; }
+  .article-equation math { font-size: 1em; }
 }

@@ -1,0 +1,34 @@
+/* Desktop adapter. foundation-tokens.css is generated from common_layout.css. */
+:root,html[data-theme] {
+  --font-sans: var(--ui-font); --font-mono: var(--ui-mono);
+  --bg: var(--ui-canvas); --text: var(--ui-ink); --text-secondary: var(--ui-muted); --text-muted: var(--ui-muted);
+  --glass: var(--ui-surface); --glass-strong: var(--ui-raised); --glass-thin: var(--ui-inset);
+  --hairline: var(--ui-border); --hairline-soft: var(--ui-border); --edge-outer: var(--ui-border);
+  --accent: var(--ui-action); --accent-soft: var(--ui-action-hover); --btn-text: var(--ui-on-action);
+  --surface-1: var(--ui-inset); --surface-2: var(--ui-inset); --surface-3: var(--ui-hover);
+  --sidebar-bg: var(--ui-surface); --input-bg: var(--ui-inset); --toast-bg: var(--ui-raised);
+  --danger: var(--ui-danger); --success: var(--ui-success); --amber: var(--ui-warning);
+}
+body.bk-page-body {font-family: var(--ui-font)}
+body {font-family: var(--ui-font)}
+body :is(.btn-primary,.btn-accent) {background:var(--ui-action);color:var(--ui-on-action);border-color:transparent}
+body :is(.btn-primary,.btn-accent):hover {background:var(--ui-action-hover)}
+body #homeImportBtn {background:var(--ui-action);color:var(--ui-on-action);border-color:transparent;border-radius:var(--ui-radius-control)}
+body #homeImportBtn:hover {background:var(--ui-action-hover)}
+body .stat-num {font-family:var(--ui-font);font-variant-numeric:tabular-nums;font-weight:600}
+body.bk-page-body :is(button,input,select,textarea) {font-family: var(--ui-font)}
+body.bk-page-body :is(.brand-title,.panel-title,.section-title) {font-family: var(--ui-font); font-weight: 600}
+body.bk-page-body .panel-title {font-size:var(--ui-text-title);line-height:1.3;letter-spacing:0}
+body.bk-page-body .today-title {font:600 var(--ui-text-section)/1.4 var(--ui-font);letter-spacing:0}
+body.bk-page-body :is(.today-sub,.today-empty,.today-col-head,.dashboard-section-title) {font:400 var(--ui-text-control)/1.65 var(--ui-font);letter-spacing:0}
+body.bk-page-body .card-label {font:600 var(--ui-text-control)/1.5 var(--ui-font);letter-spacing:0}
+body.bk-page-body .todo-mini-empty {font:400 var(--ui-text-control)/1.65 var(--ui-font)}
+body.bk-page-body :is(button,a,input,select,textarea,summary):focus-visible {outline: 2px solid var(--ui-focus); outline-offset: 3px}
+body.bk-page-body .bk-btn-primary {background: var(--ui-action); color: var(--ui-on-action); border-color: transparent}
+body.bk-page-body .bk-btn-primary:hover {background: var(--ui-action-hover)}
+body.bk-page-body button:disabled {opacity:.5;cursor:not-allowed}
+/* Deliberately leave .textLayer, canvas, annotation geometry and user-selected
+   reading/translation font sizes under the reader's control. */
+@media(prefers-reduced-motion:reduce) {
+  body.bk-page-body :is(button,a,input,select,textarea) {transition:none}
+}

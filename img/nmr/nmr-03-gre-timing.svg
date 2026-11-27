@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 430" font-family="'Microsoft YaHei','PingFang SC','Noto Sans SC',sans-serif">
+  <defs>
+    <marker id="a3b" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#334155"/></marker>
+  </defs>
+  <rect x="8" y="8" width="804" height="414" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="410" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="#334155">梯度回波 GRE 时序：小角度激发 + 梯度扰相 / 复相（无 180° 脉冲）</text>
+
+  <!-- RF 轨 -->
+  <text x="46" y="122" font-size="13" fill="#64748b">RF</text>
+  <line x1="80" y1="118" x2="762" y2="118" stroke="#cbd5e1"/>
+  <polygon points="160,148 160,92 172,118" fill="#7c3aed"/>
+  <text x="196" y="112" font-size="12" fill="#7c3aed">小角度 10°–30°</text>
+
+  <!-- 梯度轨 -->
+  <text x="46" y="222" font-size="13" fill="#64748b">梯度</text>
+  <line x1="80" y1="218" x2="762" y2="218" stroke="#cbd5e1"/>
+  <!-- 扰相负梯度 -->
+  <path d="M185,218 L195,258 L285,258 L295,218 Z" fill="#fecaca" stroke="#dc2626"/>
+  <text x="245" y="276" text-anchor="middle" font-size="12" fill="#dc2626">扰相梯度（失相）</text>
+  <!-- 复相梯度 -->
+  <path d="M295,218 L305,180 L435,180 L445,218 Z" fill="#bbf7d0" stroke="#16a34a"/>
+  <text x="370" y="172" text-anchor="middle" font-size="12" fill="#16a34a">复相梯度（重聚）</text>
+
+  <!-- 信号轨 -->
+  <text x="46" y="330" font-size="13" fill="#64748b">信号</text>
+  <line x1="80" y1="330" x2="762" y2="330" stroke="#e2e8f0"/>
+  <path d="M172,330 C260,336 340,300 430,296 C510,302 580,326 650,330" fill="none" stroke="#0891b2" stroke-width="2.5"/>
+  <circle cx="430" cy="296" r="4.5" fill="#0891b2"/>
+  <text x="430" y="286" text-anchor="middle" font-size="12" fill="#0891b2">梯度回波（T2* 衰减）</text>
+
+  <text x="410" y="388" text-anchor="middle" font-size="12" fill="#64748b">优点：无 180°、TR 短、速度快；缺点：反映 T2* 而非纯 T2，对磁场不均匀高度敏感</text>
+</svg>

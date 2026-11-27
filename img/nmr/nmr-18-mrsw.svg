@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 430" font-family="'Microsoft YaHei','PingFang SC','Noto Sans SC',sans-serif">
+  <defs>
+    <marker id="m18" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#2563eb"/></marker>
+  </defs>
+  <rect x="8" y="8" width="804" height="414" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="410" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="#334155">MRSw：状态改变与弛豫读出（方向需实验校准）</text>
+
+  <!-- 左栏 结合机制 -->
+  <g font-size="12" text-anchor="middle">
+    <rect x="34" y="74" width="360" height="220" rx="10" fill="#dbeafe" stroke="#93c5fd"/>
+    <text x="214" y="102" fill="#1d4ed8" font-weight="700" font-size="14">结合机制 Binding（单价 / 低交联）</text>
+    <rect x="62" y="120" width="140" height="52" rx="8" fill="#fff" stroke="#93c5fd"/>
+    <text x="132" y="142" fill="#475569">颗粒表面配体结合靶标</text>
+    <text x="132" y="160" fill="#475569">可能改变局部水环境</text>
+    <rect x="230" y="120" width="140" height="52" rx="8" fill="#fff" stroke="#93c5fd"/>
+    <text x="300" y="142" fill="#475569">水可及性可能改变</text>
+    <text x="300" y="160" fill="#475569">需独立结构证据</text>
+    <line x1="202" y1="146" x2="228" y2="146" stroke="#2563eb" stroke-width="2" marker-end="url(#m18)"/>
+
+    <text x="214" y="204" fill="#1d4ed8" font-weight="700">信号方向不作统一假设</text>
+    <text x="214" y="228" fill="#475569">动力学取决于识别与体系</text>
+    <text x="214" y="250" fill="#475569">用固定条件标准曲线确定响应</text>
+    <text x="214" y="272" fill="#475569">典型：小分子、单体毒素、短核酸、抗体结合</text>
+  </g>
+
+  <!-- 右栏 聚集机制 -->
+  <g font-size="12" text-anchor="middle">
+    <rect x="426" y="74" width="360" height="220" rx="10" fill="#dcfce7" stroke="#86efac"/>
+    <text x="606" y="102" fill="#15803d" font-weight="700" font-size="14">聚集机制 Aggregation（多价交联成簇）</text>
+    <rect x="454" y="120" width="140" height="52" rx="8" fill="#fff" stroke="#86efac"/>
+    <text x="524" y="142" fill="#475569">多价靶标交联多颗粒</text>
+    <text x="524" y="160" fill="#475569">形成超分子簇</text>
+    <rect x="622" y="120" width="140" height="52" rx="8" fill="#fff" stroke="#86efac"/>
+    <text x="692" y="142" fill="#475569">有效扰动体积增大</text>
+    <text x="692" y="160" fill="#475569">DLS 粒径明显上升</text>
+    <line x1="594" y1="146" x2="620" y2="146" stroke="#2563eb" stroke-width="2" marker-end="url(#m18)"/>
+
+    <text x="606" y="204" fill="#15803d" font-weight="700">信号可增强、减弱或趋于饱和</text>
+    <text x="606" y="228" fill="#475569">需控制浓度、时间与化学计量比</text>
+    <text x="606" y="250" fill="#475569">方向还取决于 MA / SD 模式与颗粒尺寸</text>
+    <text x="606" y="272" fill="#475569">典型：五聚体蛋白、多价抗原、细胞、病原体</text>
+  </g>
+
+  <!-- 底部 T1/T2 询问 -->
+  <rect x="150" y="316" width="520" height="52" rx="8" fill="#fef3c7" stroke="#fcd34d"/>
+  <text x="410" y="340" text-anchor="middle" font-size="13" fill="#b45309" font-weight="700">双参数读出：T1、T2 均可能受浓度与状态影响</text>
+  <text x="410" y="360" text-anchor="middle" font-size="13" fill="#b45309" font-weight="700">反演前先校准可辨识性，并检查基质、沉降、位点饱和和钩状效应</text>
+
+  <text x="410" y="400" text-anchor="middle" font-size="12" fill="#94a3b8">注意：本篇 MRSw = Magnetic Relaxation Switch 生物传感，不同于临床磁共振波谱 MRS（代谢物谱线），缩写不可混用</text>
+</svg>

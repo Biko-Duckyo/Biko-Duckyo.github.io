@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="460" height="650" viewBox="0 0 460 650" role="img" aria-labelledby="title desc" font-family="system-ui,'Microsoft YaHei',sans-serif">
+<title id="title">用四层框架理解 MRI 序列</title><desc id="desc">先确定图像目标，再理解磁化准备、回波与读出、采样与重建。此图为概念框架，不是扫描时序。</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0 10 5 0 10" fill="#607a99"/></marker></defs>
+<rect x="1" y="1" width="458" height="648" rx="20" fill="#f6f8fc" stroke="#cad5e2"/>
+<text x="230" y="42" text-anchor="middle" fill="#203249" font-size="22" font-weight="650">看懂序列的四层框架</text>
+<g fill="#203249" text-anchor="middle">
+<rect x="24" y="68" width="412" height="100" rx="14" fill="#e2edf8"/><text x="230" y="101" font-size="20" font-weight="600">① 想突出什么对比？</text><text x="230" y="134" font-size="18">T1 / T2 / PD · 扩散 · 血流 · 磁敏感</text>
+<rect x="24" y="194" width="412" height="100" rx="14" fill="#e8ecf6"/><text x="230" y="227" font-size="20" font-weight="600">② 怎样准备或编码磁化？</text><text x="230" y="260" font-size="18">反转恢复 · 脂肪抑制 · 扩散编码</text>
+<rect x="24" y="320" width="412" height="100" rx="14" fill="#e4efed"/><text x="230" y="353" font-size="20" font-weight="600">③ 怎样形成回波并读出？</text><text x="230" y="386" font-size="18">SE / TSE · GRE · SE-EPI / GRE-EPI</text>
+<rect x="24" y="446" width="412" height="100" rx="14" fill="#f2ecdf"/><text x="230" y="479" font-size="20" font-weight="600">④ 怎样采样与重建？</text><text x="230" y="512" font-size="18">2D / 3D · 轨迹 · 加速 · 重建</text>
+</g>
+<g stroke="#607a99" stroke-width="2" marker-end="url(#arrow)"><path d="M230 172v16"/><path d="M230 298v16"/><path d="M230 424v16"/></g>
+<text x="230" y="582" text-anchor="middle" fill="#315f92" font-size="17">例：反转准备＋3D GRE → MPRAGE 类</text>
+<text x="230" y="615" text-anchor="middle" fill="#52657d" font-size="15">自绘概念图 · 实际时序按具体实现安排</text>
+</svg>

@@ -1,0 +1,121 @@
+/* Scoped P1 sample. Homepage grid, card dimensions and quick-tool geometry are untouched. */
+body.biko-shell-sample{--bss-surface:rgba(22,32,48,.94);--bss-inset:rgba(255,255,255,.045);--bss-line:rgba(184,205,234,.18);--bss-text:#e6edf7;--bss-muted:#b1bfd1;--bss-selected:#c2d4ed;--bss-on-selected:#1a2b42;--bss-shadow:0 12px 40px #03081438;--bss-focus:#b9d7ff}
+html[data-theme=light] body.biko-shell-sample{--bss-surface:rgba(246,248,252,.96);--bss-inset:rgba(90,118,158,.06);--bss-line:rgba(91,115,150,.21);--bss-text:#263951;--bss-muted:#566b85;--bss-selected:#36597f;--bss-on-selected:#fff;--bss-shadow:0 12px 40px #22334c1c;--bss-focus:#365f91}
+body.biko-shell-sample #menu-container{visibility:hidden!important;pointer-events:none!important}
+/* Early hint (inject.head) hides the old bar before this script boots, so a refresh
+   never flashes the 60px nav before the island appears. */
+html.bss-early #menu-container{visibility:hidden!important;pointer-events:none!important}
+body.biko-shell-sample:not(.bss-post) #rightside{visibility:hidden!important;pointer-events:none!important}
+body.biko-shell-sample #biko-music-panel{bottom:96px}
+#bss-island,#bss-drawer,#bss-dock{font-family:var(--font-ui,var(--bss-font,"Segoe UI","PingFang SC",system-ui,sans-serif));color:var(--bss-text);box-sizing:border-box}
+#bss-island * ,#bss-drawer *,#bss-dock *{box-sizing:border-box}
+#bss-island{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:1250;display:flex;align-items:center;gap:4px;max-width:calc(100% - 32px);height:48px;padding:4px 7px;border:1px solid var(--bss-line);border-radius:999px;background:var(--bss-surface);box-shadow:var(--bss-shadow),inset 0 1px #ffffff0d;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+#bss-island a,#bss-island button,#bss-dock button,#bss-drawer button{border:0;background:transparent;color:inherit;text-decoration:none;cursor:pointer;font-family:inherit;line-height:1.4}
+#bss-island .bss-home-link{display:grid;place-items:center;width:36px;height:36px;flex-shrink:0;border-radius:50%;font-size:17px;background:var(--bss-inset);color:var(--bss-selected)}
+#bss-trigger{display:flex;align-items:center;gap:13px;min-height:40px;padding:4px 12px!important;white-space:nowrap;font-size:14px;font-weight:650}
+#bss-trigger i{font-size:9px;color:var(--bss-muted);transition:transform .18s}
+#bss-trigger[aria-expanded=true] i{transform:rotate(180deg)}
+#bss-island .bss-separator{height:18px;width:1px;background:var(--bss-line);margin:0 7px}
+#bss-island .bss-shortcuts{display:flex;align-items:center;gap:3px}
+#bss-island .bss-shortcuts a{font-size:13px;display:flex;align-items:center;min-height:36px;padding:5px 13px;border-radius:999px;color:var(--bss-muted)}
+#bss-island .bss-shortcuts a[aria-current=page]{background:var(--bss-inset);color:var(--bss-text)}
+#bss-island time{font-variant-numeric:tabular-nums;font-size:12px;min-width:52px;text-align:center;color:var(--bss-muted);margin-left:8px}
+#bss-island .bss-search{width:36px;height:36px;border-radius:50%;font-size:14px}
+#bss-island button:hover,#bss-island a:hover,#bss-dock button:hover{background:var(--bss-inset)}
+#bss-island :focus-visible,#bss-dock :focus-visible,#bss-drawer :focus-visible{outline:2px solid var(--bss-focus);outline-offset:3px}
+#bss-island[hidden],#bss-dock[hidden],#bss-dock button[hidden]{display:none!important}
+#bss-drawer{position:fixed;inset:calc(76px + env(safe-area-inset-top,0px)) auto auto 50%;transform:translateX(-50%);margin:0;width:540px;max-width:calc(100vw - 32px);max-height:calc(100dvh - 110px - env(safe-area-inset-top,0px));padding:24px;border:1px solid var(--bss-line);border-radius:24px;background:var(--bss-surface);box-shadow:0 30px 100px #0005;overflow:auto;overscroll-behavior:contain}
+#bss-drawer::backdrop{background:#060d1f65;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+#bss-drawer header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:22px}
+#bss-drawer header p{margin:0 0 6px;font-size:10px;letter-spacing:.16em;color:var(--bss-muted)}
+#bss-drawer h2{font-size:23px;font-weight:600;line-height:1.4;margin:0;color:var(--bss-text)}
+#bss-drawer [data-bss-close]{display:grid;place-items:center;flex-shrink:0;min-width:44px;min-height:44px;border:1px solid var(--bss-line);border-radius:14px}
+.bss-destinations{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.bss-destinations a{display:flex;align-items:center;gap:12px;min-height:58px;padding:12px;border:1px solid transparent;border-radius:14px;text-decoration:none;color:var(--bss-muted);font-size:14px}
+.bss-destinations i{width:20px;text-align:center;font-size:17px}
+.bss-destinations a:hover{color:var(--bss-text);background:var(--bss-inset);border-color:var(--bss-line)}
+.bss-destinations a[aria-current=page]{background:var(--bss-selected);color:var(--bss-on-selected)}
+.bss-control-section{padding-top:20px;margin-top:20px;border-top:1px solid var(--bss-line)}
+#bss-drawer .bss-section-title{margin:0 0 12px;color:var(--bss-muted);font-size:12px}
+.bss-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#bss-drawer .bss-controls button{display:flex;align-items:center;gap:11px;min-height:48px;padding:10px 12px;text-align:left;border-radius:12px;background:var(--bss-inset);font-size:13px}
+#bss-island [hidden],#bss-drawer [hidden],#bss-dock [hidden]{display:none!important}
+.bss-controls i{width:18px;text-align:center;color:var(--bss-muted)}
+.bss-panel-foot{display:flex;justify-content:space-between;gap:12px;padding-top:22px;font-size:11px;color:var(--bss-muted)}
+#bss-drawer[data-mode=controls] .bss-destinations{display:none}
+#bss-drawer[data-mode=controls] .bss-control-section{margin-top:0;border:0;padding-top:0}
+body.bss-open{overflow:hidden}
+#bss-dock{position:fixed;bottom:calc(18px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);z-index:1250;display:flex;align-items:center;gap:5px;padding:6px;border:1px solid var(--bss-line);border-radius:20px;background:var(--bss-surface);box-shadow:var(--bss-shadow);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+#bss-dock button{width:44px;height:44px;border-radius:13px;font-size:17px}
+#bss-dock>span{height:23px;width:1px;background:var(--bss-line);margin:0 4px}
+body.biko-shell-sample #content-inner{padding-bottom:110px!important}
+/* 公共版心规则 `.page #content-inner.layout`（1,2,0）会压过上面那条（1,1,1）：
+   实测随笔页 --layout-pad-bottom 生效成 24px，底部「加载更多」直接被 Dock 盖住。
+   把特异性抬到同一层，Dock 高度（44 + 12 内边距 + 2 边框 + 18 底距 ≈ 76）之上再留 36。 */
+body.biko-shell-sample .page #content-inner.layout{padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))!important}
+body.biko-shell-sample.home-dashboard .dash-card{border-color:var(--bss-line);box-shadow:0 8px 24px #03081420,inset 0 1px #ffffff08}
+/* Surface-only refinements. No rule changes dashboard grid, padding, dimensions or tool track. */
+body.biko-shell-sample.home-dashboard .dash-card{background-color:rgba(24,37,54,.7)}
+html[data-theme=light] body.biko-shell-sample.home-dashboard .dash-card{background-color:rgba(241,245,251,.82)}
+body.biko-shell-sample .page.type-archives #content-inner{background:none;backdrop-filter:none;-webkit-backdrop-filter:none;padding-left:var(--layout-pad-x)!important;padding-right:var(--layout-pad-x)!important}
+body.biko-shell-sample .ar{--fg:var(--bss-text);--fg-strong:var(--bss-text);--fg-mute:var(--bss-muted);--fg-dim:var(--bss-muted);max-width:100%;background:var(--bss-surface);border:1px solid var(--bss-line);border-radius:24px;box-shadow:var(--bss-shadow);padding:28px 32px 32px}
+body.biko-shell-sample .ar-head{background:transparent;border:0;box-shadow:none;border-radius:0;padding:0 0 24px;margin:0;border-bottom:1px solid var(--bss-line)}
+body.biko-shell-sample .ar-eyebrow{display:block!important;font-size:10px;letter-spacing:.2em;color:var(--bss-muted);margin:0 0 8px}
+body.biko-shell-sample .ar-head h1{font-size:30px;letter-spacing:.02em;font-weight:650}
+body.biko-shell-sample .ar-sub{font-size:13px;line-height:1.75;margin-top:8px;color:var(--bss-muted)}
+body.biko-shell-sample .ar-toolbar{padding:20px 0 0;margin:0;gap:14px}
+body.biko-shell-sample .ar-tabs{border:1px solid var(--bss-line);background:var(--bss-inset);padding:4px;gap:4px}
+body.biko-shell-sample .ar-tabs button{min-height:36px;padding:7px 14px;font-size:13px}
+body.biko-shell-sample .ar-tabs button[aria-selected=true]{background:var(--bss-selected);color:var(--bss-on-selected)}
+body.biko-shell-sample .ar-filters>summary{background:var(--bss-inset);border-color:var(--bss-line);font-size:13px;border-radius:12px}
+body.biko-shell-sample .ar-filter-panel{background:var(--bss-surface);border-color:var(--bss-line);border-radius:16px;box-shadow:var(--bss-shadow)}
+body.biko-shell-sample .ar-timeline{margin-top:26px}
+body.biko-shell-sample .ar-card{box-shadow:none;background:transparent;border-color:transparent;border-radius:12px}
+body.biko-shell-sample .ar-card:hover,body.biko-shell-sample .ar-card:focus-within{background:var(--bss-inset);border-color:var(--bss-line);box-shadow:none;transform:none}
+body.biko-shell-sample .ar-title{font-weight:550}
+body.biko-shell-sample .ar-year{color:var(--bss-muted)}
+body.biko-shell-sample .ar-timeline.is-compact .ar-card{min-height:48px;padding-top:10px;padding-bottom:10px}
+body.biko-shell-sample .ar-timeline.is-compact .ar-title{font-size:15px}
+body.biko-shell-sample .ar-timeline.is-compact .ar-meta{opacity:1}
+@media(max-width:1023px){#bss-dock{display:none}body.biko-shell-sample #content-inner{padding-bottom:var(--layout-pad-bottom)!important}body.biko-shell-sample .page #content-inner.layout{padding-bottom:var(--layout-pad-bottom)!important}}
+@media(max-width:760px){#bss-island{top:calc(10px + env(safe-area-inset-top,0px));height:44px;max-width:calc(100% - 24px);gap:0;padding:2px 5px}#bss-island .bss-shortcuts,#bss-island time,#bss-island .bss-separator{display:none}#bss-island .bss-home-link{width:36px;height:36px}#bss-trigger{min-height:40px;gap:22px;padding:4px 14px!important;min-width:128px;justify-content:space-between}#bss-island .bss-search{width:40px;height:40px}#bss-drawer{inset:calc(68px + env(safe-area-inset-top,0px)) auto auto 50%;width:calc(100vw - 24px);max-width:440px;padding:20px;max-height:calc(100dvh - 88px - env(safe-area-inset-top,0px));border-radius:22px}.bss-destinations{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.bss-destinations a{min-height:56px}#bss-drawer h2{font-size:21px}body.biko-shell-sample .ar{padding:20px 16px 24px;border-radius:18px}body.biko-shell-sample .ar-head{padding-bottom:18px}body.biko-shell-sample .ar-head h1{font-size:26px}body.biko-shell-sample .ar-sub{font-size:13px}body.biko-shell-sample .ar-toolbar{padding-top:16px;gap:12px}body.biko-shell-sample .ar-tabs{width:100%;border-radius:13px}body.biko-shell-sample .ar-tabs button{min-height:40px;padding:7px 10px;white-space:nowrap}body.biko-shell-sample .ar-filters{width:100%;margin-left:0}body.biko-shell-sample .ar-filters>summary{justify-content:center}body.biko-shell-sample .ar-timeline.is-compact .ar-title{font-size:14px;white-space:normal;line-height:1.6}body.biko-shell-sample .ar-timeline.is-compact .ar-body{flex-wrap:wrap;gap:4px 10px}body.biko-shell-sample .ar-timeline.is-compact .ar-date{flex-basis:100%;width:auto}body.biko-shell-sample .ar-timeline.is-compact .ar-item{padding-left:20px}body.biko-shell-sample .ar-timeline.is-compact .ar-card{padding:10px 6px}body.biko-shell-sample .ar-timeline.is-compact .ar-meta{display:none}}
+@media(prefers-reduced-motion:reduce){#bss-island *,#bss-drawer *,#bss-dock *{transition:none!important;animation:none!important}}
+@supports not (backdrop-filter:blur(1px)){#bss-island,#bss-drawer,#bss-dock{background:var(--bss-surface)}}
+@media(max-width:760px){body.biko-shell-sample .ar-timeline.is-compact .ar-body{flex-direction:column;flex-wrap:nowrap;align-items:flex-start;gap:4px}body.biko-shell-sample .ar-timeline.is-compact .ar-date{flex:0 0 auto;width:auto}body.biko-shell-sample .ar-timeline.is-compact .ar-title{flex:0 0 auto;width:100%;max-width:100%;margin:0;overflow-wrap:anywhere}}
+body.biko-shell-sample:not(.bss-post) #rightside *{visibility:hidden!important;pointer-events:none!important}body.biko-shell-sample #biko-music-panel{left:50%;right:auto;transform:translateX(-50%);bottom:calc(90px + env(safe-area-inset-bottom,0px));width:min(370px,calc(100vw - 24px));z-index:1251;color:var(--bss-text)}body.biko-shell-sample .bmp-card{background:var(--bss-surface);border-color:var(--bss-line);box-shadow:var(--bss-shadow)}@media(max-width:1023px){body.biko-shell-sample #biko-music-panel{bottom:calc(20px + env(safe-area-inset-bottom,0px))}}
+/* Long article titles stay inside the island instead of stretching it. */
+#bss-trigger .bss-current{display:block;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:760px){#bss-trigger .bss-current{max-width:112px}}
+/* Nothing to separate when search and music are both unavailable (standalone workspaces). */
+#bss-dock.bss-slim>span{display:none}
+/* Article pages keep their reading utilities (read mode, one/two column) as one vertical pill. */
+body.biko-shell-sample.bss-post #rightside{left:24px!important;right:auto!important;bottom:24px!important;display:flex!important;flex-direction:column!important;gap:4px!important;padding:4px;border:1px solid var(--bss-line);border-radius:20px;background:var(--bss-surface);box-shadow:var(--bss-shadow);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+body.biko-shell-sample.bss-post #rightside>*{flex-direction:column;gap:4px}
+body.biko-shell-sample.bss-post #rightside button,body.biko-shell-sample.bss-post #rightside a{width:44px!important;height:44px!important;border-radius:16px!important;background:transparent!important;color:var(--bss-text)!important;border:0!important;box-shadow:none!important;font-size:15px!important}
+body.biko-shell-sample.bss-post #rightside button:hover,body.biko-shell-sample.bss-post #rightside a:hover{background:var(--bss-inset)!important;color:var(--bss-text)!important;transform:none!important}
+/* 简繁与日夜已收进岛的下拉面板，这里只留文章页专属的两个开关，避免同一动作出现两处。 */
+body.biko-shell-sample.bss-post #rightside #translateLink,body.biko-shell-sample.bss-post #rightside #darkmode{display:none!important}
+body.biko-shell-sample.bss-post #rightside button:active{transform:scale(.94)!important}
+@media(max-width:1023px){body.biko-shell-sample.bss-post #rightside{display:none!important}}
+
+/* ---------- 岛内常显天气 ----------
+   节点是原顶栏那颗 #he-plugin-simple 胶囊（weather.js 按 id 更新），
+   这里只做“搬家后的外观”：去掉顶栏胶囊的底与内边距，只留图标 + 温度 + 状况。
+   城市、AQI、预警另有首页天气卡承载，岛上不重复堆信息。 */
+#bss-island .bss-weather{display:inline-flex;align-items:center;min-height:32px;margin-left:6px;padding:0 10px 0 8px;border-left:1px solid var(--bss-line);color:var(--bss-muted);font-size:12px;line-height:1.2;white-space:nowrap}
+#bss-island .bss-weather[hidden]{display:none!important}
+#bss-island .bss-weather .bn-weather{display:inline-flex;max-width:none!important;padding:0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;gap:6px;font-size:12px;color:inherit;opacity:1}
+#bss-island .bss-weather .bn-city,#bss-island .bss-weather .bn-aqi,#bss-island .bss-weather .bn-warn{display:inline-flex!important;align-items:center;gap:4px}
+#bss-island .bss-weather{min-width:0;max-width:300px;flex:0 1 auto}
+#bss-island .bss-weather .bn-weather{min-width:0;overflow-x:auto;scrollbar-width:none}
+#bss-island .bss-weather .bn-weather[style*="display: none"]{display:none!important}
+#bss-island .bss-weather .bn-wx{display:inline-flex;align-items:center;gap:5px;margin-left:0}
+#bss-island .bss-weather .bn-wx-icon i[class*="qi-"],
+#bss-island .bss-weather .bn-wx i[class*="qi-"]{font-size:14px;color:var(--bss-selected)}
+#bss-island .bss-weather .bn-wx-error{cursor:pointer}
+@media(max-width:760px){#bss-island .bss-weather{margin-left:2px;padding:0 2px 0 6px;font-size:11px}#bss-island .bss-weather .bn-wx{gap:3px}#bss-island .bss-weather .bn-wx i[class*="qi-"]{display:none}}
+@media(max-width:760px){#bss-trigger{min-width:82px;max-width:120px;gap:8px;padding-inline:8px!important}#bss-trigger .bss-current{max-width:5em;overflow:hidden;text-overflow:ellipsis}#bss-island .bss-weather{max-width:180px}#bss-island .bn-wx-detail{display:inline-flex;gap:6px}#bss-island .bn-city,#bss-island .bn-aqi{font-size:11px}#bss-island .bss-search{flex-shrink:0}}
+/* The homepage has a real footer card: place Dock clearance after it, not before it. */
+body.biko-shell-sample.home-dashboard .page #content-inner.layout{padding-bottom:var(--dash-gap,24px)!important}
+body.biko-shell-sample.home-dashboard #body-wrap > #footer{margin-bottom:calc(112px + env(safe-area-inset-bottom,0px))!important}
+@media(max-width:1023px){body.biko-shell-sample.home-dashboard #body-wrap > #footer{margin-bottom:var(--dash-edge,24px)!important}}

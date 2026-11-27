@@ -77,7 +77,7 @@
     // Only the validated origin and a random server namespace leave this module.
     const identity = () => configured() && storeIdentity ? base + '/' + storeIdentity : null
     const request = async (path, opts = {}) => {
-      if (!base || !token) throw new Error('请先在“娜娜莉工作室”连接私有后端。')
+      if (!base || !token) throw new Error('请先在“多多工作室”连接私有后端。')
       if (typeof path !== 'string' || path.length > 4096 || !path.startsWith('/api/') || /[\\#]/.test(path)) throw new Error('无效的后端接口。')
       const requestURL = new URL(path, base)
       if (requestURL.origin !== base || requestURL.hash || !/^\/api\/[a-zA-Z0-9/_-]+$/.test(requestURL.pathname)) throw new Error('无效的后端接口。')
@@ -114,7 +114,7 @@
     // The code studio terminal's socket address. Only a one-time ticket in the query
     // authorises it; the token itself never goes into a URL.
     const socketURL = path => {
-      if (!base || !token) throw new Error('请先在“娜娜莉工作室”连接私有后端。')
+      if (!base || !token) throw new Error('请先在“多多工作室”连接私有后端。')
       if (typeof path !== 'string' || path.length > 4096 || !path.startsWith('/api/') || /[\\#]/.test(path)) throw new Error('无效的后端接口。')
       const url = new URL(path, base)
       if (url.origin !== base || !/^\/api\/[a-zA-Z0-9/_-]+$/.test(url.pathname)) throw new Error('无效的后端接口。')
@@ -235,7 +235,7 @@
       await resume()
       if (!permitted()) throw new Error('请先解锁站点。')
       if (hadConnection && epoch !== beforeResume) throw new Error('连接已改变，请重试。')
-      if (!configured()) throw new Error('请先在“娜娜莉工作室”连接私有后端。')
+      if (!configured()) throw new Error('请先在“多多工作室”连接私有后端。')
       const generation = epoch, expectedIdentity = storeIdentity
       const guarded = opts.method === 'PUT' && expectedIdentity
         ? { ...opts, body: { ...opts.body, identity: expectedIdentity } } : opts
@@ -371,7 +371,7 @@
           result = await window.LEARNING_LAB.runCurrent({ signal: controller.signal })
           if (!result || result.status !== 'accepted') throw new Error('练习尚未通过。请在练习台查看真实诊断，修正后重试。')
         } else {
-          if (!window.NANALY?.agentTool) throw new Error('娜娜莉工具尚未加载。')
+          if (!window.NANALY?.agentTool) throw new Error('多多工具尚未加载。')
           result = await window.NANALY.agentTool({ tool: step.tool, input: step.input, goal: clone(goal), stepId, signal: controller.signal })
           if (!result) throw new Error('工具没有返回可验证的结果。')
         }

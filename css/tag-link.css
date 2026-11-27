@@ -9,6 +9,12 @@
  *   2. 落点本地化：source/css/tag-link.css，不依赖 jsDelivr
  *   3. 深浅色自动跟随（本站 --card-bg / --font-color 由 data-theme 驱动）
  *   4. 增加 favicon 加载失败的视觉兜底、参数错误提示样式
+ *   5. 2026-11-11：原 favicon 源 api.iowen.cn 已整体 404，改用 favicon.im；
+ *      图标改为 <img> + onerror 摘除，兜底层用 :has() 隐藏，避免透明底图标叠出两个图形
+ *
+ * 已知限制：深色主题下深色单色 favicon（如 GitHub 的黑色猫）与 --link-bg 对比度偏低。
+ *   这是图标本身的颜色，不是卡片样式问题。若要改善，可在 .tag-link-favicon 上加
+ *   一层浅色底盘：background: rgba(255, 255, 255, 0.12); border-radius: 4px;
  *
  * 引入方式：_config.butterfly.yml → inject.head
  *   - <link rel="stylesheet" href="/css/tag-link.css">
@@ -58,6 +64,10 @@
 }
 
 #article-container .tag-Link .tag-link-bottom .tag-link-left {
+  position: relative; /* 供 .tag-link-favicon 与 ::before 兜底图层定位 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 60px;
   min-width: 60px;
   height: 60px;
@@ -65,6 +75,37 @@
   background-repeat: no-repeat;
   background-position: center center;
   background-size: contain; /* contain：图标加载失败时也不会被拉伸变形 */
+}
+
+/* 兜底图标：接口失效 / 域名无 favicon 时显示链接图标，而不是空白方块。
+   用内联 SVG，不依赖字体文件，也不发网络请求。 */
+#article-container .tag-Link .tag-link-bottom .tag-link-left::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='1.8' stroke-linecap='round'%3E%3Cpath d='M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1'/%3E%3Cpath d='M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: 58%;
+  pointer-events: none;
+}
+
+/* favicon 图片层：盖在兜底图标之上；加载失败时被 onerror 移除，露出下面的兜底图标 */
+#article-container .tag-Link .tag-link-bottom .tag-link-left .tag-link-favicon {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  padding: 2px;
+  box-sizing: border-box;
+  object-fit: contain;
+}
+
+/* 图标在位时不显示兜底：多数 favicon 是透明底，不这样处理会叠成「图标+链环」两个图形。
+   图片被 onerror 摘掉后 :has() 不再命中，兜底图标自动出现。 */
+#article-container .tag-Link .tag-link-bottom .tag-link-left:has(.tag-link-favicon)::before {
+  display: none;
 }
 
 #article-container .tag-Link .tag-link-bottom .tag-link-right {

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>磁共振原理实验 · 鸭喵屋</title><link rel="stylesheet" href="/tools/apps/science/style.css"><script defer src="/tools/apps/science/model.js"></script><script defer src="/tools/apps/science/visuals.js"></script><script defer src="/tools/apps/science/app.js"></script></head>
+<body>
+<main class="lab">
+  <header class="lab-head"><div><p class="eyebrow">INTERACTIVE SCIENCE</p><h1>把磁共振原理，慢下来看看</h1></div><a class="home-link" href="/?home=1">鸭喵屋</a></header>
+  <nav class="topics" aria-label="演示主题"><button data-topic="moment">磁矩</button><button data-topic="precession">进动</button><button data-topic="t1">T1 弛豫</button><button data-topic="t2">T2 弛豫</button></nav>
+  <div class="lab-layout">
+    <section class="visual-panel" aria-label="动态示意与曲线"><div id="visual"></div><p class="reading" id="reading" role="status" aria-live="polite"></p><div class="transport"><button id="play" type="button">播放演示</button><button id="reset" type="button">重置</button><button id="save" type="button">保存当前图 SVG</button></div><label class="time-control" for="time">演示进度 <output id="time-label"></output><input id="time" type="range" min="0" max="500" step="1" value="0"></label></section>
+    <aside class="controls" aria-label="模型参数">
+      <h2>改一个参数，观察变化</h2>
+      <label data-for="moment precession" for="field">静磁场 B₀ <output id="field-label">1.5 T</output><input id="field" type="range" min="0" max="3" step="0.1" value="1.5"></label>
+      <label data-for="precession" for="angle">锥角 θ <output id="angle-label">40°</output><input id="angle" type="range" min="10" max="90" step="1" value="40"></label>
+      <label data-for="t1 t2" for="tau"><span id="tau-name">时间常数 T1</span> <output id="tau-label">1000 ms</output><input id="tau" type="range" min="100" max="3000" step="100" value="1000"></label>
+      <label data-for="t1" for="initial">初始纵向磁化<select id="initial"><option value="0">理想 90° 后：Mz(0) = 0</option><option value="-1">理想反转后：Mz(0) = −M₀</option></select></label>
+      <button id="one-tau" type="button" data-for="t1 t2">定位到 1 倍时间常数</button>
+      <div class="model-note"><h3>先看懂，再记公式</h3><p id="explanation"></p><p class="formula" id="formula"></p></div>
+    </aside>
+  </div>
+  <footer class="lab-foot"><p id="boundary"></p><p>自绘教学示意 · 非实测数据 · 默认暂停 · 离开面板自动暂停</p><div class="sources"><a href="https://doi.org/10.1103/PhysRev.70.460" target="_blank" rel="noopener noreferrer">Bloch（1946）</a><a href="https://doi.org/10.1103/PhysRev.80.580" target="_blank" rel="noopener noreferrer">Hahn（1950）</a><a id="article-link" href="/2026/10/31/NMR-01-原子核自旋与静磁场基础/" target="_blank" rel="noopener noreferrer">阅读对应文章 →</a></div></footer>
+</main>
+</body></html>

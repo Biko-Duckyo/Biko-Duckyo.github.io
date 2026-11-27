@@ -22,11 +22,18 @@
  * ============================================================ */
 (function () {
   'use strict'
+  /* 幂等守卫：带 data-pjax 的脚本在 pjax 换页时可能被重复 eval，
+     只保留首份闭包，避免重复注册 document 监听 / 定时器 / 按钮绑定，
+     导致一次点击触发多个 play/pause 回调互相对冲。 */
+  if (window.__BIKO_MP_BOOTED) return
+  window.__BIKO_MP_BOOTED = true
+  window.__BIKO_MP_VERSION = '20261030c'
 
   var live = true
   var ap = null
   var bound = false
   var timer = null
+  var lastVol = 0.7
   var tries = 0
   var MAX_TRIES = 66            // 66 * 300ms ≈ 20s
   var ADOPT_AFTER = 12          // 12 * 300ms ≈ 3.6s：这么久还没有实例就自己建
@@ -77,6 +84,9 @@
   }
 
   function getAP () { return window.__BIKO_AP__ || null }
+  /* 顺序模式以实例 options.order 为唯一真相（'random' | 'list'）；
+     APlayer 的 setMode() 只切 mini/normal 尺寸，不能用来切随机/循环。 */
+  function isRandom (a) { return !!a && a.options && a.options.order === 'random' }
 
   /* ------------------------------------------------------------
    * 页脚移除
@@ -263,8 +273,12 @@
   }
 
   function renderPlay () {
-    if (!live || !ui.play || !ap) return
-    var playing = !!(ap.audio && !ap.audio.paused)
+    if (!live || !ui.play) return
+    /* 兜底：闭包 ap 在 pjax 时序下可能还是 null（wire 先于 boot 赋值），
+       这里实时回读全站单例，保证图标/旋转态始终以真实 audio.paused 为准。 */
+    var a = ap || getAP()
+    if (!a || !a.audio) return
+    var playing = !!(a.audio && !a.audio.paused)
     /* 幂等：只在状态真变化时碰 DOM。
        250ms 心跳会反复调用本函数，若无条件重写 innerHTML，
        会 4 次/秒重建图标节点 —— 既浪费又会让 CSS transition 反复重置。 */
@@ -282,6 +296,23 @@
     setStatus(n ? ('第 ' + (idx() + 1) + ' / ' + n + ' 首') : '歌单是空的')
   }
 
+  /* 顺序按钮高亮、静音图标与音量滑块都从实例状态回读，与常驻小面板互通 */
+  function renderModeUI () {
+    if (!live || !ui.shuffle) return
+    var on = !!isRandom(ap)
+    ui.shuffle.classList.toggle('is-active', on)
+    ui.shuffle.setAttribute('aria-pressed', on ? 'true' : 'false')
+  }
+  function renderVolumeUI () {
+    if (!live || !ap || !ap.audio) return
+    var muted = !!ap.audio.muted || ap.audio.volume === 0
+    if (ui.vol) ui.vol.value = ap.audio.muted ? 0 : ap.audio.volume
+    if (ui.mute) {
+      var icon = ui.mute.querySelector('i')
+      if (icon) icon.className = 'fas ' + (muted ? 'fa-volume-xmark' : 'fa-volume-high')
+    }
+  }
+
   function renderActive () {
     if (!live) return
     var cur = idx()
@@ -295,6 +326,8 @@
     renderProgress()
     renderPlay()
     renderStatus()
+    renderModeUI()
+    renderVolumeUI()
     renderActive()
     loadLrc()
   }
@@ -492,7 +525,7 @@
         '<span class="cover"' + (it.t.cover ? ' style="background-image:url(\'' + esc(it.t.cover) + '\')"' : '') + '></span>' +
         '<span class="txt">' +
         '<span class="nm">' + esc(it.title) + '</span>' +
-        '<span class="ar">' + esc(it.artist) + '</span>' +
+        '<span class="bmpg-track-artist">' + esc(it.artist) + '</span>' +
         '</span>' +
         '<span class="dur">' + esc(durOf(it.t)) + '</span>' +
         '</button></li>'
@@ -609,9 +642,10 @@
    *   不复用 MetingJS 的 loadMeting()：它以「给 .aplayer 元素补 data-id」
    *   为前提，而 .no-destroy 元素它只处理一次，改 data-id 也不会重跑。
    * ------------------------------------------------------------ */
-  // 与 MetingJS 内置的默认模板保持一致（仅作兜底：正常情况一定走
-  // _config.butterfly.yml 注入的 window.meting_api）
-  var DEFAULT_API = 'https://api.i-meto.com/meting/api?server=:server&type=:type&id=:id&r=:r'
+  // 兜底模板：正常情况一定走 _config.butterfly.yml 注入的 window.meting_api；
+  // 仅当该内联脚本缺失/失败时才回落到这里。默认值与 yml 对齐到同一可用服务
+  // injahow，不用已失效的 api.i-meto.com，避免静默请求到死地址。
+  var DEFAULT_API = 'https://api.injahow.cn/meting/?server=:server&type=:type&id=:id&r=:r'
 
   function apiUrl (pl) {
     var tpl = (typeof window.meting_api === 'string' && window.meting_api) ? window.meting_api : DEFAULT_API
@@ -730,7 +764,13 @@
         setLrcHint('暂无歌词。')
         return
       }
+      /* 右卡高度固定，但曲目数变化仍可能让页面重排；记下当前视口位置，
+         渲染完如果被顶走了就放回去，避免点一下歌单整页上下跳。 */
+      var keepY = window.scrollY
       applyPlaylist(pl, audios)
+      requestAnimationFrame(function () {
+        if (Math.abs(window.scrollY - keepY) > 2) window.scrollTo(0, keepY)
+      })
       setStatus('已切换到「' + pl.name + '」· 共 ' + audios.length + ' 首')
     }).catch(function (err) {
       if (!live || token !== switchToken) return
@@ -847,135 +887,168 @@
 
   /* ---------- 播放控制 ---------- */
   function onPick () {
-    if (!live || !ap) return
+    var a = getAP()
+    if (!live || !a) return
     var i = Number(this.getAttribute('data-i'))
     if (!isFinite(i)) return
     try {
-      ap.list.switch(i)
-      ap.play()
+      a.list.switch(i)
+      a.play()
     } catch (e) {}
   }
 
   function wire () {
+    /* 节点级幂等绑定：pjax 复用同一节点、或 init 被多次触发时，
+       同一节点同一事件只绑一次，杜绝多份 play/pause 回调互相抵消。
+       pjax 替换出的全新节点 dataset 为空，会正常重新绑定。 */
+    function once (node, type, handler) {
+      if (!node) return
+      var key = 'bmpgWired_' + type
+      if (node.dataset[key]) return
+      node.dataset[key] = '1'
+      node.addEventListener(type, handler)
+    }
+
     var tabs = ui.tabs
     for (var t = 0; t < tabs.length; t++) {
-      tabs[t].addEventListener('click', function () {
-        switchTab(this.getAttribute('data-bmpg-tab'))
-      })
+      (function (tab) {
+        once(tab, 'click', function () {
+          switchTab(tab.getAttribute('data-bmpg-tab'))
+        })
+      })(tabs[t])
     }
 
-    if (ui.play) {
-      ui.play.addEventListener('click', function () {
-        if (!ap) return
-        var playing = !!(ap.audio && !ap.audio.paused)
-        if (playing) ap.pause()
-        else ap.play()
-        // 先按意图翻一次图标，事件回来后再以真实状态校正（见 renderPlay 心跳）
-        ui.playingState = null
-        renderPlay()
-        if (!playing) startBeat()
-        else stopBeat()
-      })
-    }
-    if (ui.prev) {
-      ui.prev.addEventListener('click', function () {
-        if (!ap) return
-        try { ap.skipBack() } catch (e) {}
-      })
-    }
-    if (ui.next) {
-      ui.next.addEventListener('click', function () {
-        if (!ap) return
-        try { ap.skipForward() } catch (e) {}
-      })
-    }
-    if (ui.shuffle) {
-      ui.shuffle.addEventListener('click', function () {
-        if (!ap) return
-        var on = this.classList.toggle('is-active')
-        try { ap.setMode(on ? 'random' : 'circulation') } catch (e) {}
-        this.setAttribute('aria-pressed', on ? 'true' : 'false')
-      })
-    }
+    once(ui.play, 'click', function () {
+      var a = getAP()
+      if (!a || !a.audio) return
+      var playing = !a.audio.paused
+      if (playing) a.pause()
+      else a.play()
+      // 先按意图翻一次图标，事件回来后再以真实状态校正（见 renderPlay 心跳）
+      ui.playingState = null
+      renderPlay()
+      if (!playing) startBeat()
+      else stopBeat()
+    })
+    once(ui.prev, 'click', function () {
+      var a = getAP()
+      if (!a) return
+      try { a.skipBack() } catch (e) {}
+    })
+    once(ui.next, 'click', function () {
+      var a = getAP()
+      if (!a) return
+      try { a.skipForward() } catch (e) {}
+    })
+    once(ui.shuffle, 'click', function () {
+      var a = getAP()
+      if (!a || !a.options) return
+      a.options.order = isRandom(a) ? 'list' : 'random'
+      renderModeUI()
+    })
 
-    if (ui.seek) {
-      ui.seek.addEventListener('input', function () {
-        if (ap) ap.seek(parseFloat(this.value))
-      })
-    }
+    once(ui.seek, 'input', function () {
+      var a = getAP()
+      if (a) a.seek(parseFloat(this.value))
+    })
 
-    if (ui.vol) {
-      ui.vol.addEventListener('input', function () {
-        if (!ap) return
-        ap.volume(Math.round(parseFloat(this.value) * 100), false)
-      })
-    }
-    if (ui.mute) {
-      ui.mute.addEventListener('click', function () {
-        if (!ap || !ap.audio) return
-        var a = ap.audio
-        var silent = a.muted || a.volume === 0
-        if (silent) {
-          a.muted = false
-          ap.volume(70, false)
-          if (ui.vol) ui.vol.value = 0.7
-        } else {
-          ap.volume(0, false)
-          if (ui.vol) ui.vol.value = 0
-        }
-        var icon = this.querySelector('i')
-        if (icon) icon.className = 'fas ' + (silent ? 'fa-volume-high' : 'fa-volume-xmark')
-      })
-    }
+    once(ui.vol, 'input', function () {
+      var a = getAP()
+      if (!a || !a.audio) return
+      var v = parseFloat(this.value)
+      if (v > 0) lastVol = v
+      if (a.audio.muted) a.audio.muted = false
+      a.volume(Math.round(v * 100), false)
+    })
+    once(ui.mute, 'click', function () {
+      var inst = getAP()
+      if (!inst || !inst.audio) return
+      var au = inst.audio
+      var silent = au.muted || au.volume === 0
+      if (!silent) {
+        if (au.volume > 0) lastVol = au.volume
+        inst.volume(0, false)
+      } else {
+        au.muted = false
+        inst.volume(Math.round(lastVol * 100) || 70, false)
+      }
+      renderVolumeUI()
+    })
 
-    if (ui.filter) {
-      ui.filter.addEventListener('input', function () {
-        filter = this.value || ''
-        /* 换关键词等于换了一批结果：强制回第 1 页。
-           不重置的话，页码会被 buildList 的规则 2「夹到最后一页」，
-           用户看到的是列表跳到中段，像 bug 而不像搜索。 */
-        page = 0
-        pageLocked = false
-        buildList()
-        scrollListToTop()
-      })
-    }
+    once(ui.filter, 'input', function () {
+      filter = this.value || ''
+      /* 换关键词等于换了一批结果：强制回第 1 页。
+         不重置的话，页码会被 buildList 的规则 2「夹到最后一页」，
+         用户看到的是列表跳到中段，像 bug 而不像搜索。 */
+      page = 0
+      pageLocked = false
+      buildList()
+      scrollListToTop()
+    })
 
-    if (ui.pickbtn) {
-      ui.pickbtn.addEventListener('click', function (ev) {
-        // 阻止冒泡，否则同一次点击立刻被 onDocClick 判成「点在外面」而收起
-        ev.stopPropagation()
-        togglePicker()
-      })
-    }
+    once(ui.pickbtn, 'click', function (ev) {
+      // 阻止冒泡，否则同一次点击立刻被 onDocClick 判成「点在外面」而收起
+      ev.stopPropagation()
+      togglePicker()
+    })
   }
 
 
-  /* ---------- 绑定 APlayer 事件 ---------- */
+  /* ---------- 绑定 APlayer 事件 ----------
+   * B1：APlayer 1.10 没有公开 off()，这里用具名回调 + 引用比对，离开 /music/
+   * 时只把「本页」注册的回调从 ap.events 数组里过滤掉；常驻按钮 music_button.js
+   * 在同一实例上绑的回调因引用不同而保留，不会被误删。 */
+  function onApPlay () { renderPlay(); startBeat() }
+  function onApPause () { renderPlay(); stopBeat(); syncLrc() }
+  function onApTimeupdate () { renderProgress() }
+  function onApLoadeddata () { renderMeta(); renderProgress(); loadLrc() }
+  function onApCanplay () { renderMeta(); renderProgress(); loadLrc() }
+  /* listswitch 在「切歌 / 切歌单」时都会来；listclear 只在清空时来。
+     两者都走 renderAll 兜底：即便切歌单时 APlayer 没派发 listswitch，
+     曲目信息与列表高亮也不会停在旧数据上。 */
+  function onApListswitch () {
+    setTimeout(function () {
+      renderAll()
+      // 切歌后当前曲目可能翻到别的页，列表要跟着翻过去（用户手动翻页时规则 0 会拦住）
+      buildList()
+    }, 40)
+  }
+  function onApListclear () {
+    setTimeout(function () {
+      ui.rows = []
+      renderAll()
+    }, 40)
+  }
+  /* 音量变化由常驻小面板或本页滑块任一触发，同一 audio 元素上两侧都收到，
+     这里只负责把本页滑块/静音图标回读成最新状态。 */
+  function onApVolumechange () { renderVolumeUI(); renderStatus() }
+
+  var AP_HANDLERS = {
+    play: onApPlay,
+    pause: onApPause,
+    timeupdate: onApTimeupdate,
+    loadeddata: onApLoadeddata,
+    canplay: onApCanplay,
+    listswitch: onApListswitch,
+    listclear: onApListclear,
+    volumechange: onApVolumechange
+  }
+
   function bind () {
     if (bound || !ap || !ap.on) return
     bound = true
-    ap.on('play', function () { renderPlay(); startBeat() })
-    ap.on('pause', function () { renderPlay(); stopBeat(); syncLrc() })
-    ap.on('timeupdate', renderProgress)
-    ap.on('loadeddata', function () { renderMeta(); renderProgress(); loadLrc() })
-    ap.on('canplay', function () { renderMeta(); renderProgress(); loadLrc() })
-    /* listswitch 在「切歌 / 切歌单」时都会来；listclear 只在清空时来。
-       两者都走 renderAll 兜底：即便切歌单时 APlayer 没派发 listswitch，
-       曲目信息与列表高亮也不会停在旧数据上。 */
-    ap.on('listswitch', function () {
-      setTimeout(function () {
-        renderAll()
-        // 切歌后当前曲目可能翻到别的页，列表要跟着翻过去（用户手动翻页时规则 0 会拦住）
-        buildList()
-      }, 40)
+    Object.keys(AP_HANDLERS).forEach(function (ev) { ap.on(ev, AP_HANDLERS[ev]) })
+  }
+
+  function unbind () {
+    if (!ap || !ap.events) return
+    Object.keys(AP_HANDLERS).forEach(function (ev) {
+      var arr = ap.events[ev]
+      if (Array.isArray(arr)) {
+        ap.events[ev] = arr.filter(function (fn) { return fn !== AP_HANDLERS[ev] })
+      }
     })
-    ap.on('listclear', function () {
-      setTimeout(function () {
-        ui.rows = []
-        renderAll()
-      }, 40)
-    })
+    bound = false
   }
 
   /* ---------- 曲目数据源 ---------- */
@@ -1069,6 +1142,7 @@
     stopBeat()
     if (timer) { clearInterval(timer); timer = null }
     unbindDoc()
+    unbind()
   }
 
   if (document.readyState !== 'loading') init()
@@ -1107,6 +1181,7 @@
         return
       }
       live = true
+      unbind()          // 防御：进入前先清掉可能残留的本页实例回调，再重置引用
       bound = false
       tries = 0
       ap = null

@@ -1,0 +1,50 @@
+/* Glass belongs to navigation chrome only. Content surfaces keep their tokens.
+   ?glass=classic is the visual baseline for local A/B review. */
+html:not([data-chrome-glass="classic"]) :is(#bss-island, #bss-dock, .biko-nav) {
+  --chrome-glass-bg: rgba(249, 251, 254, .74);
+  --chrome-glass-line: rgba(255, 255, 255, .66);
+  --chrome-glass-top: rgba(255, 255, 255, .90);
+  --chrome-glass-bottom: rgba(130, 151, 179, .18);
+  --chrome-glass-reflection: rgba(255, 255, 255, .34);
+  --chrome-glass-shadow: rgba(32, 50, 73, .20);
+  --chrome-glass-pill: rgba(255, 255, 255, .62);
+  background-color: var(--chrome-glass-bg);
+  background-image: linear-gradient(180deg, var(--chrome-glass-reflection), transparent 56%);
+  border-color: var(--chrome-glass-line);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  backdrop-filter: blur(24px) saturate(140%);
+  box-shadow: 0 16px 38px -14px var(--chrome-glass-shadow),
+    0 3px 10px -4px var(--chrome-glass-shadow),
+    inset 0 1px 1px var(--chrome-glass-top),
+    inset 0 -1px 1px var(--chrome-glass-bottom);
+}
+html[data-theme="dark"]:not([data-chrome-glass="classic"]) :is(#bss-island, #bss-dock, .biko-nav) {
+  --chrome-glass-bg: rgba(27, 40, 57, .72);
+  --chrome-glass-line: rgba(216, 231, 250, .25);
+  --chrome-glass-top: rgba(240, 247, 255, .37);
+  --chrome-glass-bottom: rgba(198, 221, 249, .08);
+  --chrome-glass-reflection: rgba(222, 237, 255, .11);
+  --chrome-glass-shadow: rgba(0, 5, 15, .55);
+  --chrome-glass-pill: rgba(209, 229, 255, .12);
+}
+html:not([data-chrome-glass="classic"]) #bss-island .bss-shortcuts a[aria-current="page"] {
+  background: var(--chrome-glass-pill);
+  box-shadow: inset 0 1px 0 var(--chrome-glass-top), 0 2px 5px rgba(16, 30, 48, .08);
+}
+html:not([data-chrome-glass="classic"]) #bss-dock button:hover,
+html:not([data-chrome-glass="classic"]) #bss-dock button[aria-expanded="true"] {
+  background: var(--chrome-glass-pill);
+  box-shadow: inset 0 1px 0 var(--chrome-glass-top);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html:not([data-chrome-glass="classic"]) :is(#bss-island, #bss-dock, .biko-nav) {
+    background-color: var(--ui-glass, #f9fbfe);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  html:not([data-chrome-glass="classic"]) :is(#bss-island, #bss-dock, .biko-nav) {
+    background-color: var(--ui-surface, #f9fbfe);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}

@@ -1,0 +1,35 @@
+/* Decoration is a sibling of the clipped window, never a filter on its iframe. */
+body.home-dashboard .home-tool-electric {
+  position:absolute;overflow:visible;pointer-events:none;z-index:1;
+  --qr-electric:#6ba4bf;--qr-electric-bright:#83bfd8;
+}
+body.home-dashboard .home-tool-electric[hidden] { display:none }
+html[data-theme="dark"] body.home-dashboard .home-tool-electric {
+  --qr-electric:#72afca;--qr-electric-bright:#91c9de;
+}
+body.home-dashboard .home-tool-electric rect { fill:none;stroke-linejoin:round }
+body.home-dashboard .home-tool-electric .electric-rest {
+  stroke:var(--qr-electric);stroke-width:1;opacity:.38;
+}
+body.home-dashboard .home-tool-electric .electric-live {
+  display:none;stroke:var(--qr-electric-bright);stroke-width:1.5;--electric-peak:.85;
+}
+body.home-dashboard .home-tool-electric .electric-glow {
+  display:none;stroke:var(--qr-electric);stroke-width:2;
+}
+body.home-dashboard .home-tool-electric .electric-glow-near { filter:blur(1px);--electric-peak:.45 }
+body.home-dashboard .home-tool-electric .electric-glow-wide { filter:blur(4px);--electric-peak:.35 }
+body.home-dashboard .home-tool-electric.is-charging .electric-live,
+body.home-dashboard .home-tool-electric.is-charging .electric-glow {
+  display:block;animation:qr-electric-charge 5s ease-out both;
+}
+@keyframes qr-electric-charge {
+  0% { opacity:0 }
+  8% { opacity:var(--electric-peak) }
+  88% { opacity:var(--electric-peak) }
+  100% { opacity:0 }
+}
+@media(prefers-reduced-motion:reduce) {
+  body.home-dashboard .home-tool-electric .electric-live,
+  body.home-dashboard .home-tool-electric .electric-glow { display:none!important;animation:none!important }
+}

@@ -1,6 +1,6 @@
 /* ============================================================
- * 小黑 · 看板娘触发
- * 点击本站看板娘小黑猫 → 打开小黑聊天窗（window.NANALY.open）。
+ * 多多 · 看板娘触发
+ * 点击本站看板娘黑猫 → 打开多多聊天窗（window.NANALY.open）。
  * 仅在可见猫形上覆盖一个透明热区，避免挡住大片页面。
  * ============================================================ */
 (function () {
@@ -11,8 +11,8 @@
     var btn = document.createElement('button')
     btn.type = 'button'
     btn.id = 'nanaly-cat-hotspot'
-    btn.title = '找小黑聊聊'
-    btn.setAttribute('aria-label', '打开小黑助手')
+    btn.title = '找多多聊聊'
+    btn.setAttribute('aria-label', '打开多多助手')
     btn.addEventListener('click', function (e) {
       e.preventDefault()
       e.stopPropagation()

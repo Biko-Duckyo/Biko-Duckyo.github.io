@@ -2,10 +2,15 @@
  * Biko · 工作计划历（/calendar/）
  * ------------------------------------------------------------
  * 交互约定：
- *   · 点【今天】的格子        → 弹输入卡，追加一条（同日不覆盖）
- *   · 点【过去】的日期        → 只读回顾（卡片展示当天记录）
- *   · 点【未来】的日期        → 提示「还没到呢」
- *   · 鼠标划过 / 键盘聚焦格子 → 圆角小卡片显示「日期 + 工作内容」
+ *   · 点【今天 / 过去】的格子  → 弹输入卡，默认「工作记录」（同日追加不覆盖）
+ *   · 点【未来】的日期          → 弹输入卡，默认「待办」（可指派计划事项、勾选完成）
+ *   · 待办条目                  → 弹窗清单 / 今日聚合清单勾选框切换完成态（done + doneAt）
+ *   · 鼠标划过 / 键盘聚焦格子  → 圆角小卡片显示「日期 + 条目」（完成项划线）
+ *
+ * 数据模型 entry = { id, date, kind, tag, text, t, done, doneAt }：
+ *   kind=log  工作记录（今天及过去；未来写 log 由后端拒绝）；
+ *   kind=todo 待办（允许未来；勾选只切 done/doneAt，不改写原计划 date）；
+ *   五类标签：实验 / 写作 / 组会 / 读论文 / 其他。
  *
  * 可访问性（三条硬约定，改动前先读懂）：
  *   1. 371 个格子不占用 Tab 序列（tabindex="-1"），否则要按 371 次 Tab
@@ -15,7 +20,7 @@
  *   3. 关闭输入卡后焦点归还到打开它的那个格子，不开天窗。
  *
  * 触屏约定：
- *   触屏没有 hover，所以 tap 格子 = 选中：今天既选中又开面板，
+ *   触屏没有 hover，所以 tap 格子 = 选中：今天 / 未来既选中又开面板，
  *   历史日期则把悬停卡片「钉住」在屏幕上（再次 tap 空白处收起）。
  *
  * 数据来源：同源 /api/worklog/*（Cloudflare Pages Functions）。
@@ -75,6 +80,11 @@
   var delNoEl = $('wl-del-no')
   var saveBtn = $('wl-save')
   var tagBtns = document.querySelectorAll('.wl-tag')
+  var kindBtns = document.querySelectorAll('.wl-kind-btn')
+  var agendaEl = $('wl-agenda')
+  var todoGroupsEl = $('wl-todo-groups')
+  var todoCountEl = $('wl-todo-count')
+  var todayLogsEl = $('wl-today-logs')
   var viewYearBtn = $('wl-view-year')
   var viewWeekBtn = $('wl-view-week')
   var yearViewEl = $('wl-year-view')
@@ -95,6 +105,7 @@
     '其他': '#95a5a6'
   }
   var currentTag = '其他'  // 当前选中的标签
+  var currentKind = 'log'  // log=普通工作记录（限过去/今天）；todo=待办（允许未来、可完成）
 
   /* 从记录文本中解析标签 */
   function parseTag(text) {
@@ -106,6 +117,37 @@
   /* 去掉文本中的标签前缀 */
   function stripTag(text) {
     return (text || '').replace(/^\[[^\]]+\]\s*/, '')
+  }
+
+  /* 旧数据（仅 {t,text}、标签编码在 text 前缀里）与新数据（id/kind/tag/done/doneAt）统一归一化，
+     渲染与筛选只认这一层；原始 records 数组保留下标，供 index 定位删除/勾选。 */
+  function norm(it) {
+    if (!it || typeof it !== 'object') it = { t: '', text: String(it || '') }
+    var rawText = typeof it.text === 'string' ? it.text : ''
+    return {
+      id: it.id || '',
+      date: it.date || '',
+      kind: it.kind === 'todo' ? 'todo' : 'log',
+      tag: it.tag || parseTag(rawText),
+      text: stripTag(rawText),
+      t: it.t || '',
+      done: it.done === true,
+      doneAt: it.doneAt || null
+    }
+  }
+
+  function itemsOf(k) { return listOf(k).map(norm) }
+
+  /* 跨全部日期收集归一化条目（未完成待办聚合清单用） */
+  function allItems() {
+    var out = []
+    for (var k in records) {
+      if (!Object.prototype.hasOwnProperty.call(records, k)) continue
+      listOf(k).forEach(function (it, i) {
+        out.push({ key: k, index: i, item: norm(it) })
+      })
+    }
+    return out
   }
 
   /* 设置当前选中标签 */
@@ -120,6 +162,28 @@
   tagBtns.forEach(function (btn) {
     btn.addEventListener('click', function () {
       setCurrentTag(btn.dataset.tag)
+    })
+  })
+
+  /* 类型切换：log 工作记录（限今天及过去）/ todo 待办（允许未来、可完成） */
+  function setCurrentKind(kind) {
+    currentKind = kind === 'todo' ? 'todo' : 'log'
+    kindBtns.forEach(function (btn) {
+      btn.classList.toggle('is-active', btn.dataset.kind === currentKind)
+    })
+    // 未来日期只允许建待办：禁用「工作记录」（后端 log 不允许写未来）
+    var future = !!openKey && openKey > todayK
+    kindBtns.forEach(function (btn) {
+      var dis = btn.dataset.kind === 'log' && future
+      btn.disabled = dis
+      btn.classList.toggle('is-disabled', dis)
+    })
+  }
+
+  kindBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      if (btn.disabled) return
+      setCurrentKind(btn.dataset.kind)
     })
   })
 
@@ -237,6 +301,8 @@
 
   /* ---------- 状态提示 ---------- */
   function note(msg, icon) {
+    noteEl.setAttribute('role', 'status')
+    noteEl.setAttribute('aria-live', 'polite')
     if (!msg) { noteEl.classList.remove('is-on'); return }
     noteTextEl.textContent = msg
     var i = noteEl.querySelector('i')
@@ -312,6 +378,13 @@
   /* 年份状态 */
   var viewYear = new Date().getFullYear()
   var quarter = Math.floor(new Date().getMonth() / 4)  // 默认跳到当前月份所在的4个月组
+  var rememberedView = window.BikoView?.read('calendar')
+  if (rememberedView) {
+    if (Number.isInteger(rememberedView.year) && rememberedView.year >= 1900 && rememberedView.year <= 2200) viewYear = rememberedView.year
+    if ([0, 1, 2].indexOf(rememberedView.quarter) !== -1) quarter = rememberedView.quarter
+    if (Number.isInteger(rememberedView.week) && Math.abs(rememberedView.week) < 5200) weekOffset = rememberedView.week
+  }
+  window.BikoView?.register('calendar', function () { return { year: viewYear, quarter: quarter, week: weekOffset, view: yearViewEl.hidden ? 'week' : 'year', y: window.scrollY } })
   var MONTH_NAMES = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
 
   /* 渲染日历墙：只显示当前组的四个月 */
@@ -488,12 +561,11 @@
 
   /* 获取当天最主要的标签（最多的那个） */
   function getDominantTag(k) {
-    var list = listOf(k)
+    var list = itemsOf(k)
     if (!list.length) return '其他'
     var counts = {}
     list.forEach(function (item) {
-      var tag = parseTag(item.text || '')
-      counts[tag] = (counts[tag] || 0) + 1
+      counts[item.tag] = (counts[item.tag] || 0) + 1
     })
     var maxTag = '其他'
     var maxCount = 0
@@ -506,17 +578,27 @@
     return maxTag
   }
 
+  /* 当天是否存在「未完成待办」：格子用琥珀色边提示，区别于普通记录强度色 */
+  function hasOpenTodo(k) {
+    return itemsOf(k).some(function (it) { return it.kind === 'todo' && !it.done })
+  }
+
   /* 把 records 映射到格子颜色 */
   function paint() {
     for (var i = 0; i < cells.length; i++) {
       var c = cells[i]
-      var n = listOf(c.key).length
+      var list = itemsOf(c.key)
+      var n = list.length
+      var openTodos = list.filter(function (it) { return it.kind === 'todo' && !it.done })
       c.el.setAttribute('data-lv', String(levelOf(n)))
-      c.el.setAttribute('data-tag', getDominantTag(c.key))
+      c.el.setAttribute('data-tag', n ? getDominantTag(c.key) : '')
+      if (openTodos.length) c.el.setAttribute('data-open-todo', '1')
+      else c.el.removeAttribute('data-open-todo')
 
       var base = tipDate(c.key).replace(/\s+/g, ' ')
       if (c.key === todayK) base += '（今天）'
-      else if (c.key > todayK) base += '（还没到这天）'
+      if (openTodos.length) base += '（未完成待办 ' + openTodos.length + ' 项）'
+      else if (c.key > todayK) base += list.length ? '（有安排）' : '（还没到这天）'
       else base += n ? '（' + n + ' 条记录）' : '（这天没有记录）'
       c.el.setAttribute('aria-label', base)
     }
@@ -540,27 +622,78 @@
     $('wl-days').textContent = days
     $('wl-streak').textContent = streak()
     renderMonthlyChart()
-    renderTodayCard()
+    renderAgenda()
   }
 
-  /* 渲染今日回顾卡片 */
-  function renderTodayCard() {
-    var card = $('wl-today-card')
-    var btn = $('wl-today-add')
-    if (!card || !btn) return
+  /* 两个日期键相差的天数（b - a），按本地日历日 */
+  function dayDiff(a, b) {
+    return Math.round((parseKey(b) - parseKey(a)) / 86400000)
+  }
 
-    var todayList = listOf(todayK)
-    var hasRecord = todayList.length > 0
+  /* A 方案今日聚合面板：上 = 未完成待办（逾期 / 今天 / 后续，可原地勾选）；
+     下 = 今日工作记录（仅 log，只读列表 + 记一条入口）。 */
+  function renderAgenda() {
+    if (!agendaEl) return
+    var writable = backend === 'ok'
 
-    if (hasRecord || backend !== 'ok') {
-      card.hidden = true
-      return
+    var buckets = { overdue: [], today: [], future: [] }
+    allItems().forEach(function (row) {
+      if (row.item.kind !== 'todo' || row.item.done) return
+      if (row.key < todayK) buckets.overdue.push(row)
+      else if (row.key === todayK) buckets.today.push(row)
+      else buckets.future.push(row)
+    })
+    var totalTodo = buckets.overdue.length + buckets.today.length + buckets.future.length
+    if (todoCountEl) todoCountEl.textContent = String(totalTodo)
+
+    function groupBlock(title, rows, cls) {
+      if (!rows.length) return ''
+      var head = '<div class="wl-todo-group-head ' + cls + '"><span>' + title + '</span><b>' + rows.length + '</b></div>'
+      var body = rows.map(function (row) {
+        var it = row.item
+        var meta
+        if (row.key < todayK) meta = '逾期 ' + dayDiff(row.key, todayK) + ' 天 · ' + row.key.slice(5)
+        else if (row.key === todayK) meta = '今天' + (it.t ? ' · ' + it.t : '')
+        else meta = row.key.slice(5) + ' ' + WEEK[parseKey(row.key).getDay()]
+        var dotColor = TAG_COLORS[it.tag] || TAG_COLORS['其他']
+        return '<div class="wl-todo-row' + (row.key < todayK ? ' is-overdue' : '') + '" data-key="' + row.key + '">' +
+          '<label class="wl-todo-check"><input type="checkbox" data-op="toggle" data-key="' + row.key +
+            '" data-idx="' + row.index + '" data-id="' + esc(it.id) + '"' + (writable ? '' : ' disabled') + '></label>' +
+          '<span class="wl-todo-dot" style="background:' + dotColor + '"></span>' +
+          '<span class="wl-todo-text" data-goto-date="' + row.key + '">' + esc(it.text) + '</span>' +
+          '<span class="wl-todo-meta">' + esc(meta) + '</span>' +
+        '</div>'
+      }).join('')
+      return head + '<div class="wl-todo-group-body">' + body + '</div>'
     }
 
-    card.hidden = false
-    btn.onclick = function () {
-      openPanel(todayK)
+    var todoHtml = ''
+    if (totalTodo === 0) {
+      todoHtml = '<p class="wl-agenda-empty">暂无未完成待办，享受当下。</p>'
+    } else {
+      todoHtml += groupBlock('已逾期', buckets.overdue, 'is-overdue')
+      todoHtml += groupBlock('今天', buckets.today, 'is-today')
+      todoHtml += groupBlock('后续计划', buckets.future, 'is-future')
     }
+    if (todoGroupsEl) todoGroupsEl.innerHTML = todoHtml
+
+    /* 今日工作记录（仅 log；当天待办已在上区，避免重复） */
+    var todayLogs = itemsOf(todayK).filter(function (it) { return it.kind === 'log' })
+    if (todayLogsEl) {
+      if (!todayLogs.length) {
+        todayLogsEl.innerHTML = '<li class="wl-agenda-empty">今天还没有记录。</li>'
+      } else {
+        todayLogsEl.innerHTML = todayLogs.map(function (it) {
+          var dot = TAG_COLORS[it.tag] || TAG_COLORS['其他']
+          return '<li><time>' + esc(it.t || '') + '</time>' +
+            '<span class="wl-todo-dot" style="background:' + dot + '"></span>' +
+            '<p>' + esc(it.text) + '</p></li>'
+        }).join('')
+      }
+    }
+
+    var addBtn = $('wl-today-add')
+    if (addBtn) addBtn.onclick = function () { openPanel(todayK, -1, 'log') }
   }
 
   /* ============================================================
@@ -598,7 +731,7 @@
       var d = new Date(monday)
       d.setDate(d.getDate() + i)
       var k = keyOf(d)
-      var list = listOf(k)
+      var list = itemsOf(k)
       var isToday = k === todayK
       var dayNames = ['一', '二', '三', '四', '五', '六', '日']
 
@@ -612,12 +745,15 @@
       if (list.length === 0) {
         html += '<div class="wl-week-day-empty">无记录</div>'
       } else {
-        list.forEach(function (item) {
-          var tag = parseTag(item.text || '')
-          var color = TAG_COLORS[tag] || TAG_COLORS['其他']
-          html += '<div class="wl-week-record">'
+        list.forEach(function (it) {
+          var color = TAG_COLORS[it.tag] || TAG_COLORS['其他']
+          html += '<div class="wl-week-record' + (it.done ? ' is-done' : '') + '">'
           html += '<span class="wl-week-record-dot" style="background:' + color + '"></span>'
-          html += '<span class="wl-week-record-text">' + esc(stripTag(item.text || '')) + '</span>'
+          html += '<span class="wl-week-record-text">' +
+            (it.kind === 'todo'
+              ? '<i class="fas ' + (it.done ? 'fa-circle-check' : 'fa-circle') + ' wl-todo-ico" aria-hidden="true"></i>'
+              : '') +
+            esc(it.text) + '</span>'
           html += '</div>'
         })
       }
@@ -670,7 +806,7 @@
     for (var k in records) {
       if (!Object.prototype.hasOwnProperty.call(records, k)) continue
       if (k.indexOf(prefix) !== 0) continue
-      monthRecords[k] = listOf(k)
+      monthRecords[k] = itemsOf(k)
     }
 
     // 生成 Markdown
@@ -685,8 +821,8 @@
       if (list.length > 0) {
         days++
         total += list.length
-        list.forEach(function (item) {
-          var tag = parseTag(item.text || '')
+        list.forEach(function (it) {
+          var tag = it.tag
           tagCounts[tag] = (tagCounts[tag] || 0) + 1
         })
       }
@@ -706,9 +842,10 @@
       var list = monthRecords[k]
       if (list.length === 0) return
       md += '## ' + k + '\n\n'
-      list.forEach(function (item) {
-        var tag = parseTag(item.text || '')
-        md += '- [' + tag + '] ' + stripTag(item.text || '') + '\n'
+      list.forEach(function (it) {
+        md += '- [' + (it.kind === 'todo' ? '待办 · ' : '') + it.tag + '] ' + it.text
+        if (it.done) md += '（已完成' + (it.doneAt ? ' ' + it.doneAt : '') + '）'
+        md += '\n'
       })
       md += '\n'
     })
@@ -738,9 +875,10 @@
     for (var k in records) {
       if (!Object.prototype.hasOwnProperty.call(records, k)) continue
       if (k.indexOf(prefix) !== 0) continue
-      var list = listOf(k)
-      list.forEach(function (item) {
-        var tag = parseTag(item.text || '')
+      var list = itemsOf(k)
+      list.forEach(function (it) {
+        if (it.kind !== 'log') return
+        var tag = it.tag
         tagCounts[tag] = (tagCounts[tag] || 0) + 1
         monthTotal++
       })
@@ -798,38 +936,37 @@
 
   function tipHTML(k) {
     var out = '<span class="wl-tip-date">' + tipDate(k) + '</span>'
-    var list = listOf(k)
+    var list = itemsOf(k)
+    var writable = backend === 'ok'
 
-    if (k > todayK) return out + '<p class="wl-tip-empty">还没到这天</p>'
     if (!list.length) {
-      var empty = '<p class="wl-tip-empty">这天没有记录 · 也许在休息</p>'
-      if (isEditable(k)) empty += '<span class="wl-tip-sum">点格子可以补记一条</span>'
+      var empty = '<p class="wl-tip-empty">' +
+        (k > todayK ? '未来日期，可新建待办' : '这天没有记录 · 也许在休息') + '</p>'
+      if (writable) {
+        empty += '<span class="wl-tip-sum">点格子可以添加' + (k > todayK ? '待办' : '一条') + '</span>'
+      }
       return out + empty
     }
 
-    var editable = isEditable(k)
+    var openCount = list.filter(function (it) { return it.kind === 'todo' && !it.done }).length
     out += '<ul>'
     for (var i = 0; i < list.length; i++) {
-      out += '<li' + (editable ? ' data-idx="' + i + '"' : '') + '>'
-        + '<time>' + esc(list[i].t || '') + '</time><p>' +
-        esc(list[i].text || '') + '</p>'
-      if (editable) {
+      var it = list[i]
+      out += '<li' + (writable ? ' data-idx="' + i + '"' : '') + (it.done ? ' class="is-done"' : '') + '>'
+        + '<time>' + esc(it.t || '') + '</time>'
+        + (it.kind === 'todo' ? '<i class="fas fa-circle-dot wl-todo-ico" aria-hidden="true"></i>' : '')
+        + '<p>' + esc(it.text) + '</p>'
+      if (writable) {
         out += '<button class="wl-tip-del" type="button" data-idx="' + i +
           '" title="删除这一条" aria-label="删除第 ' + (i + 1) + ' 条记录">' +
           '<i class="fas fa-trash-can" aria-hidden="true"></i></button>'
       }
       out += '</li>'
     }
-    out += '</ul><span class="wl-tip-sum">共 ' + list.length + ' 条记录'
-    if (editable) out += ' · 点格子继续追加'
+    out += '</ul><span class="wl-tip-sum">共 ' + list.length + ' 条'
+    if (openCount) out += ' · 未完成待办 ' + openCount
     out += '</span>'
     return out
-  }
-
-  /* 哪一天可以写：只读模式下什么都不行；否则今天及更早都可以
-     （历史日期也允许补记 —— 之前只放行今天，想补昨天只能干瞪眼） */
-  function isEditable(k) {
-    return backend === 'ok' && !!k && k <= todayK
   }
 
   function showTip(el) {
@@ -840,7 +977,7 @@
     tipEl.classList.add('is-on')
     tipEl.setAttribute('aria-hidden', 'false')
     /* 可写的日子必须能点到删除按钮，否则 pointer-events:none 会把点击吃掉 */
-    tipEl.classList.toggle('has-actions', isEditable(k) && listOf(k).length > 0)
+    tipEl.classList.toggle('has-actions', backend === 'ok' && itemsOf(k).length > 0)
     placeTip(el)
   }
 
@@ -880,7 +1017,7 @@
   /* ============================================================
    * 输入卡（追加 / 修改；点历史日期也能补记，不再只有今天能写）
    * ============================================================ */
-  function openPanel(k, editIndex_) {
+  function openPanel(k, editIndex_, forceKind) {
     openKey = k
     editIndex = Number.isInteger(editIndex_) ? editIndex_ : -1
     errEl.textContent = ''
@@ -888,22 +1025,31 @@
     /* 记住是谁打开的面板，关闭时把焦点还回去（否则焦点掉到 body，键盘用户懵） */
     lastFocus = document.activeElement
 
-    var list = listOf(k)
+    var list = itemsOf(k)
     var editing = Number.isInteger(editIndex) && editIndex >= 0 && editIndex < list.length
 
     titleEl.textContent = humanDate(k)
-    inputEl.value = editing ? stripTag(list[editIndex].text || '') : ''
-    updateCount()
-    inputEl.placeholder = editing
-      ? '修改这条记录…（Ctrl / ⌘ + Enter 保存）'
-      : '今天做了什么…（Ctrl / ⌘ + Enter 保存）'
 
-    // 设置当前标签（修改模式时用原记录的标签）
     if (editing) {
-      setCurrentTag(parseTag(list[editIndex].text || ''))
+      var ed = list[editIndex]
+      inputEl.value = ed.text
+      setCurrentTag(ed.tag)
+      setCurrentKind(ed.kind)
+      inputEl.placeholder = ed.kind === 'todo'
+        ? '修改这条待办…（Ctrl / ⌘ + Enter 保存）'
+        : '修改这条记录…（Ctrl / ⌘ + Enter 保存）'
     } else {
+      var kind = (forceKind === 'log' || forceKind === 'todo')
+        ? forceKind
+        : (k > todayK ? 'todo' : 'log')
+      setCurrentKind(kind)
       setCurrentTag('其他')
+      inputEl.value = ''
+      inputEl.placeholder = kind === 'todo'
+        ? '要办什么事？（Ctrl / ⌘ + Enter 保存；可指派到未来日期）'
+        : '今天做了什么…（Ctrl / ⌘ + Enter 保存）'
     }
+    updateCount()
 
     // 已有记录作为上下文列出（追加模式，不覆盖）
     existingTitle.textContent = list.length
@@ -911,13 +1057,26 @@
       : ''
     existingEl.innerHTML = ''
     for (var i = 0; i < list.length; i++) {
+      var it = list[i]
       var li = document.createElement('li')
-      if (editing && i === editIndex) li.className = 'is-editing'
-      var tag = parseTag(list[i].text || '')
-      li.innerHTML = '<time>' + esc(list[i].t || '') + '</time>' +
-                     '<span class="wl-tag-dot" style="background:' + (TAG_COLORS[tag] || TAG_COLORS['其他']) + '"></span>' +
-                     '<p>' + esc(stripTag(list[i].text || '')) + '</p>'
-      if (isEditable(k)) {
+      li.className = 'wl-exist-item'
+      if (editing && i === editIndex) li.className += ' is-editing'
+      if (it.done) li.className += ' is-done'
+      if (it.kind === 'todo') li.className += ' is-todo'
+
+      // 待办前置完成勾选（普通日志条目不显示勾选框）
+      var checkHtml = ''
+      if (it.kind === 'todo' && backend === 'ok') {
+        checkHtml = '<label class="wl-exist-check"><input type="checkbox" data-op="toggle" data-idx="' + i +
+          '" data-id="' + esc(it.id) + '"' + (it.done ? ' checked' : '') +
+          ' title="标记完成 / 取消完成"></label>'
+      }
+      li.innerHTML = checkHtml +
+        '<time>' + esc(it.t || '') + '</time>' +
+        '<span class="wl-tag-dot" style="background:' + (TAG_COLORS[it.tag] || TAG_COLORS['其他']) + '"></span>' +
+        '<p>' + esc(it.text || '') +
+        (it.doneAt ? '<em class="wl-done-at">' + esc(it.doneAt) + '</em>' : '') + '</p>'
+      if (backend === 'ok') {
         var act = document.createElement('span')
         act.className = 'wl-existing-ops'
         act.innerHTML =
@@ -935,10 +1094,12 @@
     // 没存过口令就亮出口令框（读公开、写受控）；存过则给「换口令」
     syncTokenUI()
 
-    // 只有后端可用时才允许保存；否则按钮置灰并说明原因
-    var canWrite = isEditable(k)
+    // 后端可用即可保存；具体类型是否允许未来日期由后端按 kind 校验
+    var canWrite = backend === 'ok'
     saveBtn.disabled = !canWrite
-    saveBtn.title = canWrite ? '' : '当前不可写入'
+    saveBtn.title = canWrite
+      ? (k > todayK && currentKind === 'log' ? '未来日期只能建待办' : '')
+      : '当前不可写入'
 
     modal.hidden = false
 
@@ -1003,23 +1164,39 @@
   function load() {
     note('正在载入记录…', 'fa-circle-notch')
     footEl.textContent = '正在载入记录…'
+    footEl.hidden = false
 
     probe().then(function (r) {
       if (r.ok) {
         backend = 'ok'
         records = r.data || {}
         note('')
-        footEl.textContent = '点任意格子记一条（历史日期也能补记）· 卡片里的 ✎ / 🗑 可改可删'
+        footEl.textContent = ''
+        footEl.hidden = true
       } else {
         backend = 'unavailable'
-        records = {}
-        note('当前部署不支持在线记录（未启用 /api/worklog）。' +
-             '页面可正常浏览，记录功能请在启用了 Cloudflare Functions 的环境使用。', 'fa-triangle-exclamation')
+        note(Object.keys(records).length ? '连接失败，已保留加载过的记录，暂不支持修改。' : '当前页面仅可查看，暂不支持新增或修改记录。', 'fa-triangle-exclamation')
         footEl.textContent = '只读模式 · 点格子可查看，暂不支持写入'
         if (r.message) footEl.textContent += '（' + r.message + '）'
+        footEl.hidden = false
+        var retry = document.createElement('button')
+        retry.type = 'button'; retry.className = 'ui-retry'; retry.textContent = '重试加载'
+        retry.onclick = load
+        $('wl-note-text').appendChild(retry)
       }
       paint()
+      if (rememberedView && !location.hash) { window.BikoView?.restoreScroll(rememberedView.y, grid.closest('.wl')); rememberedView = null }
+      var url = new URL(location.href)
+      if (url.searchParams.get('compose') === '1' && agendaEl && agendaEl.isConnected) {
+        url.searchParams.delete('compose')
+        history.replaceState(history.state, '', url)
+        $('wl-today-add').click()
+      }
     })
+  }
+
+  function authHeaders(token) {
+    return { 'content-type': 'application/json', 'authorization': 'Bearer ' + token }
   }
 
   function save() {
@@ -1027,41 +1204,46 @@
 
     var text = inputEl.value.trim()
     if (!text) { errEl.textContent = '写点什么再保存吧'; inputEl.focus(); return }
-
-    // 在文本前加标签前缀
-    var fullText = '[' + currentTag + '] ' + text
-    if (fullText.length > MAX_TEXT) { errEl.textContent = '超出 ' + MAX_TEXT + ' 字上限'; return }
+    if (text.length > MAX_TEXT) { errEl.textContent = '超出 ' + MAX_TEXT + ' 字上限'; return }
 
     var token = tokenInput.value.trim() || readToken()
     if (!token) { errEl.textContent = '请填写记录口令'; tokenInput.focus(); return }
 
-    var list = listOf(openKey)
+    var list = itemsOf(openKey)
     var editing = Number.isInteger(editIndex) && editIndex >= 0 && editIndex < list.length
-    /* 编辑 = 删掉原条 + 追加新条（后端没有 update，用两次已有动作组合，
-       语义上「同一位置换成新内容」，时间戳也一并更新为改动时刻）。 */
+    var payloadCommon = { date: openKey, kind: currentKind, tag: currentTag, text: text }
+
     var steps = []
     if (editing) {
-      steps.push(function () {
-        return request('/remove', {
-          method: 'DELETE',
-          headers: {
-            'content-type': 'application/json',
-            'authorization': 'Bearer ' + token
-          },
-          body: JSON.stringify({ date: openKey, index: editIndex, text: list[editIndex].text })
+      var old = list[editIndex]
+      if (old.id) {
+        /* 新数据：原地 update，保住 id / done / doneAt，不会因编辑丢失完成态 */
+        steps.push(function () {
+          return request('/update', {
+            method: 'POST',
+            headers: authHeaders(token),
+            body: JSON.stringify(Object.assign({ id: old.id }, payloadCommon))
+          })
         })
+      } else {
+        /* 旧数据（无 id）：删旧条 + 追加新条的兼容路径 */
+        var rawOld = listOf(openKey)[editIndex]
+        steps.push(function () {
+          return request('/remove', {
+            method: 'DELETE',
+            headers: authHeaders(token),
+            body: JSON.stringify({ date: openKey, index: editIndex, text: rawOld && rawOld.text })
+          })
+        })
+        steps.push(function () {
+          return request('/add', { method: 'POST', headers: authHeaders(token), body: JSON.stringify(payloadCommon) })
+        })
+      }
+    } else {
+      steps.push(function () {
+        return request('/add', { method: 'POST', headers: authHeaders(token), body: JSON.stringify(payloadCommon) })
       })
     }
-    steps.push(function () {
-      return request('/add', {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-          'authorization': 'Bearer ' + token
-        },
-        body: JSON.stringify({ date: openKey, text: text })
-      })
-    })
 
     saving = true
     errEl.textContent = ''
@@ -1082,27 +1264,52 @@
       syncTokenUI()
 
       var savedKey = openKey
-      if (editing) {
-        reload().then(function () { dropAnim(savedKey) })
-      } else {
-        if (!Array.isArray(records[savedKey])) records[savedKey] = []
-        records[savedKey].push(r.body.entry || { t: '', text: text })
-        paint()
-        dropAnim(savedKey)
-      }
+      var savedEditing = editing
+      reload().then(function () { dropAnim(savedKey) })
       closePanel()
+      window.BikoFeedback?.show(savedEditing ? '记录已更新' : '记录已保存', { kind: 'success' })
       if (footEl) {
-        footEl.textContent = editing
+        footEl.hidden = false
+        footEl.textContent = savedEditing
           ? '已更新 · 点格子可继续追加'
-          : '已记录 · 点格子可继续追加'
+          : '已保存 · 待办可在上方清单勾选完成'
       }
     }).catch(function (e) {
       errEl.textContent = e && e.message ? e.message : '网络异常，请稍后重试'
+      window.BikoFeedback?.show('保存失败，输入内容已保留。请检查网络后再次保存。', { kind: 'error' })
     }).then(function () {
       saving = false
       saveBtn.disabled = false
       saveBtn.textContent = '保存'
     })
+  }
+
+  /* 切换待办完成态：优先 id 定位，回退 index。弹窗清单与今日聚合清单共用。 */
+  function toggleDone(key, id, index) {
+    if (saving || backend !== 'ok') return
+    var token = tokenInput.value.trim() || readToken()
+    if (!token) { errEl.textContent = '请先填写记录口令'; tokenInput.focus(); return }
+
+    saving = true
+    var body = { date: key }
+    if (id) body.id = id
+    else if (Number.isInteger(index)) body.index = index
+
+    request('/toggle', { method: 'POST', headers: authHeaders(token), body: JSON.stringify(body) })
+      .then(function (r) {
+        if (r.status === 401) throw new Error('口令不正确')
+        if (r.status >= 400 || !r.body || !r.body.ok) {
+          throw new Error((r.body && r.body.message) || '操作失败（HTTP ' + r.status + '）')
+        }
+        writeToken(token)
+        var finished = r.body.entry && r.body.entry.done
+        reload().then(function () {
+          note(finished ? '已标记完成' : '已取消完成', finished ? 'fa-circle-check' : 'fa-rotate-left')
+          later(function () { note('') }, 1800)
+        })
+      }).catch(function (e) {
+        errEl.textContent = e && e.message ? e.message : '网络异常，请稍后重试'
+      }).then(function () { saving = false })
   }
 
   /* 「落子」动画：同一天连点也要能重复播放 */
@@ -1119,7 +1326,7 @@
    * ============================================================ */
   function askDelete(key, index) {
     pendingDel = { key: key, index: index }
-    var item = listOf(key)[index]
+    var item = itemsOf(key)[index]
     if (delHintEl) {
       delHintEl.textContent = item
         ? '确定删除「' + item.text + '」？删掉就找不回来了。'
@@ -1137,15 +1344,14 @@
     if (delHintEl) { delHintEl.hidden = true; delHintEl.textContent = '' }
     if (delYesEl) delYesEl.hidden = true
     if (delNoEl) delNoEl.hidden = true
-    if (saveBtn) saveBtn.disabled = !isEditable(openKey)
+    if (saveBtn) saveBtn.disabled = backend !== 'ok'
   }
 
   function doDelete() {
     if (!pendingDel || saving) return
     var key = pendingDel.key
     var index = pendingDel.index
-    var list = listOf(key)
-    var item = list[index]
+    var item = itemsOf(key)[index]
     if (!item) { cancelDelete(); return }
 
     var token = tokenInput.value.trim() || readToken()
@@ -1161,13 +1367,15 @@
     var btn = delYesEl
     if (btn) { btn.disabled = true; btn.textContent = '删除中…' }
 
+    /* 新数据优先按 id 删除（不受下标漂移影响）；旧数据回退 index + text 校验 */
+    var removeBody = item.id
+      ? { date: key, id: item.id }
+      : { date: key, index: index, text: item.text }
+
     request('/remove', {
       method: 'DELETE',
-      headers: {
-        'content-type': 'application/json',
-        'authorization': 'Bearer ' + token
-      },
-      body: JSON.stringify({ date: key, index: index, text: item.text })
+      headers: authHeaders(token),
+      body: JSON.stringify(removeBody)
     }).then(function (r) {
       if (r.status === 401) throw new Error('口令不正确')
       if (r.status === 409) throw new Error('记录已变化，请关掉重开后再试')
@@ -1178,7 +1386,7 @@
       cancelDelete()
       closePanel()
       reload().then(function () {
-        if (footEl) footEl.textContent = '已删除 1 条记录'
+        if (footEl) { footEl.textContent = '已删除 1 条记录'; footEl.hidden = false }
       })
     }).catch(function (e) {
       cancelDelete()
@@ -1321,26 +1529,19 @@
       var k = el.getAttribute('data-key')
       if (!k) return
 
-      // 未来：不响应
-      if (k > todayK) {
-        note('这还没到呢 —— 到那天再回来记吧', 'fa-hourglass-half')
-        later(function () {
-          if (backend === 'ok') note('')
-        }, 2600)
-        return
-      }
-
       // 触屏：tap = 选中并钉住卡片（没有 hover 可依赖）
       if (TOUCH) {
         hideTip(true)
         showTip(el)
         pinned = true
-        if (k === todayK) openPanel(k)     // 今天：顺手把输入卡也打开
+        // 仅可写环境打开输入卡：今天与未来（待办）直接打开；只读降级只钉住查看
+        if (backend === 'ok' && k >= todayK) openPanel(k)
         return
       }
 
-      // 鼠标：历史日期现在是「可补记」的，不再只是看一眼
-      // 即使没有后端，也打开面板让用户看（和周视图行为一致）
+      // 鼠标：可写时今天 / 历史补记 / 未来待办都打开面板；条目类型由面板按日期默认。
+      // 只读降级（GitHub Pages 无 Functions）只展示悬停卡片，不弹出保存被禁用的空输入卡。
+      if (backend !== 'ok') { showTip(el); return }
       openPanel(k)
     })
 
@@ -1406,6 +1607,8 @@
     }
 
     /* --- 输入卡 --- */
+    /* 「日历与历史记录」已改为常开区块（不再是 details）：格子从首帧起就可见，
+       初始的 fitCells / layoutMonths 本来就会跑，不必再监听 open 事件。 */
     on($('wl-close'), 'click', closePanel)
     on($('wl-cancel'), 'click', closePanel)
     on(saveBtn, 'click', save)
@@ -1436,6 +1639,24 @@
       if (btn.getAttribute('data-op') === 'edit') openPanel(openKey, i)
       else askDelete(openKey, i)
     })
+
+    /* 待办完成勾选：弹窗已有记录 + 今日聚合清单共用 change 委托 */
+    function handleToggleChange(e) {
+      var box = e.target && e.target.closest ? e.target.closest('input[data-op="toggle"]') : null
+      if (!box) return
+      toggleDone(box.getAttribute('data-key') || openKey,
+        box.getAttribute('data-id') || '',
+        Number(box.getAttribute('data-idx')))
+    }
+    on(existingEl, 'change', handleToggleChange)
+    if (agendaEl) {
+      on(agendaEl, 'change', handleToggleChange)
+      on(agendaEl, 'click', function (e) {
+        var goto = e.target && e.target.closest ? e.target.closest('[data-goto-date]') : null
+        if (!goto) return
+        openPanel(goto.getAttribute('data-goto-date'))
+      })
+    }
 
     /* 删除二次确认 */
     if (delYesEl) on(delYesEl, 'click', doDelete)
@@ -1524,6 +1745,7 @@
   function boot() {
     buildGrid()
     bind()
+    if (rememberedView?.view === 'week') switchView('week')
     load()
   }
 

@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 430" font-family="'Microsoft YaHei','PingFang SC','Noto Sans SC',sans-serif">
+  <defs>
+    <marker id="c02" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#2563eb"/></marker>
+  </defs>
+  <rect x="8" y="8" width="804" height="414" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="410" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="#334155">环境响应对比研究：四类触发与待验证机制</text>
+
+  <!-- Always-on 三缺陷 -->
+  <rect x="180" y="62" width="460" height="52" rx="8" fill="#fee2e2" stroke="#fca5a5"/>
+  <text x="410" y="84" text-anchor="middle" fill="#b91c1c" font-weight="700" font-size="13">研究目标：区分分布、触发响应与背景，不能预设所有常规探针存在相同缺陷</text>
+  <text x="410" y="104" text-anchor="middle" fill="#475569" font-size="12">环境参数因组织、位置和时间变化；体外响应不等于体内特异性</text>
+
+  <!-- 四刺激卡 -->
+  <g font-size="12" text-anchor="middle">
+    <rect x="34" y="146" width="184" height="150" rx="8" fill="#dbeafe" stroke="#93c5fd"/>
+    <text x="126" y="172" fill="#1d4ed8" font-weight="700">① pH 响应</text>
+    <text x="126" y="196" fill="#475569">需实测目标 pH 范围</text>
+    <text x="126" y="214" fill="#475569">区分胞外与细胞器</text>
+    <text x="126" y="240" fill="#475569">酸敏感键断裂</text>
+    <text x="126" y="258" fill="#475569">MnOx 酸解释 Mn²⁺</text>
+    <text x="126" y="284" fill="#1d4ed8">r1 ↑（T1 亮）</text>
+
+    <rect x="234" y="146" width="184" height="150" rx="8" fill="#ede9fe" stroke="#c4b5fd"/>
+    <text x="326" y="172" fill="#6d28d9" font-weight="700">② 氧化还原 GSH</text>
+    <text x="326" y="196" fill="#475569">需测定真实还原条件</text>
+    <text x="326" y="214" fill="#475569">高 GSH 并非肿瘤独有</text>
+    <text x="326" y="240" fill="#475569">二硫键 −S-S− 断裂</text>
+    <text x="326" y="258" fill="#475569">Mn³⁺/Mn⁴⁺ → Mn²⁺</text>
+    <text x="326" y="284" fill="#6d28d9">解组装 · r1 ↑</text>
+
+    <rect x="434" y="146" width="184" height="150" rx="8" fill="#dcfce7" stroke="#86efac"/>
+    <text x="526" y="172" fill="#15803d" font-weight="700">③ 酶响应</text>
+    <text x="526" y="196" fill="#475569">MMP-2/9 · Cathepsin B</text>
+    <text x="526" y="214" fill="#475569">ALP · caspase-3/7</text>
+    <text x="526" y="240" fill="#475569">Granzyme B（免疫疗效）</text>
+    <text x="526" y="258" fill="#475569">酶切或距离改变需验证</text>
+    <text x="526" y="284" fill="#15803d">活性暴露 · r1 ↑</text>
+
+    <rect x="634" y="146" width="152" height="150" rx="8" fill="#fef3c7" stroke="#fcd34d"/>
+    <text x="710" y="172" fill="#b45309" font-weight="700">④ 缺氧响应</text>
+    <text x="710" y="196" fill="#475569">实体瘤低氧</text>
+    <text x="710" y="214" fill="#475569">硝基咪唑还原滞留</text>
+    <text x="710" y="240" fill="#475569">Co(III) 抗磁 → Co(II) 顺磁</text>
+    <text x="710" y="258" fill="#475569">缺氧不等于所有还原反应</text>
+    <text x="710" y="284" fill="#b45309">顺磁态激活</text>
+  </g>
+
+  <g stroke="#2563eb" stroke-width="2" marker-end="url(#c02)">
+    <line x1="126" y1="114" x2="126" y2="144"/><line x1="326" y1="114" x2="326" y2="144"/>
+    <line x1="526" y1="114" x2="526" y2="144"/><line x1="710" y1="114" x2="710" y2="144"/>
+  </g>
+
+  <!-- 输出条 -->
+  <rect x="120" y="324" width="580" height="62" rx="8" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="410" y="350" text-anchor="middle" font-size="13" fill="#334155" font-weight="700">输出：T1 信号点亮（亮）· T1↔T2 角色切换（r2/r1 比值方向性变化）· 病灶特异富集（FA / RGD / Affibody / 抗体配体）</text>
+  <text x="410" y="374" text-anchor="middle" font-size="12" fill="#94a3b8">MRET = magnetic resonance tuning；响应方向、触发范围和生物学选择性均需独立对照</text>
+</svg>

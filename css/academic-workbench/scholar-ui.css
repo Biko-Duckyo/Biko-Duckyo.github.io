@@ -1,0 +1,128 @@
+/* Shared reading styles for the web and desktop readers. */
+.scholar-ui {
+  --scholar-reading-font: var(--ui-font, "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif);
+  --scholar-ink: var(--bk-fg, var(--text));
+  --scholar-muted: var(--bk-fg-dim, var(--text-muted));
+  --scholar-line: var(--bk-line, var(--card-border));
+  --scholar-surface: var(--bk-bg-2, var(--surface-1));
+  --scholar-accent: var(--ui-action, #235993);
+  --scholar-active: var(--ui-selection, #e7effa);
+  font-family: var(--scholar-reading-font);
+}
+html[data-theme="dark"] .scholar-ui, body.dark .scholar-ui {
+  --scholar-accent: var(--ui-action, #b9d6ff);
+  --scholar-active: var(--ui-selection, #243e60);
+}
+.scholar-ui .scholar-title {
+  color: var(--scholar-ink);
+  font: 600 1.125rem/1.35 var(--scholar-reading-font);
+}
+.scholar-ui .scholar-section-title {
+  color: var(--scholar-ink);
+  font: 600 1rem/1.5 var(--scholar-reading-font);
+}
+.scholar-ui .scholar-prose { font: 400 1rem/1.75 var(--scholar-reading-font); }
+.scholar-ui .scholar-control {
+  gap: .35em;
+  border-radius: var(--ui-radius-control, 10px);
+  color: var(--scholar-ink);
+  font: 500 .875rem/1.4 var(--scholar-reading-font);
+}
+.scholar-ui .scholar-control i { font-size: .875rem; }
+.scholar-ui .scholar-control:hover:not(:disabled) { background: var(--scholar-active); }
+.scholar-ui .scholar-control[aria-pressed="true"],
+.scholar-ui .scholar-control[aria-selected="true"],
+.scholar-ui .scholar-control[aria-expanded="true"] {
+  background: var(--scholar-active);
+  color: var(--scholar-accent);
+  box-shadow: inset 0 0 0 1px var(--scholar-accent);
+}
+.scholar-ui .scholar-control:focus-visible {
+  outline: 2px solid var(--scholar-accent);
+  outline-offset: 2px;
+}
+.scholar-ui .scholar-control:disabled { opacity: .45; cursor: default; }
+.scholar-ui .scholar-page-counter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  min-height: 28px;
+  padding: 2px 8px;
+  white-space: nowrap;
+  border: 1px solid var(--scholar-line);
+  border-radius: 6px;
+  background: var(--scholar-surface);
+  color: var(--scholar-muted);
+  font: 650 .8125rem/1.25 var(--scholar-reading-font);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The navigation floats above the workspace and opens from the right edge. */
+#scholar-navigation {
+  inset: 8px 0 8px auto;
+  width: min(var(--sidebar-w), calc(100vw - 24px));
+  padding: 20px 16px;
+  border: 1px solid var(--hairline);
+  border-radius: 16px 0 0 16px;
+  background: var(--glass-strong);
+  transform: translateX(calc(100% + 24px));
+  box-shadow: none;
+  pointer-events: none;
+}
+#scholar-navigation.sidebar-open {
+  transform: translateX(0);
+  box-shadow: -8px 0 30px rgba(0, 0, 0, .12);
+  pointer-events: auto;
+}
+#scholar-navigation ~ .sidebar-trigger {
+  inset: 25% 0 auto auto;
+  width: 6px;
+  height: 50%;
+  z-index: 29;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: transparent;
+  overflow: hidden;
+}
+#scholar-navigation ~ .sidebar-trigger svg { display: none; }
+#scholar-navigation ~ .sidebar-trigger:focus-visible {
+  width: auto;
+  height: auto;
+  padding: 8px 12px;
+  border-radius: 8px 0 0 8px;
+  background: var(--glass-strong);
+  color: var(--text);
+}
+#scholar-navigation .brand-text,
+#scholar-navigation .nav-item span { display: inline; }
+#scholar-navigation .sidebar-footer { display: block; }
+#scholar-navigation .nav-item { justify-content: flex-start; }
+@media (pointer: coarse) {
+  #scholar-navigation ~ .sidebar-trigger { width: 24px; }
+  #scholar-navigation ~ .sidebar-trigger:focus-visible { width: auto; }
+}
+@media (max-width: 900px) {
+  #scholar-navigation ~ .main { margin-right: 0; }
+}
+@media (max-width: 768px) {
+  #scholar-navigation ~ .sidebar-trigger,
+  #scholar-navigation ~ .sidebar-trigger:focus-visible {
+    inset: 5px auto auto 12px;
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-radius: 50%;
+    color: var(--text);
+  }
+  #scholar-navigation ~ .sidebar-trigger svg { display: block; width: 21px; height: 21px; }
+  #scholar-navigation ~ .sidebar-trigger span { display: none; }
+  #scholar-navigation ~ .main > .topbar { padding-inline: 64px 12px; }
+  #scholar-navigation .nav-item { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #scholar-navigation { transition: none; }
+}

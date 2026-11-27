@@ -1,0 +1,44 @@
+/* ---------- 加载页底部纵向滚动文字（参考张洪Heo 教程） ----------
+ * 结构由 source/js/custom/loading_rolling.js 运行时注入 #loading-box，
+ * 不改 node_modules 主题源码。颜色跟随主题 preloader 令牌，明暗自适应。
+ */
+#loadingtxt {
+  position: fixed;
+  left: 0;
+  right: 0;
+  /* 底部让出 Home 指示条高度：Safari 里 env() 为 0，等于原来的 30px */
+  bottom: calc(30px + env(safe-area-inset-bottom, 0px));
+  width: 100%;
+  height: 25px;
+  line-height: 25px;
+  overflow: hidden;
+  z-index: 1001;
+  text-align: center;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: var(--preloader-color);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+#loadingtxt ul,
+#loadingtxt li {
+  list-style: none;
+  display: block;
+  margin: 0;
+  padding: 0;
+}
+
+#loadingtxt .li-style {
+  width: 100%;
+  height: 25px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 加载结束：遮罩滑出后随 spinner 一起隐藏，避免文字残留 */
+#loading-box.loaded #loadingtxt {
+  display: none;
+}

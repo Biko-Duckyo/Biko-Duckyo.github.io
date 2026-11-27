@@ -1,0 +1,317 @@
+/* ============================================================
+   404 页魔改：参照 Dstudio「402+2」的构图
+     大圆角卡 + 三色块状 404 + 散落碎片 + 圆形返回钮
+   材质换成本站玻璃体系，跟随亮/暗两套主题。
+
+   作用域严格限定 #body-wrap.type-404，不影响其它页面。
+   结构由 source/js/error404.js 注入；本文件的卡片样式只在
+   改造成功后（.error-content[data-biko404="1"]）生效 ——
+   脚本没跑或报错时保留主题默认 404，不会白屏。
+   ============================================================ */
+
+/* ---------- 令牌 ---------- */
+#body-wrap.type-404 {
+  --e4-bg: rgba(244, 245, 245, .90);
+  --e4-line: rgba(0, 0, 0, .06);
+  --e4-shadow: 0 20px 48px -24px rgba(0, 0, 0, .18);
+  --e4-title: #1b1f1d;
+  --e4-desc: rgba(27, 31, 29, .62);
+  --e4-foot: rgba(27, 31, 29, .42);
+  /* 数字与碎片：参考图取色。暗色下蓝、红需要提亮，见下面覆盖 */
+  --e4-c1: #f7770a;
+  --e4-c2: #ff0e0a;
+  --e4-c3: #0832fc;
+  --e4-c4: #3fa35c;
+  --e4-btn: #1b1f1d;
+  --e4-btn-ink: #fff;
+}
+
+[data-theme="dark"] #body-wrap.type-404 {
+  --e4-bg: rgba(20, 30, 26, .60);
+  --e4-line: rgba(255, 255, 255, .08);
+  --e4-shadow: 0 24px 64px -24px rgba(0, 0, 0, .55);
+  --e4-title: #fff;
+  --e4-desc: rgba(255, 255, 255, .62);
+  --e4-foot: rgba(255, 255, 255, .38);
+  /* #0832FC 在深底上对比度只有 2.5:1，会陷进背景；红同理 */
+  --e4-c2: #ff3b30;
+  --e4-c3: #3a63ff;
+  --e4-btn: rgba(255, 255, 255, .92);
+  --e4-btn-ink: #16211c;
+}
+
+/* ---------- 版面容器：让卡片在视口内真正垂直居中 ---------- */
+/* common_layout.css 给 #content-inner 的 padding / min-height 都加了 !important，
+   所以这里必须同样用 !important 才能改掉（顶栏占位由卡片自身居中承担）。 */
+#body-wrap.type-404 #content-inner {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  padding: 24px var(--layout-pad-x, 40px) !important;
+  min-height: calc(100vh - 60px) !important;
+}
+
+/* ---------- 卡片 ---------- */
+#body-wrap.type-404 .error-content[data-biko404="1"] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: calc(100% - 48px);
+  max-width: 920px;
+  height: auto;
+  min-height: 620px;
+  margin: 40px auto;
+  padding: 56px 48px 40px;
+  overflow: visible;
+  border-radius: 28px;
+  background: var(--e4-bg);
+  border: 1px solid var(--e4-line);
+  box-shadow: var(--e4-shadow);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  backdrop-filter: blur(18px) saturate(1.25);
+  text-align: center;
+  /* 主题给 .error-content 加了 cardHover 上浮动效，404 页不需要 */
+  transform: none !important;
+  transition: box-shadow .2s ease;
+}
+
+/* 原 h1「404」保留语义、视觉隐藏，避免无障碍与 SEO 只看到图形 */
+#body-wrap.type-404 .error-content[data-biko404="1"] .error_title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+  font-size: 0;
+}
+
+/* ---------- 视觉主体 ---------- */
+.biko-404__art {
+  display: block;
+  width: min(100%, 720px);
+  margin: 0 auto;
+}
+
+.biko-404__svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* 数字 */
+.biko-404__n {
+  fill: currentColor;
+}
+
+.biko-404__n--a { color: var(--e4-c1); }
+.biko-404__n--b { color: var(--e4-c2); }
+.biko-404__n--c { color: var(--e4-c3); }
+
+/* 碎片 */
+.biko-404__frag {
+  fill: currentColor;
+  opacity: var(--frag-o, .85);
+}
+
+.biko-404__frag--c1 { color: var(--e4-c1); }
+.biko-404__frag--c2 { color: var(--e4-c2); }
+.biko-404__frag--c3 { color: var(--e4-c3); }
+.biko-404__frag--c4 { color: var(--e4-c4); }
+
+/* 碎片缓慢呼吸：三层错相位，整组平移，成本极低 */
+@media (prefers-reduced-motion: no-preference) {
+  .biko-404__fragGroup--1 { animation: e4-drift-a 9s ease-in-out infinite; }
+  .biko-404__fragGroup--2 { animation: e4-drift-b 7.5s ease-in-out infinite; }
+  .biko-404__fragGroup--3 { animation: e4-drift-a 11s ease-in-out infinite reverse; }
+}
+
+@keyframes e4-drift-a {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+@keyframes e4-drift-b {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(3px); }
+}
+
+/* ---------- 文案 ---------- */
+.biko-404__title {
+  margin: 34px 0 0;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.45;
+  letter-spacing: .01em;
+  color: var(--e4-title);
+}
+
+.biko-404__desc {
+  max-width: 520px;
+  margin: 12px 0 0;
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--e4-desc);
+}
+
+/* ---------- 操作 ---------- */
+.biko-404__actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 34px;
+}
+
+.biko-404__home {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0;
+  border: 0;
+  background: none;
+  text-decoration: none;
+  cursor: pointer;
+  color: var(--e4-title);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.biko-404__homeIcon {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--e4-btn);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+
+.biko-404__homeIcon svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: var(--e4-btn-ink);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.biko-404__homeText {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--e4-title);
+}
+
+.biko-404__home:hover .biko-404__homeIcon,
+.biko-404__home:focus-visible .biko-404__homeIcon {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px -12px rgba(0, 0, 0, .5);
+}
+
+/* 焦点环必须带 #body-wrap.type-404 前缀：主题对 a:focus-visible 的特异性
+   (0,1,1) 高于 .biko-404__home:focus-visible (0,1,0)，否则会被主题的默认环覆盖 */
+#body-wrap.type-404 .biko-404__home:focus-visible {
+  outline: 2px solid var(--e4-c3);
+  outline-offset: 6px;
+  border-radius: 999px;
+}
+
+.biko-404__back {
+  margin-top: 14px;
+  padding: 6px 10px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--e4-foot);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  transition: color .15s ease;
+}
+
+.biko-404__back:hover {
+  color: var(--e4-desc);
+}
+
+#body-wrap.type-404 .biko-404__back:focus-visible {
+  outline: 2px solid var(--e4-c3);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ---------- 页脚行 ---------- */
+/* 居中而非左对齐：卡片左下角有站点自带的猫咪装饰，左对齐会被它压住 */
+.biko-404__foot {
+  width: 100%;
+  margin: 34px 0 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--e4-line);
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--e4-foot);
+}
+
+/* ---------- 404 页收起右侧悬浮按钮列 ---------- */
+/* 主题 _page/404.styl 里写了 `& + #rightside{display:none}`，
+   但 .type-404 挂在 #body-wrap 上、与 #rightside 不是兄弟，选择器没命中 */
+#body-wrap.type-404 ~ #rightside {
+  display: none !important;
+}
+
+/* ---------- 窄屏 ---------- */
+@media (max-width: 768px) {
+  #body-wrap.type-404 .error-content[data-biko404="1"] {
+    width: calc(100% - 24px);
+    min-height: 0;
+    margin: 16px auto;
+    padding: 40px 16px 28px;
+    border-radius: 20px;
+  }
+
+  /* 768 档卡片内宽 708，art 若取 100% 会让碎片贴到卡片边，收到 620 留出边距 */
+  .biko-404__art {
+    width: min(100%, 620px);
+  }
+
+  .biko-404__title {
+    margin-top: 24px;
+    font-size: 19px;
+  }
+
+  .biko-404__actions {
+    margin-top: 26px;
+  }
+
+  .biko-404__homeIcon {
+    width: 56px;
+    height: 56px;
+  }
+
+  .biko-404__homeIcon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .biko-404__foot {
+    margin-top: 26px;
+  }
+
+  /* 碎片只留一半，窄屏上太密会糊成一团 */
+  .biko-404__frag--hideSm {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .biko-404__desc {
+    font-size: 13px;
+  }
+}

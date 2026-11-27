@@ -496,7 +496,7 @@
           actions.append(summary, menu); row.append(open, actions); results.appendChild(row)
         })
         if (!results.children.length) results.appendChild(node('p', 'nanaly-session-empty', field.value.trim()
-          ? '没有找到相关话题，换个词试试吧。' : '这里还没有对话记录。和娜娜莉说句话，话题会自动起名并保存在这里。'))
+          ? '没有找到相关话题，换个词试试吧。' : '这里还没有对话记录。和多多说句话，话题会自动起名并保存在这里。'))
       }
       field.addEventListener('input', renderResults)
       ui.drawer.append(drawerHeading('我的话题'), node('p', 'nanaly-session-intro', '名字会自动总结，想改名或删除时点话题旁的 ···。'), label, results, renameHost)

@@ -1,4 +1,4 @@
-/* 小黑 —— 博客常驻小助手
+/* 多多 —— 博客常驻小助手
  *
  * ============ 关于 API Key 的安全说明（很重要） ============
  * 博客主体是 GitHub Pages 静态站，练习与私有记忆使用可选的独立后端。
@@ -349,7 +349,7 @@
   // ---------------- 人设 ----------------
   // 想改她的性格，直接改下面这段文字即可，不需要动别的代码。
 
-  const PERSONA = `你是小黑，一只住在 Biko 个人博客里的黑猫，由看板娘小黑猫现身。
+  const PERSONA = `你是多多，一只住在 Biko 个人博客里的黑猫，由看板娘黑猫现身。
 
 【核心性格】
 - 毒舌但清醒。对主人的偷懒会毫不留情地损两句，但真出问题时第一个冲上去解决。
@@ -690,6 +690,7 @@
       })
       pre.appendChild(btn)
     })
+    window.BikoCodeImage?.attach(node, { assistant: true })
   }
 
   // 暗号门尚未初始化、校验失败或页面仍被遮住时，不读取正文上下文。
@@ -1052,8 +1053,7 @@
     },
     { label: '归档', url: '/archives/', alias: ['归档', 'archive', 'archives', '全部文章', '文章列表', '所有文章', '文章归档'] },
     { label: '分类', url: '/categories/', alias: ['分类', 'categories', 'category', '分类页'] },
-    { label: '标签', url: '/tags/', alias: ['标签', 'tags', 'tag', '标签页'] },
-    { label: '关于', url: '/about/', alias: ['关于', 'about', '关于我', '关于你', '关于页'] }
+    { label: '标签', url: '/tags/', alias: ['标签', 'tags', 'tag', '标签页'] }
   ]
 
   // 跳转目标是模型给的。而这个页面的同源里存着解密后的 API key
@@ -1152,7 +1152,7 @@
         if (!btn) return outcome('这个页面没有可用的搜索框喵。', false)
         btn.click()
         setTimeout(() => {
-          const box = document.querySelector('#local-search-input input, .search-dialog input[type="text"]')
+          const box = document.querySelector('#bks-input, #local-search-input input, .search-dialog input[type="text"]')
           if (box && act.q) {
             box.value = act.q
             box.dispatchEvent(new Event('input', { bubbles: true }))
@@ -1400,22 +1400,22 @@
   const launcher = el('button', '', catFace())
   launcher.id = 'nanaly-launcher'
   launcher.type = 'button'
-  launcher.title = '找小黑聊聊'
-  launcher.setAttribute('aria-label', '打开小黑助手')
+  launcher.title = '找多多聊聊'
+  launcher.setAttribute('aria-label', '打开多多助手')
   launcher.setAttribute('aria-controls', 'nanaly-panel')
   launcher.setAttribute('aria-expanded', 'false')
 
   const panel = el('div')
   panel.id = 'nanaly-panel'
   panel.setAttribute('role', 'dialog')
-  panel.setAttribute('aria-label', '小黑助手')
+  panel.setAttribute('aria-label', '多多助手')
   panel.setAttribute('aria-hidden', 'true')
   panel.inert = true
   panel.innerHTML = `
     <div class="nanaly-head">
       <span class="nanaly-head__avatar">${catFace()}</span>
       <div class="nanaly-head__meta">
-        <div class="nanaly-head__name">小黑</div>
+        <div class="nanaly-head__name">多多</div>
         <div class="nanaly-head__sub" data-role="sub">Biko 的学习搭子</div>
       </div>
       <button class="nanaly-head__btn" data-act="think" title="深度思考（推理模型，更准但更慢更贵）"><i class="fas fa-brain"></i></button>
@@ -1433,7 +1433,7 @@
       <button data-q="web">上网搜…</button>
     </div>
     <div class="nanaly-foot">
-      <textarea data-role="input" rows="1" placeholder="和小黑聊聊…"></textarea>
+      <textarea data-role="input" rows="1" placeholder="和多多聊聊…"></textarea>
       <button class="nanaly-send" data-role="send" title="发送"><i class="fas fa-paper-plane"></i></button>
     </div>`
 
@@ -1453,7 +1453,7 @@
     btn.type = 'button'
     if (btn.title) btn.setAttribute('aria-label', btn.title)
   })
-  input.setAttribute('aria-label', '给小黑的消息')
+  input.setAttribute('aria-label', '给多多的消息')
   body.setAttribute('role', 'log')
   body.setAttribute('aria-label', '对话记录')
   body.setAttribute('aria-live', 'polite')
@@ -1648,7 +1648,7 @@
     body.innerHTML = ''
     if (!history.length) {
       // 未解锁访客也会看到默认问候，不在这里透露内部文章或分类。
-      addMsg('her', '呐，我是小黑。想聊点什么？学习里的小问题，或者今天的小日常，都可以和我说。'
+      addMsg('her', '呐，我是多多。想聊点什么？学习里的小问题，或者今天的小日常，都可以和我说。'
         + '\n\n……才、才不是特地等你来的呢。')
       workspace?.refresh()
       return
@@ -2209,7 +2209,7 @@
       if (d.content || (d.reasoning_content && deep)) onDelta(full, think)
       const reason = chunk.choices?.[0]?.finish_reason
       if (reason === 'stop') completed = true
-      if (reason === 'length') throw new Error('回答达到模型输出长度上限，尚未完成；可以让小黑继续。')
+      if (reason === 'length') throw new Error('回答达到模型输出长度上限，尚未完成；可以让多多继续。')
       if (reason === 'content_filter') throw new Error('服务商中止了这条回答（content_filter），回答尚未完成。')
     }
     const consumeLine = line => {
@@ -2540,7 +2540,7 @@
    * 走便宜的那一档；token 照样记进总账。 */
   const canComplete = () => canReadPageContext() && !!(secrets.apiKey || secrets.visionKey)
   const complete = async ({ system, user, json = false, signal } = {}) => {
-    if (!canComplete()) throw new Error('请先解锁小黑的模型密钥。')
+    if (!canComplete()) throw new Error('请先解锁多多的模型密钥。')
     const request = window.NANALY_PROVIDER.request({ cfg, secrets, stream: false, json, messages: [
       { role: 'system', content: String(system || '') }, { role: 'user', content: String(user || '').slice(0, 12000) }
     ] })
@@ -2839,7 +2839,7 @@
 
   // ---------------- 划词提问 ----------------
 
-  const selBtn = el('button', 'nanaly-selbtn', '<i class="fas fa-cat"></i> 问小黑')
+  const selBtn = el('button', 'nanaly-selbtn', '<i class="fas fa-cat"></i> 问多多')
   selBtn.type = 'button'
   selBtn.id = 'nanaly-selbtn'
   document.body.appendChild(selBtn)
@@ -3050,7 +3050,7 @@
         button.classList.toggle('is-on', on)
         button.classList.toggle('is-loading', on && ['planning', 'loading'].includes(state.phase))
         button.title = on ? (state.phase === 'planning' ? '理解语气…，点击停止'
-          : state.phase === 'loading' ? '生成声音中，点击停止' : '停止朗读') : '用小黑的声音朗读'
+          : state.phase === 'loading' ? '生成声音中，点击停止' : '停止朗读') : '用多多的声音朗读'
         button.setAttribute('aria-label', button.title); button.setAttribute('aria-pressed', String(on))
       })
     })

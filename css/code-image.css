@@ -1,0 +1,52 @@
+/* Article / assistant entry points; the editor itself loads on demand. */
+#article-container figure.highlight { position:relative }
+#article-container .code-image-trigger, .nanaly-msg .code-image-trigger {
+  font:500 12px/1.5 var(--ui-font, sans-serif);padding:3px 9px;border:1px solid currentColor;
+  border-radius:6px;background:transparent;color:inherit;cursor:pointer;white-space:nowrap;
+}
+#article-container .highlight-tools .code-image-trigger { margin:4px 8px 4px auto;flex-shrink:0 }
+#article-container pre:has(> .code-image-trigger) { position:relative;padding-top:40px }
+#article-container pre > .code-image-trigger { position:absolute;right:8px;top:6px }
+.nanaly-msg pre.has-code-image { padding-top:40px }
+.nanaly-msg pre > .code-image-trigger { position:absolute;right:68px;top:6px;color:#e7eef8;background:#243448 }
+.code-image-trigger:focus-visible { outline:2px solid var(--ui-focus, #8ab4f8);outline-offset:3px }
+.code-image-trigger:disabled { opacity:.65;cursor:wait }
+.code-image-dialog {
+  box-sizing:border-box;width:min(1120px, calc(100vw - 32px));max-width:none;max-height:calc(100dvh - 32px);
+  padding:0;margin:auto;border:1px solid var(--ui-border, #c3cfdc);border-radius:20px;
+  background:var(--ui-surface, #f9fbfe);color:var(--ui-ink, #203249);box-shadow:0 24px 100px #0005;
+  font:14px/1.5 var(--ui-font, sans-serif);overflow:auto;overscroll-behavior:contain;
+}
+.code-image-dialog::backdrop { background:rgba(6,12,22,.7) }
+html.is-code-image-open { overflow:hidden }
+.code-image-dialog *, .code-image-dialog *::before { box-sizing:border-box }
+.code-image-dialog .ci-head { display:flex;align-items:center;gap:16px;padding:18px 22px;border-bottom:1px solid var(--ui-border) }
+.code-image-dialog h2 { margin:0;font-size:20px;color:inherit }
+.code-image-dialog .ci-head p { margin:3px 0 0;color:var(--ui-muted);font-size:12px }
+.code-image-dialog button, .code-image-dialog input, .code-image-dialog select, .code-image-dialog textarea { font:inherit;color:inherit }
+.code-image-dialog button { cursor:pointer;border:1px solid var(--ui-border);background:var(--ui-raised);border-radius:10px;padding:9px 14px;min-height:40px }
+.code-image-dialog button:hover { background:var(--ui-hover) }
+.code-image-dialog button:disabled { opacity:.55;cursor:wait }
+.code-image-dialog #ci-close { margin-left:auto;flex-shrink:0 }
+.code-image-dialog .ci-layout { display:grid;grid-template-columns:minmax(0,1fr) 300px }
+.code-image-dialog .ci-preview { min-width:0;padding:24px;display:flex;flex-direction:column;gap:14px;align-items:center;justify-content:center;background:var(--ui-inset);min-height:340px }
+.code-image-dialog .ci-preview img { display:block;max-width:100%;max-height:56vh;object-fit:contain;border-radius:8px;filter:none!important }
+.code-image-dialog #ci-dimensions { color:var(--ui-muted);font-size:12px }
+.code-image-dialog .ci-settings { padding:20px;display:flex;flex-direction:column;gap:12px;min-width:0 }
+.code-image-dialog label { display:flex;flex-direction:column;gap:5px;font-weight:500;font-size:13px }
+.code-image-dialog input:not([type=checkbox]), .code-image-dialog select, .code-image-dialog textarea { width:100%;padding:8px 10px;border:1px solid var(--ui-border);border-radius:8px;background:var(--ui-raised);min-width:0 }
+.code-image-dialog textarea { font:12px/1.6 var(--ui-mono, monospace);resize:vertical;min-height:110px;max-height:240px;tab-size:4 }
+.code-image-dialog .ci-pair { display:grid;grid-template-columns:1fr 1fr;gap:10px }
+.code-image-dialog label.ci-check { flex-direction:row;align-items:center;gap:8px }
+.code-image-dialog .ci-foot { padding:14px 22px;border-top:1px solid var(--ui-border);display:flex;align-items:center;gap:8px;flex-wrap:wrap }
+.code-image-dialog #ci-status { flex:1 1 200px;margin:0;color:var(--ui-muted);font-size:12px }
+.code-image-dialog #ci-png { background:var(--ui-action);color:var(--ui-on-action);border-color:transparent }
+.code-image-dialog :focus-visible { outline:2px solid var(--ui-focus, #235c9a);outline-offset:2px }
+@media(max-width:760px) {
+  .code-image-dialog { width:calc(100vw - 16px);max-height:calc(100dvh - 16px);border-radius:14px }
+  .code-image-dialog .ci-layout { grid-template-columns:1fr }
+  .code-image-dialog .ci-preview { min-height:180px;padding:16px }
+  .code-image-dialog .ci-preview img { max-height:32vh }
+  .code-image-dialog .ci-settings { padding:16px }
+  .code-image-dialog .ci-head, .code-image-dialog .ci-foot { padding:14px 16px }
+}

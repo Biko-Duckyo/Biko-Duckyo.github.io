@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 430" font-family="'Microsoft YaHei','PingFang SC','Noto Sans SC',sans-serif">
+  <defs>
+    <marker id="a5b" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/></marker>
+  </defs>
+  <rect x="8" y="8" width="804" height="414" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="410" y="40" text-anchor="middle" font-size="16" font-weight="700" fill="#334155">常规二维笛卡尔采样的空间编码示意</text>
+
+  <!-- 卡片1 Gz -->
+  <rect x="40" y="90" width="230" height="210" rx="10" fill="#eff6ff" stroke="#93c5fd"/>
+  <text x="155" y="124" text-anchor="middle" font-size="16" font-weight="700" fill="#1d4ed8">Gz 层面选择梯度</text>
+  <text x="60" y="158" font-size="13" fill="#334155">· Z 方向磁场线性变化</text>
+  <text x="60" y="184" font-size="13" fill="#334155">· 配合选定带宽的射频脉冲</text>
+  <text x="60" y="208" font-size="13" fill="#334155">  只激发匹配频率的一层</text>
+  <text x="60" y="244" font-size="13" fill="#1d4ed8">层厚控制：</text>
+  <text x="60" y="268" font-size="12" fill="#334155">带宽越大 → 层越厚</text>
+  <text x="60" y="288" font-size="12" fill="#334155">梯度越大 → 层越薄</text>
+
+  <!-- 箭头1 -->
+  <line x1="272" y1="195" x2="308" y2="195" stroke="#2563eb" stroke-width="2.5" marker-end="url(#a5b)"/>
+
+  <!-- 卡片2 Gy -->
+  <rect x="310" y="90" width="230" height="210" rx="10" fill="#fefce8" stroke="#fde047"/>
+  <text x="425" y="124" text-anchor="middle" font-size="16" font-weight="700" fill="#a16207">Gy 相位编码梯度</text>
+  <text x="330" y="158" font-size="13" fill="#334155">· Y 方向进动频率短暂不同</text>
+  <text x="330" y="184" font-size="13" fill="#334155">· 关闭后频率复原，相位差保留</text>
+  <text x="330" y="214" font-size="13" fill="#a16207">此处示意一次激发读一条相位线</text>
+  <text x="330" y="244" font-size="12" fill="#334155">多回波 / EPI 可一次读多条线</text>
+  <text x="330" y="268" font-size="12" fill="#b45309">实际耗时依赖轨迹与序列</text>
+
+  <!-- 箭头2 -->
+  <line x1="542" y1="195" x2="578" y2="195" stroke="#2563eb" stroke-width="2.5" marker-end="url(#a5b)"/>
+
+  <!-- 卡片3 Gx -->
+  <rect x="580" y="90" width="230" height="210" rx="10" fill="#f0fdf4" stroke="#86efac"/>
+  <text x="695" y="124" text-anchor="middle" font-size="16" font-weight="700" fill="#15803d">Gx 频率编码梯度</text>
+  <text x="600" y="158" font-size="13" fill="#334155">· 在信号采集（读出）时施加</text>
+  <text x="600" y="184" font-size="13" fill="#334155">· X 方向质子进动频率不同</text>
+  <text x="600" y="214" font-size="13" fill="#334155">· 不同频率 → 对应不同 X 位置</text>
+  <text x="600" y="248" font-size="12" fill="#64748b">采样后结合重建恢复位置信息</text>
+
+  <text x="410" y="352" text-anchor="middle" font-size="14" font-weight="700" fill="#334155">梯度编码与采样、重建共同恢复空间分布</text>
+  <text x="410" y="382" text-anchor="middle" font-size="12" fill="#94a3b8">梯度幅度单位 mT/m；切换率单位 T/(m·s)；分辨率与伪影还受采样、序列和场均匀度影响</text>
+</svg>

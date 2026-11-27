@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 430" font-family="'Microsoft YaHei','PingFang SC','Noto Sans SC',sans-serif">
+  <rect x="8" y="8" width="804" height="414" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="410" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="#334155">常规 SE：相对 TR / TE 与三种加权</text>
+
+  <!-- 列头 -->
+  <text x="410" y="78" text-anchor="middle" font-size="13" fill="#64748b">TE 回波时间 →</text>
+  <rect x="200" y="88" width="275" height="30" fill="#e2e8f0"/>
+  <rect x="485" y="88" width="275" height="30" fill="#e2e8f0"/>
+  <text x="337" y="108" text-anchor="middle" font-size="13" font-weight="700" fill="#334155">短 TE（相对 T2）</text>
+  <text x="622" y="108" text-anchor="middle" font-size="13" font-weight="700" fill="#334155">长 TE（相对 T2）</text>
+
+  <!-- 行头 -->
+  <text x="128" y="230" text-anchor="middle" font-size="13" fill="#64748b" transform="rotate(-90 128 230)">TR 重复时间 →</text>
+
+  <!-- 格：短TR行 y=126 h=128 -->
+  <rect x="200" y="126" width="275" height="128" rx="8" fill="#dbeafe" stroke="#93c5fd"/>
+  <text x="337" y="152" text-anchor="middle" font-size="15" font-weight="700" fill="#1d4ed8">短 TR + 短 TE = T1WI</text>
+  <text x="337" y="178" text-anchor="middle" font-size="12" fill="#334155">脂肪高信号 · 自由水低信号</text>
+  <text x="337" y="200" text-anchor="middle" font-size="12" fill="#334155">TR 短 → Mz 恢复不完全，T1 主导</text>
+  <text x="337" y="224" text-anchor="middle" font-size="12" fill="#64748b">用途：解剖结构、脑灰白质区分</text>
+
+  <rect x="485" y="126" width="275" height="128" rx="8" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <text x="622" y="152" text-anchor="middle" font-size="15" font-weight="700" fill="#64748b">短 TR + 长 TE（混合，少用）</text>
+  <text x="622" y="180" text-anchor="middle" font-size="12" fill="#64748b">T1 未恢复 + T2 已明显衰减</text>
+  <text x="622" y="204" text-anchor="middle" font-size="12" fill="#64748b">混合加权；用途取决于具体序列</text>
+
+  <!-- 格：长TR行 y=266 h=128 -->
+  <rect x="200" y="266" width="275" height="128" rx="8" fill="#dcfce7" stroke="#86efac"/>
+  <text x="337" y="292" text-anchor="middle" font-size="15" font-weight="700" fill="#15803d">长 TR + 短 TE = PDWI</text>
+  <text x="337" y="318" text-anchor="middle" font-size="12" fill="#334155">主要看质子（氢核）密度多少</text>
+  <text x="337" y="340" text-anchor="middle" font-size="12" fill="#334155">长 TR 减弱 T1 权重 · 短 TE 减弱 T2 权重</text>
+  <text x="337" y="364" text-anchor="middle" font-size="12" fill="#64748b">用途：软骨、脊髓、椎间盘精细结构</text>
+
+  <rect x="485" y="266" width="275" height="128" rx="8" fill="#fef3c7" stroke="#fcd34d"/>
+  <text x="622" y="292" text-anchor="middle" font-size="15" font-weight="700" fill="#b45309">长 TR + 长 TE = T2WI</text>
+  <text x="622" y="318" text-anchor="middle" font-size="12" fill="#334155">长 T2 成分常较亮；脂肪信号依赖序列</text>
+  <text x="622" y="340" text-anchor="middle" font-size="12" fill="#334155">长 TE → Mxy 衰减，T2 主导</text>
+  <text x="622" y="364" text-anchor="middle" font-size="12" fill="#64748b">组织和病变判断需结合多序列</text>
+</svg>

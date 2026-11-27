@@ -2,7 +2,7 @@
  * 文章合并页（/archives/）：时间轴 + 分类 + 标签
  *
  * 数据来自构建期产物 /json/post-index.json（见 scripts/biko-index.js），
- * 每行是 [路径, 标题, 描述, 发布时间, 更新, 缩略图, [分类], [标签]]。
+ * 每行是 [路径, 标题, 描述, 发布时间, 更新, 缩略图, [分类], [标签], 展示元数据]。
  *
  * 交互设计：
  *   - 三个视图：时间轴 / 分类 / 标签，切视图只换渲染，不刷新
@@ -15,18 +15,32 @@
  */
 ;(function () {
   'use strict'
+  if (window.BikoArchives) { window.BikoArchives.refresh(); return }
 
   var ROOT_SEL = '#ar-root'
   var DATA_URL = '/json/post-index.json'
   var PAGE_SIZE = 20 // 一次渲染多少条，避免一口气插上百个卡片
   var DENSITIES = ['compact', 'standard', 'grid'] // 紧凑 / 标准 / 网格
-  var DEFAULT_DENSITY = 'compact' // 默认紧凑：一屏能看完一整年
+  var DEFAULT_DENSITY = 'standard' // 默认展示封面与摘要，仍尊重已保存的密度选择。
   var LS_DENSITY = 'ar-density' // 记住上次选的密度
 
-  // 用户的「密度」是否来自本次主动点击（点到默认值 compact 也要能进地址栏）
+  // 用户的「密度」是否来自本次主动点击（点到默认值也要能进地址栏）
   var densityTouched = false
   // 已经点开「+N」的文章路径：重渲染（切密度/筛选）后保持展开状态
   var expandedTags = {}
+  var indexTask
+  function loadIndex () {
+    if (!indexTask) {
+      indexTask = fetch(DATA_URL, { credentials: 'same-origin' })
+        .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status) })
+        .then(function (data) {
+          if (!data || !Array.isArray(data.posts)) throw new Error('文章索引格式无效')
+          return data
+        })
+        .catch(function (error) { indexTask = null; throw error })
+    }
+    return indexTask
+  }
 
   var state = {
     view: 'timeline',
@@ -36,6 +50,7 @@
     year: '', // 月份链路点的年份，'' 表示不限
     month: '', // 月份链路点的月份（1~12 的字符串），'' 表示不限
     posts: [],
+    topics: {},
     limit: PAGE_SIZE,
     root: null
   }
@@ -209,7 +224,7 @@
         if (year) html += '</ul>'
         year = y
         html += '<div class="ar-year"><span>' + y + '</span><i></i></div>' +
-          monthRailHTML(y, list) + '<ul class="ar-list">'
+          '<ul class="ar-list">'
       }
       html += itemHTML(p)
       shown++
@@ -218,15 +233,23 @@
 
     tl.innerHTML = html
 
-    // 缩略图兜底：Resize 失败（本地没起图片服务）就换回原图，原图也挂了就藏掉
-    Array.prototype.forEach.call(tl.querySelectorAll('.ar-thumb img'), function (img) {
+    bindCoverFallback(tl)
+    more.hidden = shown >= list.length
+    more.textContent = '加载更多（还有 ' + (list.length - shown) + ' 篇）'
+  }
+
+  function bindCoverFallback (container) {
+    // Preserve the cover slot on failure; reveal the topic icon instead of collapsing the row.
+    Array.prototype.forEach.call(container.querySelectorAll('img'), function (img) {
       var retry = function () {
         img.removeEventListener('error', retry)
         var raw = img.getAttribute('data-raw')
-        if (raw && img.currentSrc.indexOf(raw) === -1) {
+        if (raw && img.getAttribute('src') !== raw && !img.dataset.coverRetried) {
+          img.dataset.coverRetried = '1'
           img.src = raw
+          img.addEventListener('error', retry, { once: true })
         } else {
-          img.parentNode.classList.add('is-hidden')
+          img.hidden = true
         }
       }
       img.addEventListener('error', retry)
@@ -234,17 +257,35 @@
       if (img.complete && img.naturalWidth === 0) retry()
     })
 
-    more.hidden = shown >= list.length
-    more.textContent = '加载更多（还有 ' + (list.length - shown) + ' 篇）'
+  }
+
+  function topicFor (name) {
+    return state.topics[name] || { title: name || '随笔', description: '沿着这个主题继续阅读', icon: 'fa-book-open', theme: 'build' }
+  }
+
+  function safeImage (src) {
+    src = String(src || '')
+    return /^(\/(?!\/)|https?:\/\/)/i.test(src) ? src : ''
+  }
+
+  function coverHTML (topic, src, kind) {
+    var icon = /^fa-[a-z0-9-]+$/.test(topic.icon) ? topic.icon : 'fa-book-open'
+    src = safeImage(src)
+    return '<span class="ar-cover-symbol" aria-hidden="true"><i class="fas ' + icon + '"></i></span>' +
+      (src ? '<img src="' + escapeHTML(src) + '" data-raw="' + escapeHTML(src.split('?')[0]) +
+        '" alt="" width="640" height="360" loading="lazy" decoding="async" class="' + (kind === 'diagram' ? 'is-diagram' : '') + '">' : '')
   }
 
   function itemHTML (p) {
     var path = escapeHTML(p[0])
     var title = escapeHTML(p[1])
-    var desc = escapeHTML(p[2])
-    var thumb = p[5] ? String(p[5]) : ''
+    var presentation = p[8] || {}
+    var desc = escapeHTML(p[2] || presentation.excerpt || '')
     var cats = p[6] || []
     var tags = p[7] || []
+    var topic = topicFor(cats[0])
+    var legacy = String(p[5] || '')
+    var thumb = presentation.cover || (legacy.split('?')[0] !== '/img/banner.jpg' ? legacy : '')
     var meta = ''
 
     cats.forEach(function (c) {
@@ -252,9 +293,9 @@
         '<i class="fas fa-folder-open" aria-hidden="true"></i>' + escapeHTML(c) + '</button>'
     })
 
-    // 标签只露前 2 个，其余收进「+N」：既不让单卡因为标签多而高度参差，
+    // 标签只露前 1 个，其余收进「+N」：分类与标签保持紧凑，
     // 也不至于把整页拉长。点「+N」展开后就地显示全部（仍可点选筛选）。
-    var VISIBLE_TAGS = 2
+    var VISIBLE_TAGS = 1
     var expanded = !!expandedTags[p[0]]
     tags.slice(0, VISIBLE_TAGS).forEach(function (t) {
       meta += '<button type="button" class="ar-tag" data-tag="' + escapeHTML(t) + '">' +
@@ -274,36 +315,35 @@
 
     var date = fmtDate(p[3])
     return '<li class="ar-item">' +
-      '<a class="ar-card" href="' + path + '">' +
-        (thumb ? '<div class="ar-thumb"><img src="' + escapeHTML(thumb) +
-          '" data-raw="' + escapeHTML(String(thumb).split('?')[0]) +
-          '" alt="" loading="lazy" decoding="async"></div>' : '') +
+      '<article class="ar-card" data-path="' + path + '">' +
+        '<a class="ar-thumb" href="' + path + '" tabindex="-1" aria-hidden="true" data-topic="' + escapeHTML(topic.theme || 'build') + '">' + coverHTML(topic, thumb, presentation.kind) + '</a>' +
         '<div class="ar-body">' +
           '<time class="ar-date" datetime="' + date + '">' + date + '</time>' +
-          '<span class="ar-title">' + title + '</span>' +
+          '<h2 class="ar-title"><a href="' + path + '">' + title + '</a></h2>' +
           (desc ? '<p class="ar-desc">' + desc + '</p>' : '') +
           (meta ? '<div class="ar-meta">' + meta + '</div>' : '') +
         '</div>' +
-      '</a></li>'
+      '</article></li>'
   }
 
   /* ---------------- 渲染：分类磁贴 ---------------- */
 
   function renderCategories () {
     var map = countBy(state.posts, 6)
-    var total = state.posts.length || 1
     var wall = state.root.querySelector('#ar-catwall')
 
     wall.innerHTML = sortedEntries(map).map(function (row) {
-      var pct = Math.round(row[1] / total * 100)
+      var topic = topicFor(row[0])
       return '<button type="button" class="ar-tile" data-cat="' + escapeHTML(row[0]) + '" ' +
+        'aria-label="查看' + escapeHTML(row[0]) + '，' + row[1] + '篇文章" ' +
         'aria-pressed="' + (state.cat === row[0]) + '">' +
-        '<span class="ar-tile-name"><i class="fas fa-folder-open" aria-hidden="true"></i>' +
-        escapeHTML(row[0]) + '</span>' +
-        '<span class="ar-tile-n">' + row[1] + ' 篇 · ' + pct + '%</span>' +
-        '<span class="ar-tile-bar"><span style="width:' + pct + '%"></span></span>' +
+        '<span class="ar-topic-cover" data-topic="' + escapeHTML(topic.theme || 'build') + '">' + coverHTML(topic, topic.cover, 'diagram') + '</span>' +
+        '<span class="ar-tile-name">' + escapeHTML(topic.title) + '</span>' +
+        '<span class="ar-tile-desc">' + escapeHTML(topic.description || '') + '</span>' +
+        '<span class="ar-tile-n">' + row[1] + ' 篇文章 <i class="fas fa-arrow-right" aria-hidden="true"></i></span>' +
       '</button>'
     }).join('')
+    bindCoverFallback(wall)
   }
 
   /* ---------------- 渲染：标签云 ---------------- */
@@ -339,6 +379,15 @@
         escapeHTML(row[0]) + '<span class="ar-chip-n">' + row[1] + '</span></button>'
     })
     bar.innerHTML = html
+  }
+
+  function renderDatebar () {
+    var years = Array.from(new Set(state.posts.map(yearOf)))
+    state.root.querySelector('#ar-datebar').innerHTML = years.map(function (year) {
+      return '<p class="ar-date-year">' + year + ' 年</p>' + monthRailHTML(year, state.posts)
+    }).join('')
+    var count = [state.cat, state.tag, state.year].filter(Boolean).length
+    state.root.querySelector('#ar-filter-count').textContent = count ? ' · ' + count + ' 项' : ''
   }
 
   function renderActive () {
@@ -398,6 +447,7 @@
     renderViews()
     renderDensity()
     renderCatbar()
+    renderDatebar()
     renderActive()
     renderTimeline()
     renderCategories()
@@ -406,8 +456,12 @@
     var hit = filtered().length
     var noHit = state.view === 'timeline' && hit === 0
     state.root.querySelector('#ar-empty').hidden = !noHit
-    // 空结果时不摆筛选条（「全部」已被点亮，留着反而误导），只留「清除筛选」
-    state.root.querySelector('.ar-view[data-view="timeline"] .ar-filterbar').hidden = noHit
+    if (state.posts.length && !state.root.dataset.viewRestored) {
+      state.root.dataset.viewRestored = '1'
+      var saved = window.BikoView?.read('archives')
+      if (saved?.query === location.search && !location.hash) window.BikoView?.restoreScroll(saved.y, state.root)
+    }
+    // Keep filters available even when no article matches, so users can recover in the same panel.
   }
 
   /* ---------------- 交互 ---------------- */
@@ -430,11 +484,16 @@
     // 点在卡片空白处 / 锚点上时拿不到按钮，直接放过（不 preventDefault，链接照常跳转）
     if (!target || !state.root.contains(target)) return
 
-    // 卡片里的按钮都套在 <a class="ar-card"> 里，按钮自己不阻止默认行为的话，
-    // 事件会继续冒泡到 <a>，整页就跳去文章了。所以拿到按钮就统一拦掉：
-    // 下面每个分支（视图 / 密度 / 月份 / +N / 分类 / 标签 / 清除）都不该触发跳转。
+    // 封面和标题使用独立链接；筛选按钮只更新当前列表，不触发文章跳转。
     e.preventDefault()
     e.stopPropagation()
+
+    if (target.hasAttribute('data-close-filters')) {
+      state.root.querySelector('#ar-filters').open = false
+      state.root.querySelector('#ar-filters summary').focus()
+      return
+    }
+    if (target.hasAttribute('data-reset-filters')) return apply({ cat: '', tag: '', year: '', month: '' })
 
     // 切换视图（三个 tab）
     var view = target.getAttribute('data-view')
@@ -465,7 +524,7 @@
     // 卡片上的「+N」：就地展开剩余标签，不参与筛选
     if (target.hasAttribute('data-expand')) {
       var card = target.closest('.ar-card')
-      var path = card ? card.getAttribute('href') : ''
+      var path = card ? card.getAttribute('data-path') : ''
       if (path) {
         // 记在路径上再重画：切密度、换筛选之后展开状态也不会丢
         if (expandedTags[path]) delete expandedTags[path]
@@ -521,22 +580,31 @@
   // 本页每次「活着」期间只绑定一次监听（绑在 document/window 上，
   // pjax 换掉 #body-wrap 时不会跟着消失，所以需要自己管理生命周期）
   var listening = false
+  function closeFilters (restoreFocus) {
+    var panel = state.root && state.root.querySelector('#ar-filters')
+    if (!panel || !panel.open) return
+    panel.open = false
+    if (restoreFocus) panel.querySelector('summary').focus()
+  }
+  function onFilterOutsideClick (event) {
+    if (!event.target.closest('#ar-filters')) closeFilters(false)
+  }
+  function onFilterEscape (event) {
+    if (event.key === 'Escape') closeFilters(true)
+  }
 
   function attachOnce () {
     if (listening) return
     listening = true
-    document.addEventListener('pjax:complete', onPjax)
-    // popstate 必须挂在 window 上：pjax 自己就是 window 上的监听，
-    // 浏览器派发的 popstate 不冒泡到 document.addEventListener 这一层之外，
-    // 挂在 document 上收不到（实测过）。
-    window.addEventListener('popstate', onPop)
+    document.addEventListener('click', onFilterOutsideClick)
+    document.addEventListener('keydown', onFilterEscape)
   }
 
   function detach () {
-    if (!listening) return
+    state.root = null
+    document.removeEventListener('click', onFilterOutsideClick)
+    document.removeEventListener('keydown', onFilterEscape)
     listening = false
-    document.removeEventListener('pjax:complete', onPjax)
-    window.removeEventListener('popstate', onPop)
   }
 
   function boot () {
@@ -544,10 +612,15 @@
     if (!root) { detach(); return }
 
     state.root = root
+    if (!root._initialEmpty) root._initialEmpty = root.querySelector('#ar-empty').innerHTML
+    var savedView = window.BikoView?.read('archives')
+    if (root.dataset.arBound !== '1' && !location.search && savedView?.query) history.replaceState(history.state, '', location.pathname + savedView.query)
+    window.BikoView?.register('archives', function () { return { query: location.search, limit: state.limit, y: window.scrollY } })
     // 先把「本页活着」这件事登记好，再处理查询串与数据；
     // 这样 pjax / popstate 改 ?view= 时能立刻被接到（见下面的签名比对）
     attachOnce()
     readQuery()
+    if (savedView?.query === location.search && Number.isFinite(savedView.limit)) state.limit = Math.max(PAGE_SIZE, Math.min(savedView.limit, 500))
     refreshNavHighlight()
 
     // 同一份 DOM 上不要重复绑定
@@ -560,7 +633,7 @@
         renderTimeline()
       })
       root.querySelector('#ar-reset').addEventListener('click', function () {
-        apply({ cat: '', tag: '' })
+        apply({ cat: '', tag: '', year: '', month: '' })
       })
 
       // ← → 在三个视图之间切换
@@ -582,20 +655,32 @@
       return
     }
 
-    render() // 先按 0 条渲染骨架，再拉数据补上
-    fetch(DATA_URL, { credentials: 'same-origin' })
-      .then(function (r) { return r.ok ? r.json() : Promise.reject(r.status) })
+    root.setAttribute('aria-busy', 'true')
+    render()
+    var loading = root.querySelector('#ar-loading')
+    loading.hidden = false
+    loading.setAttribute('role', 'status')
+    loading.setAttribute('aria-live', 'polite')
+    root.querySelector('#ar-empty').hidden = true
+    loadIndex()
       .then(function (data) {
-        if (state.root !== root) return // 数据回来前已经切走，别覆盖新页面
+        if (state.root !== root || !root.isConnected) return // 数据回来前已经切走，别覆盖新页面
         state.posts = (data.posts || []).slice().sort(function (a, b) { return b[3] - a[3] })
+        state.topics = data.topics || {}
+        root.removeAttribute('aria-busy')
+        loading.hidden = true
+        root.querySelector('#ar-empty').innerHTML = root._initialEmpty
         render()
       })
       .catch(function () {
-        if (state.root !== root) return
+        if (state.root !== root || !root.isConnected) return
+        root.removeAttribute('aria-busy')
+        loading.hidden = true
         var box = root.querySelector('#ar-empty')
         box.hidden = false
-        box.innerHTML = '<i class="fas fa-triangle-exclamation" aria-hidden="true"></i>' +
-          '文章索引加载失败，请刷新重试'
+        box.setAttribute('role', 'status')
+        box.innerHTML = '<p>文章暂时加载失败，请检查网络后重试。</p><button class="ui-retry" type="button">重试</button>'
+        box.querySelector('button').onclick = function () { boot() }
       })
   }
 
@@ -629,6 +714,12 @@
     syncFromUrl()
   }
 
+  // Keep exactly one route listener alive; only page-specific handlers detach.
+  // Pjax may evaluate this script again when returning to archives.
+  window.BikoArchives = { refresh: onPjax }
+  document.addEventListener('pjax:complete', onPjax)
+  // Browser history events are dispatched on window, not document.
+  window.addEventListener('popstate', onPop)
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot, { once: true })
   } else {

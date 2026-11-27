@@ -26,6 +26,24 @@
   z-index: var(--z-nav);
   transform: translateY(0);
   transition: transform .45s cubic-bezier(.4, 0, .2, 1);
+  /* iOS 主屏 standalone（black-translucent）下让出状态栏高度，否则顶栏按钮被刘海压住。
+     Safari 普通浏览时 env() 恒为 0，这里等于没写；--layout-nav-h 与 --layout-pad-top
+     已叠加同一份内边距，所以顶栏变高后内容基线会同步下移。 */
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* 状态栏那条带子补顶栏同款玻璃底：black-translucent 下内容透到状态栏背后，
+   若不铺底色，白色状态栏图标会压在模糊的浅色背景上、对比度不稳。
+   高度取 env(top)，Safari 里为 0 → 伪元素零高度，不产生任何视觉变化。 */
+.menu-container::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--nav-bar-bg);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  backdrop-filter: blur(14px) saturate(1.1);
+  pointer-events: none;
 }
 body:has(#recent-posts) #menu-container { transform: translateY(-100%); }
 body:has(#recent-posts).biko-nav-on #menu-container { transform: translateY(0); }
@@ -127,6 +145,9 @@ html[data-theme='light'] .biko-nav .bn-clock i { color: #6b81a3; }
   white-space: nowrap;
 }
 .bn-weather .bn-wx-icon .fa-rotate-right { font-size: 12px; }
+/* 官方 qweather-icons 字体类（qi-*）：常驻图标略大于详情内联图标 */
+.bn-weather .bn-wx-icon i[class*="qi-"] { font-size: 15px; }
+.bn-weather .bn-wx-detail i[class*="qi-"] { font-size: 12px; }
 
 /* ======================================================
  * 左区胶囊：天气「图标 + 文字」一律常显（用户要求）
@@ -327,7 +348,7 @@ html[data-theme='light'] .bn-menu::after { background: linear-gradient(to left, 
   z-index: var(--z-base);
 }
 /* 搜索按钮外层包装：结构必须是 #search-button > .search，
- * 这样主题 local-search.js 的 document.querySelector('#search-button > .search') 才能命中。
+ * 与自建聚合面板 site-search.js 的 document 委托选择器保持一致。
  * 它本身不参与视觉，只做选择器挂载点，故设为透明自适应。 */
 .bn-right #search-button { display: flex; align-items: center; background: transparent; }
 #search-button > .search { flex: 0 0 auto; }
@@ -350,6 +371,46 @@ html[data-theme='light'] .bn-menu::after { background: linear-gradient(to left, 
   border-radius: var(--r-control); color: #fff; background: transparent; border: 0; cursor: pointer;
 }
 .bn-burger:hover { background: var(--nav-item-hover); }
+.bn-page-title { display: none; }
+
+/* Native modal supplies focus containment and a backdrop without depending on Butterfly's removed nav. */
+#bn-mobile-nav:not([open]) { display: none; }
+#bn-mobile-nav {
+  position: fixed;
+  inset: max(8px, env(safe-area-inset-top, 0px)) max(8px, env(safe-area-inset-right, 0px)) auto auto;
+  width: min(360px, calc(100% - 16px));
+  max-width: calc(100% - 16px);
+  max-height: calc(100dvh - 16px - env(safe-area-inset-top, 0px));
+  margin: 0;
+  padding: 18px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--line, #54647b);
+  border-radius: var(--r-panel);
+  background: var(--card-bg, #1c2432);
+  color: var(--font-color, #e9ebf1);
+  font-family: var(--font-ui);
+  box-shadow: 0 16px 56px rgba(0, 0, 0, .3);
+}
+#bn-mobile-nav::backdrop { background: rgba(8, 14, 24, .55); }
+body.biko-menu-open { overflow: hidden !important; }
+.bn-drawer-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+#bn-mobile-nav h2 { margin: 0; font-size: 19px; color: inherit; }
+#bn-mobile-nav h3 { margin: 18px 0 8px; font-size: 13px; color: inherit; opacity: .75; }
+#bn-mobile-nav button, #bn-mobile-nav a {
+  display: flex; align-items: center; gap: 12px;
+  min-height: 44px; min-width: 44px; box-sizing: border-box;
+  padding: 10px 12px; border: 0; border-radius: var(--r-control);
+  color: inherit; background: transparent; font: inherit;
+  text-decoration: none; cursor: pointer;
+}
+#bn-mobile-nav [data-nav-close] { justify-content: center; padding: 10px; }
+.bn-drawer-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+#bn-mobile-nav a[aria-current="page"] { background: var(--nav-item-hover); color: #fff; font-weight: 600; }
+#bn-mobile-nav a:hover, #bn-mobile-nav button:hover { background: var(--nav-item-bg); }
+#bn-mobile-nav :focus-visible, .biko-nav :focus-visible { outline: 2px solid var(--accent, #9db4d3); outline-offset: 2px; }
+#bn-page-tools { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
 
 /* 中等宽度（769~1000px）：左区「天气 + 时钟」两枚胶囊把中区挤到只剩几十像素，
  * 表现为文字叠文字。此区间直接收起天气胶囊，只保留时钟 + 搜索/明暗。 */
@@ -393,6 +454,21 @@ html[data-theme='light'] .bn-menu::after { background: linear-gradient(to left, 
   .biko-nav { height: 50px; padding: 0 8px; }
   .bn-clock .bn-weekday { display: none; }
   .bn-clock { font-size: 11px; }
+}
+/* One shared compact header for all theme-based pages. Desktop navigation keeps its full layout. */
+@media (max-width: 768px) {
+  #menu-container { width: 100%; }
+  #menu-container .biko-nav { height: 54px; width: 100%; box-sizing: border-box; }
+  #menu-container .bn-left { display: none; }
+  #menu-container .bn-page-title {
+    display: block; flex: 1 1 auto; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    color: var(--nav-item-fg); font-size: 16px; font-weight: 600;
+  }
+  #menu-container .bn-right { flex: 0 0 auto; margin: 0; padding: 0; gap: 4px; }
+  #menu-container .bn-right .bn-icon { width: 44px; height: 44px; padding: 0; justify-content: center; }
+  #menu-container .bn-icon-text { display: none; }
+  #menu-container .bn-icon-glyph { width: 44px; flex-basis: 44px; }
 }
 /* 横屏手机：顶栏压缩，不占据可视高度 */
 @media (max-width: 900px) and (orientation: landscape) and (max-height: 480px) {
@@ -565,11 +641,6 @@ html[data-theme='light'] .bn-menu::after { background: linear-gradient(to left, 
     font-size: 12px !important;
   }
 
-  /* 正文：给浮动按钮留出避让区域 */
-  #article-container,
-  .layout_page {
-    padding-right: 44px !important;
-  }
 }
 
 /* ======================================================

@@ -1,0 +1,119 @@
+/* Approved desktop shell: gallery and music surfaces only.
+   Album authentication, image sources and the shared audio engine remain authoritative. */
+body.biko-shell-sample :is(.gal,.gg-gate){
+  --fg:var(--bss-text);--fg-strong:var(--bss-text);--fg-mute:var(--bss-muted);
+  --line:var(--bss-line);--gal-sheet:var(--bss-surface);--gal-ink-soft:var(--bss-muted);
+  color:var(--bss-text);font-family:var(--font-ui);
+}
+body.biko-shell-sample .page.type-music{
+  --bmpg-strong:var(--bss-text);--bmpg-mute:var(--bss-muted);--bmpg-accent:var(--bss-selected);
+  --bmpg-line:var(--bss-line);--bmpg-line-soft:var(--bss-line);--bmpg-card:var(--bss-surface);
+  --bmpg-card-solid:var(--bss-surface);--bmpg-raise:var(--bss-inset);--bmpg-shadow:var(--bss-shadow);
+}
+body.biko-shell-sample :is(.gal,.gg-gate,.gal-lb,.bmpg) :is(button,a,input):focus-visible{
+  outline:2px solid var(--bss-focus);outline-offset:3px;
+}
+body.biko-shell-sample :is(.gal,.gg-gate,.bmpg) button{font-family:inherit;min-height:44px}
+body.biko-shell-sample :is(.gal,.bmpg){min-width:0;padding:0;font-size:100%}
+body.biko-shell-sample :is(.bmpg-head,.gal-stats-card){
+  padding:28px 32px;margin:0 0 20px;border:1px solid var(--bss-line);border-radius:24px;
+  background:var(--bss-surface);box-shadow:var(--bss-shadow);
+}
+body.biko-shell-sample :is(.bmpg-eyebrow,.gal-eyebrow,.gg-eyebrow){
+  display:block;margin:0 0 8px;font-size:10px;font-weight:500;line-height:1.6;
+  letter-spacing:.2em;text-transform:uppercase;color:var(--bss-muted);
+}
+body.biko-shell-sample :is(.bmpg-title,.gal-stats-title){
+  margin:0;font-size:30px;font-weight:650;line-height:1.25;letter-spacing:.02em;color:var(--bss-text);
+}
+body.biko-shell-sample .bmpg-sub{margin:8px 0 0;font-size:13px;line-height:1.75}
+body.biko-shell-sample .gal-stats-head{gap:16px;flex-wrap:wrap;margin-bottom:10px}
+body.biko-shell-sample .gal-stats-info{margin:0;font-size:13px;color:var(--bss-muted)}
+body.biko-shell-sample .gal-stats-divider{display:none}
+body.biko-shell-sample .gal-sync-status{margin:12px 0 0;color:var(--bss-muted)}
+body.biko-shell-sample .gal-layout-toggle{
+  min-height:44px;padding:10px 14px;border:1px solid var(--bss-line);border-radius:12px;
+  background:var(--bss-inset);color:var(--bss-text);font-size:13px;line-height:1.5;
+}
+body.biko-shell-sample .gal-wall{
+  padding:24px;border:1px solid var(--bss-line);border-radius:24px;
+  background:var(--bss-surface);box-shadow:var(--bss-shadow);
+}
+body.biko-shell-sample .gal-wall-head{padding:0;margin-bottom:24px}
+body.biko-shell-sample .gal-search{flex:1 1 260px;max-width:560px;min-width:0}
+body.biko-shell-sample .gal-search input{
+  min-height:46px;border:1px solid var(--bss-line);border-radius:12px;
+  background:var(--bss-inset);color:var(--bss-text);font-size:16px;
+}
+body.biko-shell-sample .gal-search-clear{width:44px;height:44px;top:50%;transform:translateY(-50%)}
+body.biko-shell-sample .gal-grid--film{padding:4px 4px 18px;gap:16px}
+body.biko-shell-sample .gal-film-card{
+  border:1px solid var(--bss-line);border-radius:16px;background:var(--bss-inset);box-shadow:none;
+}
+body.biko-shell-sample .gal-film-card__hole{background:var(--bss-line)}
+body.biko-shell-sample .gal-film-card__name{color:var(--bss-text);font-size:15px;line-height:1.6;font-weight:600}
+body.biko-shell-sample .gal-film-card__count{color:var(--bss-muted);font-size:12px}
+body.biko-shell-sample .gal-empty{color:var(--bss-muted);font-size:14px;line-height:1.8;padding:30px 14px}
+/* The gate leaves room for island navigation and remains scrollable with a keyboard. */
+body.biko-shell-sample .gg-page.gg-gate{
+  top:0;padding:84px 24px 30px;background:rgba(12,22,38,.3);color:var(--bss-text);
+  align-items:safe center;
+}
+body.biko-shell-sample .gg-panel{
+  width:min(100%,480px);box-sizing:border-box;padding:32px;border:1px solid var(--bss-line);
+  border-radius:24px;background:var(--bss-surface);box-shadow:var(--bss-shadow);
+}
+body.biko-shell-sample .gg-emblem{border-color:var(--bss-line);background:var(--bss-inset);color:var(--bss-selected)}
+body.biko-shell-sample .gg-title{font-size:26px;font-weight:650;line-height:1.4;color:var(--bss-text)}
+body.biko-shell-sample :is(.gg-hint,.gg-back){color:var(--bss-muted);font-size:13px;line-height:1.8}
+body.biko-shell-sample .gg-input{min-height:46px;font-size:16px;background:var(--bss-inset);border-color:var(--bss-line);color:var(--bss-text);border-radius:12px}
+body.biko-shell-sample .gg-input::placeholder{color:var(--bss-muted)}
+body.biko-shell-sample .gg-submit{min-height:46px;background:var(--bss-selected);color:var(--bss-on-selected);border-radius:12px;box-shadow:none;font-size:14px;font-weight:600}
+body.biko-shell-sample .gg-err{color:var(--bss-muted);font-size:13px}
+body.biko-shell-sample:has(.page.type-gallery):not(.is-open) #bss-dock{display:none}
+/* Fullscreen viewer stays above shell controls; lightbox UI retains a dark photo surround. */
+body.biko-shell-sample.gal-lb-lock :is(#bss-island,#bss-dock){display:none}
+body.biko-shell-sample .gal-lb :is(button,.gal-lb-open){min-width:44px;min-height:44px;border-radius:12px}
+body.biko-shell-sample .gal-lb-title{font-weight:600;overflow-wrap:anywhere}
+body.biko-shell-sample .gal-lb-count{font-size:12px;font-variant-numeric:tabular-nums}
+/* Keep music's two-pane playback model and all original control IDs. */
+body.biko-shell-sample .bmpg-card{border-radius:24px;box-shadow:var(--bss-shadow);background:var(--bss-surface)}
+body.biko-shell-sample .bmpg-player{padding:24px;scroll-margin-top:84px}
+body.biko-shell-sample .bmpg-side{padding:20px;min-height:480px}
+body.biko-shell-sample .bmpg-name{font-size:21px;font-weight:600;line-height:1.5}
+body.biko-shell-sample .bmpg-artist{font-size:13px;line-height:1.7}
+body.biko-shell-sample .bmpg-ctrl button{border-radius:12px;min-width:44px;min-height:44px}
+body.biko-shell-sample .bmpg-ctrl .bmpg-play{background:var(--bss-selected)!important;color:var(--bss-on-selected)!important;border:0;box-shadow:none;border-radius:50%}
+body.biko-shell-sample .bmpg-ctrl button.is-active{color:var(--bss-selected);background:var(--bss-inset)}
+body.biko-shell-sample .bmpg-tabs{border-radius:14px;background:var(--bss-inset);gap:4px}
+body.biko-shell-sample .bmpg-tab{border-radius:10px;font-size:13px}
+body.biko-shell-sample .bmpg-tab.is-on{background:var(--bss-selected);color:var(--bss-on-selected);box-shadow:none}
+body.biko-shell-sample :is(.bmpg-search,.bmpg-pickbtn,.bmpg-pager button){border-radius:12px;background:var(--bss-inset);border-color:var(--bss-line)}
+body.biko-shell-sample .bmpg-filter{font-size:16px;min-height:44px}
+body.biko-shell-sample .bmpg-pickmenu{border-radius:16px;background:var(--bss-surface);max-width:min(280px,calc(100vw - 104px))}
+body.biko-shell-sample .bmpg-pickitem{border-radius:10px;min-height:44px}
+body.biko-shell-sample .bmpg-item{border-radius:12px}
+body.biko-shell-sample .bmpg-item.on{background:var(--bss-inset)}
+body.biko-shell-sample .bmpg-pager button[aria-current=page]{background:var(--bss-selected);color:var(--bss-on-selected)}
+body.biko-shell-sample:has(.page.type-music) #biko-music-panel{display:none!important}
+body.biko-shell-sample .bmpg-lrc-line.is-on{color:var(--bss-selected);text-shadow:none}
+@media(max-width:760px){
+  body.biko-shell-sample :is(.bmpg-head,.gal-stats-card){padding:20px 18px;margin-bottom:14px;border-radius:18px}
+  body.biko-shell-sample :is(.bmpg-title,.gal-stats-title){font-size:26px}
+  body.biko-shell-sample .gal-stats-head{align-items:flex-start;gap:14px}
+  body.biko-shell-sample .gal-layout-toggle{padding-inline:12px}
+  body.biko-shell-sample .gal-wall{padding:18px 14px;border-radius:18px}
+  body.biko-shell-sample .gal-wall-head{margin-bottom:20px}
+  body.biko-shell-sample .gal-search{flex:1 1 auto;max-width:100%}
+  body.biko-shell-sample .gg-page.gg-gate{padding:76px 16px 24px}
+  body.biko-shell-sample .gg-panel{padding:24px 20px;border-radius:18px}
+  body.biko-shell-sample .gg-title{font-size:23px}
+  body.biko-shell-sample .bmpg-main{gap:14px}
+  body.biko-shell-sample .bmpg-card{border-radius:18px}
+  body.biko-shell-sample .bmpg-player{padding:18px 16px;gap:12px}
+  body.biko-shell-sample .bmpg-disc-wrap{width:min(150px,50%)}
+  body.biko-shell-sample .bmpg-side{min-height:380px;padding:16px}
+  body.biko-shell-sample .bmpg-name{font-size:19px}
+  body.biko-shell-sample .gal-lb-caption{max-width:calc(100% - 64px);font-size:12px;overflow-wrap:anywhere}
+}
+@media(prefers-reduced-motion:reduce){body.biko-shell-sample :is(.gal,.gg-gate,.bmpg) *{transition:none;scroll-behavior:auto}}

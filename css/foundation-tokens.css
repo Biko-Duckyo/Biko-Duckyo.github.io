@@ -1,0 +1,75 @@
+/* Generated from source/css/common_layout.css by tools/visual-foundations.mjs. */
+:root {
+  --ui-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Noto Sans SC', sans-serif;
+  --ui-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  --ui-text-xs: 12px;
+  --ui-text-sm: 13px;
+  --ui-text-control: 14px;
+  --ui-text-body: 16px;
+  --ui-text-item: 18px;
+  --ui-text-section: 20px;
+  --ui-text-title: 28px;
+  --ui-leading: 1.65;
+  --ui-weight-label: 500;
+  --ui-weight-heading: 600;
+  --ui-radius-control: 10px;
+  --ui-radius-inset: 12px;
+  --ui-radius-panel: 20px;
+  --ui-control-height: 40px;
+  --ui-touch-height: 44px;
+  --ui-space-section: 24px;
+  --ui-duration: 160ms;
+  --ui-ease: cubic-bezier(.2,0,0,1);
+  --ui-canvas: #eef2f7;
+  --ui-surface: #f9fbfe;
+  --ui-raised: #ffffff;
+  --ui-inset: #e9eff6;
+  --ui-hover: #dde7f2;
+  --ui-border: #c3cfdc;
+  --ui-ink: #203249;
+  --ui-muted: #52657d;
+  --ui-action: #345d89;
+  --ui-on-action: #ffffff;
+  --ui-action-hover: #294c74;
+  --ui-selection: #dce9f7;
+  --ui-focus: #235c9a;
+  --ui-success: #15704e;
+  --ui-danger: #b12f43;
+  --ui-warning: #865c13;
+  --ui-market-up: #b42d3b;
+  --ui-market-down: #216b43;
+  /* Photo viewer controls keep a dark surround in either page theme. */
+  --ui-photo-control: #233449;
+  --ui-on-photo: #f3f6fc;
+  --ui-photo-border: #62738a;
+  --ui-separator: #dce3ec;
+  --ui-shadow: 0 3px 12px #263c560a;
+  --ui-floating-shadow: 0 12px 36px #263c5624;
+  --ui-wallpaper-veil: rgba(238,242,247,.76);
+  --ui-glass: rgba(249,251,254,.94);
+}
+html[data-theme="dark"] {
+  --ui-canvas: #101822;
+  --ui-surface: #1b2839;
+  --ui-raised: #243448;
+  --ui-inset: #223247;
+  --ui-hover: #2d435c;
+  --ui-border: #485b72;
+  --ui-ink: #e7eef8;
+  --ui-muted: #b2c2d6;
+  --ui-action: #b7d0ee;
+  --ui-on-action: #142c47;
+  --ui-action-hover: #d1e3f8;
+  --ui-selection: #2d4664;
+  --ui-focus: #acd2ff;
+  --ui-success: #81d8ad;
+  --ui-danger: #ffb3c0;
+  --ui-warning: #ebcb87;
+  --ui-market-up: #ffb0b7;
+  --ui-market-down: #8ed6ad;
+  --ui-separator: #303e50;
+  --ui-shadow: 0 3px 12px #03091418;
+  --ui-floating-shadow: 0 12px 36px #03091450;
+  --ui-wallpaper-veil: rgba(12,19,29,.72);
+  --ui-glass: rgba(27,40,57,.95);
+}

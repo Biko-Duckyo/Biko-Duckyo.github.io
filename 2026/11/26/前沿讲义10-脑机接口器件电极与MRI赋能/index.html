@@ -1,0 +1,651 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="dark"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>前沿讲义 10 · 脑机接口：器件分类、采集芯片、柔性电极与 MRI 赋能 | Biko的个人小站</title><meta name="author" content="Biko"><meta name="copyright" content="Biko"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#0d1018"><meta name="description" content="从非侵入、半侵入、侵入三类器件的取舍讲起，看 1024 通道采传一体与 64 通道采刺一体芯片的指标含义；分析植入电极因机械失配导致慢性衰退的机制与三种微创植入策略，并梳理 MRI 在术前导航、闭环读写、术后评估中的五种角色。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="前沿讲义 10 · 脑机接口：器件分类、采集芯片、柔性电极与 MRI 赋能">
+<meta property="og:url" content="https://biko-duckyo.pages.dev/2026/11/26/%E5%89%8D%E6%B2%BF%E8%AE%B2%E4%B9%8910-%E8%84%91%E6%9C%BA%E6%8E%A5%E5%8F%A3%E5%99%A8%E4%BB%B6%E7%94%B5%E6%9E%81%E4%B8%8EMRI%E8%B5%8B%E8%83%BD/index.html">
+<meta property="og:site_name" content="Biko的个人小站">
+<meta property="og:description" content="从非侵入、半侵入、侵入三类器件的取舍讲起，看 1024 通道采传一体与 64 通道采刺一体芯片的指标含义；分析植入电极因机械失配导致慢性衰退的机制与三种微创植入策略，并梳理 MRI 在术前导航、闭环读写、术后评估中的五种角色。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://biko-duckyo.pages.dev/img/banner.jpg">
+<meta property="article:published_time" content="2026-11-25T23:30:00.000Z">
+<meta property="article:modified_time" content="2026-11-25T16:00:00.000Z">
+<meta property="article:author" content="Biko">
+<meta property="article:tag" content="NCASI">
+<meta property="article:tag" content="柔性电极">
+<meta property="article:tag" content="神经影像">
+<meta property="article:tag" content="脑机接口">
+<meta property="article:tag" content="脑电采集芯片">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://biko-duckyo.pages.dev/img/banner.jpg"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "前沿讲义 10 · 脑机接口：器件分类、采集芯片、柔性电极与 MRI 赋能",
+  "url": "https://biko-duckyo.pages.dev/2026/11/26/%E5%89%8D%E6%B2%BF%E8%AE%B2%E4%B9%8910-%E8%84%91%E6%9C%BA%E6%8E%A5%E5%8F%A3%E5%99%A8%E4%BB%B6%E7%94%B5%E6%9E%81%E4%B8%8EMRI%E8%B5%8B%E8%83%BD/",
+  "image": "https://biko-duckyo.pages.dev/img/banner.jpg",
+  "datePublished": "2026-11-25T23:30:00.000Z",
+  "dateModified": "2026-11-25T16:00:00.000Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "Biko",
+      "url": "https://biko-duckyo.pages.dev"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://biko-duckyo.pages.dev/2026/11/26/%E5%89%8D%E6%B2%BF%E8%AE%B2%E4%B9%8910-%E8%84%91%E6%9C%BA%E6%8E%A5%E5%8F%A3%E5%99%A8%E4%BB%B6%E7%94%B5%E6%9E%81%E4%B8%8EMRI%E8%B5%8B%E8%83%BD/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"><link rel="manifest" href="/manifest.json"><meta name="msapplication-TileColor" content="#0d1018"><link rel="apple-touch-icon" sizes="180x180" href="/img/pwa/apple-touch-icon-180.png"><link rel="stylesheet" href="/css/index.css?v=5.7.0"><link rel="stylesheet" href="/css/vendor/fontawesome.min.css?v=188eaf469afe"><link rel="stylesheet" href="/css/vendor/snackbar.min.css?v=a9fb1d56a55e" media="print" onload="this.media='all'"><link rel="stylesheet" href="/css/vendor/fancybox.min.css?v=0384c834d6c6" media="print" onload="this.media='all'"><script>
+    (() => {
+      
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        const data = { value }
+
+        if (ttl != null) {
+          data.expiry = Date.now() + ttl * 86400000
+        }
+
+        localStorage.setItem(key, JSON.stringify(data))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return
+
+        try {
+          const data = JSON.parse(itemStr)
+
+          if (data.expiry && Date.now() > data.expiry) {
+            localStorage.removeItem(key)
+            return
+          }
+
+          return data.value
+        } catch {
+          localStorage.removeItem(key)
+        }
+      }
+    }
+
+    const scriptCache = new Map()
+    const cssCache = new Map()
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => {
+        if (scriptCache.has(url)) {
+          return scriptCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const script = document.createElement('script')
+
+          script.src = url
+          script.async = true
+
+          for (const key in attr) {
+            script.setAttribute(key, attr[key])
+          }
+
+          script.onload = resolve
+          script.onerror = reject
+
+          document.head.appendChild(script)
+        })
+
+        scriptCache.set(url, promise)
+
+        return promise
+      },
+      getCSS: (url, id) => {
+        if (cssCache.has(url)) {
+          return cssCache.get(url)
+        }
+
+        const promise = new Promise((resolve, reject) => {
+          const link = document.createElement('link')
+
+          link.rel = 'stylesheet'
+          link.href = url
+
+          if (id) {
+            link.id = id
+          }
+
+          link.onload = resolve
+          link.onerror = reject
+
+          document.head.appendChild(link)
+        })
+
+        cssCache.set(url, promise)
+
+        return promise
+      },
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!true && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const metaThemeColor = document.querySelector('meta[name="theme-color"]')
+      const activateDarkMode = () => {
+        document.documentElement.dataset.theme = 'dark'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', '#0d1018')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.dataset.theme = 'light'
+        if (metaThemeColor !== null) {
+          metaThemeColor.setAttribute('content', 'f2f5fa')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":true},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '天',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"已切换为繁体中文","cht_to_chs":"已切换为简体中文","day_to_night":"已切换为深色模式","night_to_day":"已切换为浅色模式","bgLight":"#7E96B8","bgDark":"#1a2030","position":"bottom-left"},
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '前沿讲义 10 · 脑机接口：器件分类、采集芯片、柔性电极与 MRI 赋能',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><script src="/js/custom/home-entry.js?v=e8c73227429d"></script><script src="/js/custom/chrome-glass.js?v=5c2fbc17cb59"></script><link rel="stylesheet" href="/css/access-gates.css?v=e190abb0720e"><script src="/js/custom/access-gates.js?v=7ee1fae5be52"></script><script>(function(){try{var p=location.pathname.replace(/\/?$/,"/");var s=new URLSearchParams(location.search).get("shell");if(s==="classic"||/^\/(image-editor|books|nanaly)\//.test(p))return;var d=document.documentElement;d.classList.add("bss-early");setTimeout(function(){if(!window.__bikoShellSample)d.classList.remove("bss-early")},3000)}catch(e){}})()</script><link rel="stylesheet" href="/css/common_layout.css?v=9c849f948849"><link rel="stylesheet" href="/css/custom.css?v=2f3c21063883"><link rel="stylesheet" href="/css/custom_nav.css?v=c6b098771e46"><link rel="stylesheet" href="/css/custom_article.css?v=1f228c9f97ba"><link rel="stylesheet" href="/css/workspace-hierarchy.css?v=b5b5b887b628"><link rel="stylesheet" href="/css/interaction-feedback.css?v=2bb562afecce"><script src="/js/custom/interaction-feedback.js?v=7360cdf2c1d3"></script><link rel="stylesheet" href="/css/home_dashboard.css?v=7e3409ffad74"><link rel="stylesheet" href="/css/home_hub.css?v=788a182be6c6"><link rel="stylesheet" href="/css/music_panel.css?v=4eea1c3056c9"><link rel="stylesheet" href="/css/music_page.css?v=bd461e49c67e"><link rel="stylesheet" href="/css/biko_subpage.css?v=894bd3d4aa91"><link rel="stylesheet" href="/css/biko_theme_toggle.css?v=0b64cf3a6076"><link rel="stylesheet" href="/css/worklog_calendar.css?v=ca6de81ba9e4"><link rel="stylesheet" href="/css/anime.css?v=86fe320e234e"><link rel="stylesheet" href="/css/resources.css?v=ab84ffbc3a84"><link rel="stylesheet" href="/css/gallery_page.css?v=d1216271bcc1"><link rel="stylesheet" href="/css/gallery_gate.css?v=cd4df8585731"><link rel="stylesheet" href="/css/tag-link.css?v=f526c58dc0cf"><link rel="stylesheet" href="/css/og-card.css?v=165af189fa1b"><link rel="stylesheet" href="/css/rightmenu.css?v=a53b93e0396b"><link rel="stylesheet" href="https://at.alicdn.com/t/c/font_3764468_7jp6rqh1vde.css"><script src="/js/custom/fontawesome-guard.js?v=dd8f042c449a"></script><link rel="stylesheet" href="/css/error404.css?v=4d31e0d0af1f"><script defer="" src="/js/error404.js?v=38276536fb44"></script><link rel="stylesheet" href="/css/site-search.css?v=3494bc6513e9"><link rel="stylesheet" href="/css/loading-rolling.css?v=48e5a3e27113"><meta name="apple-mobile-web-app-title" content="鸭喵屋"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><!-- hexo injector head_end start --><link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Zfour/Butterfly-double-row-display@1.00/cardlistpost.min.css">
+<style>#recent-posts > .recent-post-item >.recent-post-info > .article-meta-wrap > .tags:before {content:"\A";
+  white-space: pre;}#recent-posts > .recent-post-item >.recent-post-info > .article-meta-wrap > .tags > .article-meta__separator{display:none}</style>
+<link rel="stylesheet" href="/clock/clock.css?v=da21df19eae8"><link rel="stylesheet" href="/footer-beautify/runtime.min.css?v=a2c75d72ca5b" media="print" onload="this.media='all'"><link rel="stylesheet" href="/swiper/swiper.min.css?v=8087679cf0f7" media="print" onload="this.media='all'"><link rel="stylesheet" href="/swiper/swiperstyle.css?v=312c2f99bbbe" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-butterfly-wowjs/lib/animate.min.css" media="print" onload="this.media='screen'"><link rel="stylesheet" href="/css/vendor/font-awesome-animation.min.css?v=10fa38d6f20b" media="defer" onload="this.media='all'"><link rel="stylesheet" href="/css/vendor/tag_plugins.css?v=4657dc7b7cbc" media="defer" onload="this.media='all'"><script src="/js/vendor/carousel-touch.js?v=92a0dea503b2"></script><!-- hexo injector head_end end --><meta name="generator" content="Hexo 8.1.2"><link rel="alternate" href="/atom.xml" title="Biko的个人小站" type="application/atom+xml">
+<link rel="stylesheet" href="/css/adaptive-tools.css?v=36e1ac6a9bac"><script defer="" src="/js/custom/adaptive-tools.js?v=ed3e1b84047e"></script></head><body><div id="loading-box"><div class="loading-left-bg"></div><div class="loading-right-bg"></div><div class="spinner-box"><div class="configure-border-1"><div class="configure-core"></div></div><div class="configure-border-2"><div class="configure-core"></div></div><div class="loading-word">加载中...</div></div></div><script>(()=>{
+  const $loadingBox = document.getElementById('loading-box')
+  const $body = document.body
+  const preloader = {
+    endLoading: () => {
+      if ($loadingBox.classList.contains('loaded')) return
+      $body.style.overflow = ''
+      $loadingBox.classList.add('loaded')
+    },
+    initLoading: () => {
+      $body.style.overflow = 'hidden'
+      $loadingBox.classList.remove('loaded')
+    }
+  }
+
+  preloader.initLoading()
+
+  if (document.readyState === 'complete') {
+    preloader.endLoading()
+  } else {
+    window.addEventListener('load', preloader.endLoading)
+    document.addEventListener('DOMContentLoaded', preloader.endLoading)
+    // Add timeout protection: force end after 7 seconds
+    setTimeout(preloader.endLoading, 7000)
+  }
+
+  if (true) {
+    btf.addGlobalFn('pjaxSend', preloader.initLoading, 'preloader_init')
+    btf.addGlobalFn('pjaxComplete', preloader.endLoading, 'preloader_end')
+  }
+})()</script><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img text-center"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" decoding="async" loading="eager"></div><div class="site-data text-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">67</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">252</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><div class="menus_items"><div class="menus_item"><a class="site-page" target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly/"><i class="fa-fw fas fa-heart"></i><span> butterfly主题</span></a></div></div></div></div><div class="post" id="body-wrap"><header class="post-bg fixed" id="page-header" style="background-image: url(/img/banner.jpg);"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">Biko的个人小站</span></a><a class="nav-page-title" href="/"><span class="site-name">前沿讲义 10 · 脑机接口：器件分类、采集芯片、柔性电极与 MRI 赋能</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page" target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly/"><i class="fa-fw fas fa-heart"></i><span> butterfly主题</span></a></div></div><div id="toggle-menu"><span class="site-page"><i class="fas fa-bars fa-fw"></i></span></div></div></nav><div id="post-info"><h1 class="post-title">前沿讲义 10 · 脑机接口：器件分类、采集芯片、柔性电极与 MRI 赋能</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-11-25T23:30:00.000Z" title="发表于 2026-11-26 07:30:00">2026-11-26</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-11-25T16:00:00.000Z" title="更新于 2026-11-26 00:00:00">2026-11-26</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E5%89%8D%E6%B2%BF%E7%9F%A5%E8%AF%86%E8%AE%B2%E4%B9%89/">前沿知识讲义</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-wordcount"><i class="far fa-file-word fa-fw post-meta-icon"></i><span class="post-meta-label">总字数:</span><span class="word-count">1.7k</span><span class="post-meta-separator">|</span><i class="far fa-clock fa-fw post-meta-icon"></i><span class="post-meta-label">阅读时长:</span><span>5分钟</span></span><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><p>脑机接口的三段是采集、解码、反馈，每一段都有自己的瓶颈。本讲取材于 NCASI 2026 现场照片 05、09、61–66、97–100，分别讲器件、芯片、电极与影像。</p>
+<div class="note info flat"><p><strong>本讲要点</strong></p>
+<ul>
+<li>三类器件在信号质量与创伤之间的取舍</li>
+<li>通道数、功耗、闭环延迟三个指标各自的含义</li>
+<li>植入电极慢性衰退的原因是机械失配与免疫反应</li>
+<li>MRI 在脑机接口中不只是术前拍片</li>
+</ul>
+</div>
+
+<h2 id="一、三类器件"><a href="#一、三类器件" class="headerlink" title="一、三类器件"></a>一、三类器件</h2><p><img src="/img/ncasi2026/05.jpg" alt="关键核心技术：卡脖子的是硬件" decoding="async" loading="lazy"></p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>典型形式</th>
+<th>信号</th>
+<th>优势</th>
+<th>局限</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>非侵入</td>
+<td>头皮脑电、脑磁</td>
+<td>汇聚后的场信号</td>
+<td>无创</td>
+<td>空间分辨率低</td>
+</tr>
+<tr>
+<td>半侵入</td>
+<td>皮层表面电极</td>
+<td>皮层脑电</td>
+<td>不穿入脑实质</td>
+<td>仍需开颅</td>
+</tr>
+<tr>
+<td>侵入</td>
+<td>皮层内微电极</td>
+<td>单神经元、局部场电位</td>
+<td>信息量最大</td>
+<td>长期稳定性差</td>
+</tr>
+</tbody></table>
+<p>现场以 Neuralink 的 N1 为例：1024 个电极分布在 64 根柔性丝上，每根丝的直径只有 4–6 μm。报告者的判断是，高端脑电采集芯片多依赖进口，这是产业的机会所在。</p>
+<h2 id="二、采集芯片的两个指标"><a href="#二、采集芯片的两个指标" class="headerlink" title="二、采集芯片的两个指标"></a>二、采集芯片的两个指标</h2><p><img src="/img/ncasi2026/09.jpg" alt="自主芯片赋能脑机接口产业" decoding="async" loading="lazy"></p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>通道</th>
+<th>结果</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>采传一体</td>
+<td>1024</td>
+<td>功耗降低 14 倍，尺寸 7.9×8.5 mm</td>
+</tr>
+<tr>
+<td>采刺一体</td>
+<td>64</td>
+<td>闭环效率提高 10 倍，尺寸 7.3×7.0 mm</td>
+</tr>
+</tbody></table>
+<p><strong>功耗为什么是第一指标。</strong> 通道数、采样率与位数共同决定数据量。以 1024 通道、每通道每秒 2 万次采样、16 位计，原始数据率约 41 MB/s，无线传输的功耗远高于采集本身，所以要在片上做压缩与特征提取。</p>
+<p><strong>采刺一体为什么看闭环效率。</strong> 刺激型接口需要「采—解码—刺激—再采」连续进行，任何一段的延迟都计入闭环。把采集与刺激做在同一块芯片上，省去的是芯片之间的传输与转换。</p>
+<h2 id="三、MRI-赋能脑机接口"><a href="#三、MRI-赋能脑机接口" class="headerlink" title="三、MRI 赋能脑机接口"></a>三、MRI 赋能脑机接口</h2><p><img src="/img/ncasi2026/61.jpg" alt="侵入式 BCI 困境与 MRI 优势" decoding="async" loading="lazy"></p>
+<p>现场把侵入式脑机接口的困境归为两条：植入精度不足，机制认知不清。对应的办法是结构导航与多模态机制解析。</p>
+<p><img src="/img/ncasi2026/62.jpg" alt="MRI 本体即为脑机接口" decoding="async" loading="lazy"></p>
+<p>更进一步，磁共振本身就可以构成一个闭环：BOLD 信号是读出，射频与梯度场的调控是写入，毫米级覆盖全脑。现场引用的工作是用功能磁共振重建受试者所听、所想的连续语义（<em>Nature Neuroscience</em> 2023）。</p>
+<p><img src="/img/ncasi2026/63.jpg" alt="实时 fMRI 引导个体化 TMS" decoding="async" loading="lazy"></p>
+<p>实时功能影像还可以给刺激做导航。系统由磁共振兼容的刺激线圈、实时反馈与 OpenNFT 框架组成，根据当下的脑活动决定下一次刺激的靶点与强度。</p>
+<p><img src="/img/ncasi2026/64.jpg" alt="增强现实引导界面" decoding="async" loading="lazy"></p>
+<p>手术阶段用增强现实：把血管与功能区透明叠加到术野上，用颜色标出路径风险，多视窗联动。</p>
+<p><img src="/img/ncasi2026/65.jpg" alt="FUS 加显影微泡血脑屏障开放" decoding="async" loading="lazy"></p>
+<p>聚焦超声加微泡可以暂时打开血脑屏障。静脉注射的微泡在超声场中反复膨胀与压缩，对血管内皮施加机械力，紧密连接暂时松开，数小时后恢复。现场把这一过程概括为五步。</p>
+<p><img src="/img/ncasi2026/66.jpg" alt="术后多模态影像评估" decoding="async" loading="lazy"></p>
+<p>植入之后需要纵向评估脑环路的可塑性。现场列出十种模态，各自观察的量不同。</p>
+<table>
+<thead>
+<tr>
+<th>模态</th>
+<th>观察量</th>
+<th>在脑机接口中的用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DTI、DSI、DKI、HARDI</td>
+<td>白质纤维走向与复杂度</td>
+<td>电极与纤维束的空间关系</td>
+</tr>
+<tr>
+<td>NODDI</td>
+<td>取向弥散度、胞内分数</td>
+<td>训练引起的白质微结构变化</td>
+</tr>
+<tr>
+<td>IVIM</td>
+<td>灌注与扩散</td>
+<td>局部血流</td>
+</tr>
+<tr>
+<td>ASL</td>
+<td>脑血流量</td>
+<td>训练前后的灌注改变</td>
+</tr>
+<tr>
+<td>Multi-Echo BOLD</td>
+<td>血氧与场成分</td>
+<td>功能连接，剔除非血氧成分</td>
+</tr>
+<tr>
+<td>MRS</td>
+<td>代谢物浓度</td>
+<td>兴奋性与抑制性递质水平</td>
+</tr>
+<tr>
+<td>SWI</td>
+<td>磁化率</td>
+<td>出血、钙化、电极伪影</td>
+</tr>
+</tbody></table>
+<h2 id="四、电极：柔软、动态、高密度"><a href="#四、电极：柔软、动态、高密度" class="headerlink" title="四、电极：柔软、动态、高密度"></a>四、电极：柔软、动态、高密度</h2><p><img src="/img/ncasi2026/98.jpg" alt="脑机接口电极总结" decoding="async" loading="lazy"></p>
+<p>现场给出的趋势是三个词：更柔软的材料、可动态展开的结构、更高的通道密度。背后的预期是，通道数增加到一定程度后，脑与机器的集成会出现新的性质。</p>
+<p><img src="/img/ncasi2026/99.jpg" alt="共生融合脑机接口瓶颈" decoding="async" loading="lazy"></p>
+<p>瓶颈在于慢性衰退，现场引用 Lieber 的综述（标注为 <em>Nature Reviews Materials</em> 2019）。</p>
+<ul>
+<li><strong>机械失配</strong>：硅的模量在吉帕量级，脑组织在千帕量级，相差七八个数量级。呼吸、心跳、体位都会造成微动。</li>
+<li><strong>免疫反应</strong>：微动损伤细胞，星形胶质细胞被激活并形成瘢痕，把电极包裹起来。</li>
+<li><strong>后果</strong>：界面阻抗上升，信噪比下降，数月后信号难以稳定记录。</li>
+</ul>
+<p><img src="/img/ncasi2026/100.jpg" alt="微创植入电极三策略" decoding="async" loading="lazy"></p>
+<p>对策是在小切口与大覆盖之间找到办法。</p>
+<table>
+<thead>
+<tr>
+<th>策略</th>
+<th>做法</th>
+<th>特点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>超膜皮层电极</td>
+<td>经 500–900 μm 切口送入，在皮层表面铺展</td>
+<td>超薄，贴附性好</td>
+</tr>
+<tr>
+<td>折叠展开</td>
+<td>电极折叠后送入，到位后展开</td>
+<td>小切口，大覆盖（<em>Nature</em> 2020）</td>
+</tr>
+<tr>
+<td>电子帐篷</td>
+<td>网状结构盖在皮层表面</td>
+<td>覆盖面积大（<em>Nature Electronics</em> 2024）</td>
+</tr>
+</tbody></table>
+<p><img src="/img/ncasi2026/97.jpg" alt="第三届电生理电极研讨会招贴" decoding="async" loading="lazy"></p>
+<p>会议招贴显示，第三届电生理电极研讨会定于 2026 年 12 月 12–13 日举行，议题包括柔性电极与长期植入的动物实验方法，注册费 1500 元、学生 1200 元（以官方通知为准）。</p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><ul>
+<li>器件分类的本质是创伤与信号质量的交换。</li>
+<li>芯片看功耗与闭环延迟，电极看模量匹配与长期稳定性。</li>
+<li>磁共振在脑机接口中有导航、读写闭环、术中增强现实、血脑屏障调控、术后评估五种角色。</li>
+</ul>
+<p><strong>自测</strong></p>
+<ol>
+<li>为什么 1024 通道芯片的第一指标是功耗而不是带宽？</li>
+<li>电极植入数月后信号变差，中间经历了哪些环节？</li>
+<li>折叠展开策略解决的是哪一对矛盾？</li>
+</ol>
+<h2 id="照片索引"><a href="#照片索引" class="headerlink" title="照片索引"></a>照片索引</h2><table>
+<thead>
+<tr>
+<th>编号</th>
+<th>内容</th>
+<th>备注</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>05</td>
+<td>关键核心技术：卡脖子的是硬件</td>
+<td>—</td>
+</tr>
+<tr>
+<td>09</td>
+<td>自主芯片赋能脑机接口产业</td>
+<td>—</td>
+</tr>
+<tr>
+<td>61</td>
+<td>侵入式 BCI 困境与 MRI 优势</td>
+<td>—</td>
+</tr>
+<tr>
+<td>62</td>
+<td>MRI 本体即为脑机接口</td>
+<td>—</td>
+</tr>
+<tr>
+<td>63</td>
+<td>实时 fMRI 引导个体化 TMS</td>
+<td>—</td>
+</tr>
+<tr>
+<td>64</td>
+<td>增强现实引导界面</td>
+<td>—</td>
+</tr>
+<tr>
+<td>65</td>
+<td>FUS 加显影微泡血脑屏障开放</td>
+<td>—</td>
+</tr>
+<tr>
+<td>66</td>
+<td>术后多模态影像评估</td>
+<td>—</td>
+</tr>
+<tr>
+<td>97</td>
+<td>第三届电生理电极研讨会招贴</td>
+<td>以官方通知为准</td>
+</tr>
+<tr>
+<td>98</td>
+<td>脑机接口电极总结</td>
+<td>—</td>
+</tr>
+<tr>
+<td>99</td>
+<td>共生融合脑机接口瓶颈</td>
+<td>—</td>
+</tr>
+<tr>
+<td>100</td>
+<td>微创植入电极三策略</td>
+<td>—</td>
+</tr>
+<tr>
+<td>130</td>
+<td>微创电极三策略</td>
+<td>同 100</td>
+</tr>
+<tr>
+<td>131</td>
+<td>共生融合瓶颈</td>
+<td>同 99</td>
+</tr>
+<tr>
+<td>132</td>
+<td>电极总结</td>
+<td>同 98</td>
+</tr>
+<tr>
+<td>133</td>
+<td>电极研讨会招贴</td>
+<td>同 97，竖版</td>
+</tr>
+</tbody></table>
+<p>上一讲：<a href="./%E5%89%8D%E6%B2%BF%E8%AE%B2%E4%B9%8909-%E8%84%91%E5%8A%9F%E8%83%BD%E8%84%91%E7%94%B5%E4%B8%8E%E8%84%91%E7%A3%81%E5%9B%BE.md">脑功能、脑电与脑磁图</a> ｜ 下一讲：<a href="./%E5%89%8D%E6%B2%BF%E8%AE%B2%E4%B9%8911-%E7%A5%9E%E7%BB%8F%E8%B0%83%E6%8E%A7%E7%94%B5%E7%A3%81%E5%A3%B0%E4%B8%8E%E7%A5%9E%E7%BB%8F%E7%94%B5%E5%8C%96%E5%AD%A6.md">神经调控：电磁、声与神经电化学</a></p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://biko-duckyo.pages.dev">Biko</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://biko-duckyo.pages.dev/2026/11/26/%E5%89%8D%E6%B2%BF%E8%AE%B2%E4%B9%8910-%E8%84%91%E6%9C%BA%E6%8E%A5%E5%8F%A3%E5%99%A8%E4%BB%B6%E7%94%B5%E6%9E%81%E4%B8%8EMRI%E8%B5%8B%E8%83%BD/">https://biko-duckyo.pages.dev/2026/11/26/%E5%89%8D%E6%B2%BF%E8%AE%B2%E4%B9%8910-%E8%84%91%E6%9C%BA%E6%8E%A5%E5%8F%A3%E5%99%A8%E4%BB%B6%E7%94%B5%E6%9E%81%E4%B8%8EMRI%E8%B5%8B%E8%83%BD/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://biko-duckyo.pages.dev" target="_blank">Biko的个人小站</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/NCASI/">NCASI</a><a class="post-meta__tags" href="/tags/%E8%84%91%E6%9C%BA%E6%8E%A5%E5%8F%A3/">脑机接口</a><a class="post-meta__tags" href="/tags/%E7%A5%9E%E7%BB%8F%E5%BD%B1%E5%83%8F/">神经影像</a><a class="post-meta__tags" href="/tags/%E6%9F%94%E6%80%A7%E7%94%B5%E6%9E%81/">柔性电极</a><a class="post-meta__tags" href="/tags/%E8%84%91%E7%94%B5%E9%87%87%E9%9B%86%E8%8A%AF%E7%89%87/">脑电采集芯片</a></div><div class="post-share"><div class="social-share" data-image="/img/banner.jpg" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer=""></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/2026/11/26/%E5%89%8D%E6%B2%BF%E8%AE%B2%E4%B9%8911-%E7%A5%9E%E7%BB%8F%E8%B0%83%E6%8E%A7%E7%94%B5%E7%A3%81%E5%A3%B0%E4%B8%8E%E7%A5%9E%E7%BB%8F%E7%94%B5%E5%8C%96%E5%AD%A6/" title="前沿讲义 11 · 神经调控：四条技术路线、磁声耦合与神经电化学"><img class="cover" src="/img/banner.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post" decoding="async" loading="lazy"><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">前沿讲义 11 · 神经调控：四条技术路线、磁声耦合与神经电化学</div></div><div class="info-2"><div class="info-item-1">以 2021 年诺贝尔奖揭示的温度与机械敏感通道为起点，比较 TMS、tES、TUS、TMAS 四种非侵入调控的物理原理与深部聚焦能力；推导声压、粒子速度与磁场产生电场的公式，再讲闭环自主神经调控、单细胞电化学测量与一氧化氮的双向效应。</div></div></div></a><a class="pagination-related" href="/2026/11/26/%E5%89%8D%E6%B2%BF%E8%AE%B2%E4%B9%8909-%E8%84%91%E5%8A%9F%E8%83%BD%E8%84%91%E7%94%B5%E4%B8%8E%E8%84%91%E7%A3%81%E5%9B%BE/" title="前沿讲义 09 · 脑功能、脑电与脑磁图：从头皮电位到无屏蔽脑磁"><img class="cover" src="/img/banner.jpg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post" decoding="async" loading="lazy"><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">前沿讲义 09 · 脑功能、脑电与脑磁图：从头皮电位到无屏蔽脑磁</div></div><div class="info-2"><div class="info-item-1">从 BOLD 的血氧来源与静息态功能连接讲起，解读睡眠限制研究中突显网络的连接变化；再比较脑电与脑磁的信号来源与时空特性，拆解梯度计的差分原理与三级主动补偿，并看三款穿戴脑电产品各自解决什么问题。</div></div></div></a></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><a class="pagination-related" href="/2026/11/25/CONF-01-NCASI2026%E5%8F%82%E4%BC%9A%E7%AC%94%E8%AE%B0-%E5%8D%95%E5%8E%9F%E5%AD%90%E5%82%AC%E5%8C%96%E4%B8%8E%E8%84%91%E5%BD%B1%E5%83%8F%E8%84%91%E6%9C%BA%E6%8E%A5%E5%8F%A3/" title="NCASI 2026 参会笔记 · 单原子催化、脑科学测绘与脑卒中磁共振影像"><img class="cover" src="/img/banner.jpg" alt="cover" decoding="async" loading="lazy"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-11-25</div><div class="info-item-2">NCASI 2026 参会笔记 · 单原子催化、脑科学测绘与脑卒中磁共振影像</div></div><div class="info-2"><div class="info-item-1">第二届分析科学与仪器大会现场 20 张幻灯按三条主线归纳：单原子催化表征范式与同步辐射、脑空间测绘与自主脑机芯片、脑卒中病因分型与 MRI 成像方法创新。</div></div></div></a><a class="pagination-related" href="/2026/11/25/CONF-07-NCASI2026%E5%8F%82%E4%BC%9A%E7%AC%94%E8%AE%B0%E5%85%AD%E7%BB%AD-%E7%A5%9E%E7%BB%8F%E5%BD%B1%E5%83%8F%E6%97%B6%E9%97%B4%E7%BA%BF%E4%B8%8E%E7%BB%8F%E9%A2%85%E7%A3%81%E5%A3%B0%E5%88%BA%E6%BF%80%E5%A4%9A%E5%B0%BA%E5%BA%A6%E7%A0%94%E7%A9%B6/" title="NCASI 2026 参会笔记（六续）· 神经影像技术演进时间线与经颅磁声刺激多尺度研究"><img class="cover" src="/img/banner.jpg" alt="cover" decoding="async" loading="lazy"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-11-25</div><div class="info-item-2">NCASI 2026 参会笔记（六续）· 神经影像技术演进时间线与经颅磁声刺激多尺度研究</div></div><div class="info-2"><div class="info-item-1">第七批现场照片归纳：结构/功能/弥散 MRI 加速与模型演进时间线（Multi-Band、NODDI、MRF、EPTI、SANDI 等），TMS/tES/TUS/TMAS 非侵入神经调控对比，以及 TMAS 物理场—脑网络—突触功能—行为病理的多尺度研究框架。</div></div></div></a><a class="pagination-related" href="/2026/11/25/CONF-04-NCASI2026%E5%8F%82%E4%BC%9A%E7%AC%94%E8%AE%B0%E4%B8%89%E7%BB%AD-MRI%E8%B5%8B%E8%83%BDBCI%E7%B2%BE%E7%A5%9E%E5%BD%B1%E5%83%8F%E4%B8%8E%E5%BC%A5%E6%95%A3%E8%84%91%E6%88%90%E5%83%8F/" title="NCASI 2026 参会笔记（三续）· MRI 赋能 BCI、精神影像期刊、穿戴脑电与弥散脑成像"><img class="cover" src="/img/banner.jpg" alt="cover" decoding="async" loading="lazy"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-11-25</div><div class="info-item-2">NCASI 2026 参会笔记（三续）· MRI 赋能 BCI、精神影像期刊、穿戴脑电与弥散脑成像</div></div><div class="info-2"><div class="info-item-1">第四批照片归纳：MRI 破解侵入式 BCI 临床转化、fMRI-TMS 实时导航、FUS 微泡血脑屏障开放、术后多模态评估；Psychoradiology 期刊概况；中电云脑穿戴脑电头环与多模式神经调控图谱；单细胞电化学调控与 NO 稳态；弥散 MRI 轴突直径估计、电镜跨模态验证与 DIMOND 建模。</div></div></div></a><a class="pagination-related" href="/2026/11/25/CONF-05-NCASI2026%E5%8F%82%E4%BC%9A%E7%AC%94%E8%AE%B0%E5%9B%9B%E7%BB%AD-SPICE%E5%85%A8%E8%84%91%E6%B3%A2%E8%B0%B1%E6%88%90%E5%83%8F%E4%B8%8E%E7%A5%9E%E7%BB%8F%E4%BB%A3%E8%B0%A2%E4%B8%B4%E5%BA%8A%E7%9B%91%E6%B5%8B/" title="NCASI 2026 参会笔记（四续）· SPICE 全脑波谱成像与神经代谢临床监测"><img class="cover" src="/img/banner.jpg" alt="cover" decoding="async" loading="lazy"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-11-25</div><div class="info-item-2">NCASI 2026 参会笔记（四续）· SPICE 全脑波谱成像与神经代谢临床监测</div></div><div class="info-2"><div class="info-item-1">第五批照片归纳：多模态脑影像全景、MRSI 物理基础与 SRS 技术挑战、SPICE 快速高分辨子空间波谱成像、8 种神经代谢分子同步成像；卒中/脑出血/胶质瘤/阿尔茨海默病的全脑代谢长程监测与 SV2A 突触密度 PET 互补。</div></div></div></a><a class="pagination-related" href="/2026/11/26/%E5%89%8D%E6%B2%BF%E8%AE%B2%E4%B9%8912-%E6%9D%90%E6%96%99%E8%A1%A8%E5%BE%81%E4%B8%8E%E6%99%BA%E8%83%BD%E7%94%9F%E7%89%A9%E6%9D%90%E6%96%99/" title="前沿讲义 12 · 材料表征与智能生物材料：从原子到器械"><img class="cover" src="/img/banner.jpg" alt="cover" decoding="async" loading="lazy"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-11-26</div><div class="info-item-2">前沿讲义 12 · 材料表征与智能生物材料：从原子到器械</div></div><div class="info-2"><div class="info-item-1">以单原子催化为例讲清球差电镜、XAFS、红外与 DFT 各回答什么问题，再介绍同步辐射的四个代际与国内三台装置；随后把视角转向生物材料：材料与成像模态的对应、智能程度的四级分类，以及声表面波器件、电化学发光凝胶和治疗性疫苗三种具体形态。</div></div></div></a><a class="pagination-related" href="/2026/11/25/CONF-08-NCASI2026%E5%8F%82%E4%BC%9A%E7%AC%94%E8%AE%B0%E4%B8%83%E7%BB%AD-MRx%E5%85%A8%E6%99%AF%E5%AE%9A%E9%87%8F%E8%84%91%E6%88%90%E5%83%8F%E4%B8%8E%E4%BB%8B%E8%A7%82%E5%88%86%E8%BE%A8%E5%BC%A5%E6%95%A3%E8%AF%BB%E5%87%BA/" title="NCASI 2026 参会笔记（七续）· MRx 全景定量脑成像与介观分辨弥散读出技术"><img class="cover" src="/img/banner.jpg" alt="cover" decoding="async" loading="lazy"><div class="info text-center"><div class="info-1"><div class="info-item-1"><i class="far fa-calendar-alt fa-fw"></i> 2026-11-25</div><div class="info-item-2">NCASI 2026 参会笔记（七续）· MRx 全景定量脑成像与介观分辨弥散读出技术</div></div><div class="info-2"><div class="info-item-1">第八批现场照片归纳：MRx 一次扫描全脑 22 项分子/生理/结构生物标志物；高梯度介观分辨 dMRI 读出谱系（2D/3D EPI、Spiral、GRASE）；3D Multi-slab GRASE 0.57 mm 各向同性；Romer-EPTI 旋转视角运动鲁棒超分辨。其余 16 张为前序页面重复翻拍，索引表标注对应编号。</div></div></div></a></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/avatar.jpg" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar" decoding="async" loading="lazy"></div><div class="author-info-name">Biko</div><div class="author-info-description">一只努力学习的菜鸟甜甜圈～</div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">67</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">252</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">8</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/Biko-Duckyo"><i class="fab fa-github"></i><span>Follow Me</span></a><div class="card-info-social-icons"><a class="social-icon" href="https://github.com/Biko-Duckyo" target="_blank" title="Github"><i class="fab fa-github" style="color: #24292e;"></i></a><a class="social-icon" href="mailto:1078857679@qq.com" target="_blank" title="Email"><i class="fas fa-envelope" style="color: #4a7dbe;"></i></a><a class="social-icon" href="tencent://AddContact/?fromId=50&amp;fromSubId=1&amp;subcmd=all&amp;uin=1078857679" target="_blank" title="QQ"><i class="iconfont icon-qq" style="color: #12b7f5;"></i></a><a class="social-icon" href="https://www.zhihu.com/people/qin-chao-10-90" target="_blank" title="Zhihu"><i class="iconfont icon-zhihu" style="color: #0084ff;"></i></a></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">Biko的个人小站！
+一只全面发展的菜鸟甜甜圈~
+<span class="biko-marquee" role="marquee" aria-label="双手合十成为自己的神，自己所信念的即是信仰"><span class="biko-marquee__track"><span class="biko-marquee__item">双手合十成为自己的神，自己所信念的即是信仰</span><span class="biko-marquee__item" aria-hidden="true">双手合十成为自己的神，自己所信念的即是信仰</span></span></span>微信号：15651005256
+QQ号：1078857679</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E4%B8%89%E7%B1%BB%E5%99%A8%E4%BB%B6"><span class="toc-number">1.</span> <span class="toc-text">一、三类器件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E9%87%87%E9%9B%86%E8%8A%AF%E7%89%87%E7%9A%84%E4%B8%A4%E4%B8%AA%E6%8C%87%E6%A0%87"><span class="toc-number">2.</span> <span class="toc-text">二、采集芯片的两个指标</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%89%E3%80%81MRI-%E8%B5%8B%E8%83%BD%E8%84%91%E6%9C%BA%E6%8E%A5%E5%8F%A3"><span class="toc-number">3.</span> <span class="toc-text">三、MRI 赋能脑机接口</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E7%94%B5%E6%9E%81%EF%BC%9A%E6%9F%94%E8%BD%AF%E3%80%81%E5%8A%A8%E6%80%81%E3%80%81%E9%AB%98%E5%AF%86%E5%BA%A6"><span class="toc-number">4.</span> <span class="toc-text">四、电极：柔软、动态、高密度</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B0%8F%E7%BB%93"><span class="toc-number">5.</span> <span class="toc-text">小结</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E7%85%A7%E7%89%87%E7%B4%A2%E5%BC%95"><span class="toc-number">6.</span> <span class="toc-text">照片索引</span></a></li></ol></div></div></div></div></main><footer id="footer" style="background-image: url(/img/banner.jpg);"><div class="footer-other"><div class="footer-copyright"><span class="copyright">©&nbsp;2022 - 2026 By Biko</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.2</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.7.0</a></span></div><div class="footer_custom_text">Hi, welcome to my <a target="_blank" rel="noopener" href="https://biko-duckyo.github.io/">blog</a>!<p><a target="_blank" href="https://hexo.io/"><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" title="博客框架为Hexo" decoding="async" loading="lazy"></a>&nbsp;<a target="_blank" href="https://butterfly.js.org/"><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" title="主题采用butterfly" decoding="async" loading="lazy"></a>&nbsp;<a target="_blank" href="https://www.jsdelivr.com/"><img src="https://img.shields.io/badge/CDN-jsDelivr-orange?style=flat&amp;logo=jsDelivr" title="本站使用JsDelivr为静态资源提供CDN加速" decoding="async" loading="lazy"></a>&nbsp;<a target="_blank" href="https://github.com/"><img src="https://img.shields.io/badge/Source-Github-d021d6?style=flat&amp;logo=GitHub" title="本站项目由Gtihub托管" decoding="async" loading="lazy"></a>&nbsp;<a target="_blank" href="http://creativecommons.org/licenses/by-nc-sa/4.0/"><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=Claris" title="本站采用知识共享署名-非商业性使用-相同方式共享4.0国际许可协议进行许可" decoding="async" loading="lazy"></a></p></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.7.0"></script><script src="/js/main.js?v=5.7.0"></script><script src="/js/tw_cn.js?v=5.7.0"></script><script src="/js/vendor/fancybox.umd.min.js?v=d4a6e2d6f476"></script><script src="/js/vendor/instantpage.min.js?v=8e4c6f7c8015" type="module"></script><script src="/js/vendor/snackbar.min.js?v=34eaac416486"></script><div class="js-pjax"></div><script defer="" data-pjax="">(function(){function rm(){var n=document.getElementById('nav');if(n&&n.parentNode)n.parentNode.removeChild(n)}if(document.readyState!=='loading')rm();else document.addEventListener('DOMContentLoaded',rm);document.addEventListener('pjax:complete',rm)})()</script><script defer="" data-pjax="" src="/js/custom/footer_butterfly.js?v=efac2e01dd43"></script><script defer="" data-pjax="" src="/js/custom/fireflies.js?v=ffb55c2208cc"></script><div id="menu-container" class="menu-container"><div class="biko-nav"><button class="bn-burger" type="button" onclick="Navvisible()" aria-label="打开菜单" aria-controls="bn-mobile-nav" aria-expanded="false"><i class="fas fa-bars"></i></button><span class="bn-page-title">前沿讲义 10 · 脑机接口：器件分类、采集芯片、柔性电极与 MRI 赋能</span><div class="bn-left"><span class="bn-weather" id="he-plugin-simple"></span><span class="bn-clock" id="message-date-box"></span></div><ul class="bn-menu"><li class="menu-item-main"><a class="site-page" href="/"><i class="fas fa-home fa-fw"></i><span>鸭喵屋</span></a></li><li class="menu-item-main"><a class="site-page" href="/calendar/"><i class="fas fa-calendar-day fa-fw"></i><span>迹录</span></a></li><li class="menu-item-main is-active"><a class="site-page" href="/archives/"><i class="fas fa-list fa-fw"></i><span>随笔</span></a></li><li class="menu-item-main has-child"><span class="menu-item-parent"><a class="site-page" href="javascript:void(0);"><i class="fas fa-heartbeat fa-fw"></i><span>闲趣</span></a></span><a class="site-page menu-item-child" href="/galleryGroup/"><i class="fas fa-images fa-fw"></i><span>相册</span></a><a class="site-page menu-item-child" href="/music/"><i class="fas fa-music fa-fw"></i><span>音乐</span></a><a class="site-page menu-item-child" href="/anime/"><i class="fas fa-tv fa-fw"></i><span>追番</span></a></li><li class="menu-item-main"><a class="site-page" href="/scholar/"><i class="fas fa-book fa-fw"></i><span>研思</span></a></li><li class="menu-item-main"><a class="site-page" href="/finance/"><i class="fas fa-wallet fa-fw"></i><span>金库</span></a></li><li class="menu-item-main"><a class="site-page" href="/resources/"><i class="fas fa-bookmark fa-fw"></i><span>百宝箱</span></a></li></ul><div class="bn-right"><div id="search-button"><a class="bn-icon social-icon search" title="搜索" role="button" tabindex="0" aria-label="搜索" data-bn-label="搜索"><i class="fas fa-search"></i></a></div><a class="bn-icon icon-V" data-bn-no-label="true" onclick="switchNightMode()" title="浅色/深色模式切换" role="button" tabindex="0" aria-label="明暗切换" data-bn-label="明暗"><svg width="23" height="23" viewBox="0 0 1024 1024" aria-hidden="true"><use id="modeicon" xlink:href="#icon-sun"></use></svg><svg width="0" height="0" style="position:absolute;width:0;height:0;overflow:hidden;" aria-hidden="true"><defs><symbol id="icon-sun" viewBox="0 0 1024 1024"><path d="M960 512l-128 128v192h-192l-128 128-128-128H192v-192l-128-128 128-128V192h192l128-128 128 128h192v192z" fill="#FFD878"></path><path d="M736 512a224 224 0 1 0-448 0 224 224 0 1 0 448 0z" fill="#FFE4A9"></path><path d="M512 320c105.888 0 192 86.112 192 192s-86.112 192-192 192-192-86.112-192-192 86.112-192 192-192m0-32a224 224 0 1 0 0 448 224 224 0 0 0 0-448z" fill="#4D5152"></path></symbol><symbol id="icon-moon" viewBox="0 0 1024 1024"><path d="M611.37 167.08a445.01 445.01 0 0 1-38.4 161.83 477.82 477.82 0 0 1-244.74 244.4 445.14 445.14 0 0 1-161.1 38.06 85.08 85.08 0 0 0-65.07 135.72A462.08 462.08 0 1 0 747.09 102.06 85.08 85.08 0 0 0 611.37 167.08z" fill="#FFB531"></path></symbol></defs></svg></a></div></div></div><dialog id="bn-mobile-nav" aria-labelledby="bn-mobile-nav-title"><header class="bn-drawer-head"><h2 id="bn-mobile-nav-title">网站导航</h2><button type="button" data-nav-close="" aria-label="关闭菜单"><i class="fas fa-times" aria-hidden="true"></i></button></header><nav class="bn-drawer-links" aria-label="全站导航"><a href="/"><i class="fas fa-home fa-fw"></i><span>鸭喵屋</span></a><a href="/calendar/"><i class="fas fa-calendar-day fa-fw"></i><span>迹录</span></a><a href="/archives/" aria-current="page"><i class="fas fa-list fa-fw"></i><span>随笔</span></a><a href="/galleryGroup/"><i class="fas fa-images fa-fw"></i><span>相册</span></a><a href="/music/"><i class="fas fa-music fa-fw"></i><span>音乐</span></a><a href="/anime/"><i class="fas fa-tv fa-fw"></i><span>追番</span></a><a href="/scholar/"><i class="fas fa-book fa-fw"></i><span>研思</span></a><a href="/finance/"><i class="fas fa-wallet fa-fw"></i><span>金库</span></a><a href="/resources/"><i class="fas fa-bookmark fa-fw"></i><span>百宝箱</span></a></nav><section class="bn-drawer-tools" aria-label="页面工具"><h3>页面工具</h3><div id="bn-page-tools"></div></section></dialog><script defer="" data-pjax="" src="/js/custom/nav.js?v=df6c5f2262d8"></script><link rel="stylesheet" href="/css/desktop-shell-sample.css?v=b5b1c909c371"><link rel="stylesheet" href="/css/desktop-shell-pages.css?v=46015b4c32e2"><link rel="stylesheet" href="/css/desktop-shell-media.css?v=2bde3138b84e"><link rel="stylesheet" href="/css/desktop-shell-workspaces.css?v=1e13c1ba77c5"><link rel="stylesheet" href="/css/visual-foundations.css?v=17ef00efcd9f"><link rel="stylesheet" href="/css/chrome-glass.css?v=b047e4697776"><link rel="stylesheet" href="/css/qrcode-electric.css?v=e7e41300b03a"><script defer="" data-pjax="" src="/js/custom/tool-electric.js?v=2e882b6277aa"></script><link rel="stylesheet" href="/css/private-workspaces.css?v=7e57a57db49a"><link rel="stylesheet" href="/css/ui-controls.css?v=2635b7900c6e"><script defer="" data-pjax="" src="/js/custom/desktop-shell-sample.js?v=83415f5b274d"></script><script defer="" data-pjax="" src="/js/custom/site-search.js?v=9e5231775ae5"></script><link rel="stylesheet" href="/css/code-image.css?v=56f632087fb7"><script defer="" data-pjax="" src="/js/custom/code-image.js?v=15172ee558ae"></script><script defer="" data-pjax="" src="/js/custom/article-reading.js?v=e35c8cdbb5da"></script><script defer="" data-pjax="" src="/js/custom/music_button.js?v=a0478c111163"></script><script defer="" data-pjax="" src="/js/custom/page_footer.js?v=3f1476b66eef"></script><script defer="" data-pjax="" src="/js/custom/music_page.js?v=2fcce2f6668c"></script><script defer="" data-pjax="" src="/js/custom/worklog_calendar.js?v=467bc6d05227"></script><script defer="" data-pjax="" src="/js/custom/gallery_seal.js?v=60c724a36cfb"></script><script defer="" data-pjax="" src="/js/custom/gallery_page.js?v=bd3f225f51d6"></script><script defer="" data-pjax="" src="/js/custom/home_hub.js?v=eedc35c702a5"></script><script defer="" data-pjax="" src="/js/custom/banner_parallax.js?v=72e7f2c0aac0"></script><script>function endStalledPreloader(){var lb=document.querySelector('#loading-box:not(.loaded)');if(lb){lb.classList.add('loaded');document.body.style.overflow='';}}setTimeout(endStalledPreloader,3000);document.addEventListener('pjax:complete',function(){setTimeout(endStalledPreloader,1500);});</script><script defer="" data-pjax="" src="/js/custom/loading_rolling.js?v=725eea86c5d9"></script><script data-pjax="" defer="" src="/js/custom/fixed_card_widget.js?v=05efec571ba4"></script><script data-pjax="" defer="" src="/js/custom/title_hover.js?v=779ec4e8c707"></script><script>function injectWechatCapsule(){var icons=document.getElementById('site_social_icons');if(icons&&!document.getElementById('wechat-capsule')){var w=document.createElement('div');w.id='wechat-capsule';w.innerHTML='<i class=\"fab fa-weixin\"></i><span>微信：15651005256</span>';icons.parentNode.insertBefore(w,icons.nextSibling);}}if(document.readyState!=='loading'){injectWechatCapsule();}else{document.addEventListener('DOMContentLoaded',injectWechatCapsule);}document.addEventListener('pjax:complete',function(){setTimeout(injectWechatCapsule,300);});</script><script data-pjax="" defer="" src="/js/custom/runtime_fallback.js?v=d4020843a29c"></script><link rel="stylesheet" href="/css/vendor/qweather-icons.css?v=2e83ca49dc74"><script defer="" data-pjax="" src="/js/custom/weather.js?v=2a94ec386b66"></script><script defer="" data-pjax="" src="/js/custom/article_title_move.js?v=7d80c2438748"></script><script defer="" data-pjax="" src="/js/custom/auto_cover.js?v=b5169e86f8b1"></script><script defer="" data-pjax="" src="/js/custom/zh-history.js?v=1d9353be537b"></script><script defer="" data-pjax="" src="/js/custom/history.js?v=6d9f6baa7f8c"></script><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/aplayer@1/dist/APlayer.min.css" media="print" onload="this.media='all'"><script defer="" src="https://cdn.jsdelivr.net/npm/aplayer@1/dist/APlayer.min.js"></script><script defer="" src="/js/custom/aplayer_wrap.js?v=9a2442d869c8"></script><script>window.meting_api='https://api.injahow.cn/meting/?server=:server&type=:type&id=:id&r=:r';</script><script defer="" src="https://cdn.jsdelivr.net/gh/metowolf/MetingJS@1.2/dist/Meting.min.js"></script><div class="aplayer no-destroy" data-id="2120966270" data-server="netease" data-type="playlist" data-fixed="true" data-mini="true" data-autoplay="false" data-preload="none" data-listfolded="true"> </div><script src="/nanaly/js/nanaly-backup-entry.js?v=6425a2fdf4c2"></script><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward" title="后退"><i class="fas fa-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward" title="前进"><i class="fas fa-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh" title="刷新"><i class="fas fa-arrow-rotate-right"></i></div><div class="rightMenu-item" id="menu-home" title="回首页"><i class="fas fa-house"></i></div></div><div class="rightMenu-group rightMenu-line"><div class="rightMenu-item" id="menu-radompage"><i class="fas fa-shoe-prints"></i><span>随便逛逛</span></div><div class="rightMenu-item" id="menu-darkmode"><i class="fas fa-moon"></i><span>切换模式</span></div><div class="rightMenu-item" id="menu-translate"><i class="fas fa-earth-asia"></i><span>繁简切换</span></div></div></div><div id="rightmenu-mask"></div><script defer="" src="/js/custom/rightmenu.js?v=1b665d53a4ac"></script><script defer="" src="/js/home_dashboard.js?v=530a651d1412"></script><script src="/js/vendor/pjax.min.js?v=c9819844d18c" defer="defer"></script><script>document.addEventListener('DOMContentLoaded', () => {
+  const pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+
+  window.pjax = new Pjax({
+    elements: 'a:not([target="_blank"]):not([data-fancybox]):not([href="/scholar/"]):not([href="/books/"]):not([href="/admin/"]):not([href="/finance/"]):not([href="/image-editor/"]):not([href="/tools/qrcode/"]):not([href="/tools/images/"]):not([href="/tools/knowledge/"]):not([href="/tools/math/"]):not([href="/tools/periodic/"])',
+    selectors: pjaxSelectors,
+    cacheBust: false,
+    analytics: false,
+    scrollRestoration: false
+  })
+
+  const triggerPjaxFn = (val) => {
+    if (!val) return
+    Object.values(val).forEach(fn => {
+      try {
+        fn()
+      } catch (err) {
+        console.debug('Pjax callback failed:', err)
+      }
+    })
+  }
+
+  document.addEventListener('pjax:send', () => {
+    // removeEventListener
+    btf.removeGlobalFnEvent('pjaxSendOnce')
+    btf.removeGlobalFnEvent('themeChange')
+
+    // reset readmode
+    const $bodyClassList = document.body.classList
+    if ($bodyClassList.contains('read-mode')) $bodyClassList.remove('read-mode')
+
+    triggerPjaxFn(window.globalFn.pjaxSend)
+  })
+
+  document.addEventListener('pjax:complete', () => {
+    btf.removeGlobalFnEvent('pjaxCompleteOnce')
+    document.querySelectorAll('script[data-pjax]').forEach(item => {
+      if (!item.parentNode) return
+      const newScript = document.createElement('script')
+      const content = item.text || item.textContent || ''
+      Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+      newScript.appendChild(document.createTextNode(content))
+      item.parentNode.replaceChild(newScript, item)
+    })
+
+    triggerPjaxFn(window.globalFn.pjaxComplete)
+  })
+
+  document.addEventListener('pjax:error', e => {
+    const responseURL = e.request && e.request.responseURL
+    if (e.request && e.request.status === 404) {
+      true
+        ? pjax.loadUrl('/404.html')
+        : responseURL && (window.location.href = responseURL)
+    } else if (responseURL) {
+      window.location.href = responseURL
+    }
+  })
+})</script><script async="" data-pjax="" src="/js/vendor/busuanzi-local.js?v=d55de7ff7338"></script></div><!-- hexo injector body_end start --><script data-pjax="">
+  function butterfly_clock_injector_config(){/*biko-guard*/if(!document.getElementsByClassName('sticky_layout').length)return;
+    var parent_div_git = document.getElementsByClassName('sticky_layout')[0];
+    var item_html = '<div class="card-widget card-clock"><div class="card-glass"><div class="card-background"><div class="card-content"><div id="hexo_electric_clock"><img class="entered loading" id="card-clock-loading" src="/clock/loading.gif" style="height: 120px; width: 100%;" data-ll-status="loading"/></div></div></div></div></div>';
+    console.log('已挂载butterfly_clock')
+    parent_div_git.insertAdjacentHTML("afterbegin",item_html)
+    }
+  var elist = '/posts/'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_clock_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_clock_injector_config();
+  }
+  </script><script src="/js/vendor/noop.js?v=89ad880bb506"></script><script data-pjax="" src="/clock/clock.js?v=dbe65add9be4"></script><script data-pjax="">
+  function butterfly_footer_beautify_injector_config(){/*biko-guard*/if(!document.getElementById('footer-wrap'))return;
+    var parent_div_git = document.getElementById('footer-wrap');
+    var item_html = '<div id="workboard"></div><p id="ghbdages"><a class="github-badge" target="_blank" href="https://hexo.io/" style="margin-inline:5px" data-title="博客框架为 Hexo" title=""><img src="https://img.shields.io/badge/Frame-Hexo-blue?style=flat&amp;logo=hexo" alt=""/></a><a class="github-badge" target="_blank" href="https://butterfly.js.org/" style="margin-inline:5px" data-title="主题 Butterfly" title=""><img src="https://img.shields.io/badge/Theme-Butterfly-6513df?style=flat&amp;logo=bitdefender" alt=""/></a><a class="github-badge" target="_blank" href="https://pages.github.com/" style="margin-inline:5px" data-title="本站托管于 GitHub Pages" title=""><img src="https://img.shields.io/badge/Hosted-GitHub_Pages-181717?style=flat&amp;logo=github" alt=""/></a><a class="github-badge" target="_blank" href="https://github.com/Biko-Duckyo/Biko-Duckyo.github.io" style="margin-inline:5px" data-title="本站项目由 GitHub 托管" title=""><img src="https://img.shields.io/badge/Source-Github-d021d6?style=flat&amp;logo=GitHub" alt=""/></a><a class="github-badge" target="_blank" href="https://creativecommons.org/licenses/by-nc-sa/4.0/" style="margin-inline:5px" data-title="本站采用 CC BY-NC-SA 4.0 协议" title=""><img src="https://img.shields.io/badge/Copyright-BY--NC--SA%204.0-d42328?style=flat&amp;logo=creativecommons" alt=""/></a></p>';
+    console.log('已挂载butterfly_footer_beautify')
+    parent_div_git.insertAdjacentHTML("beforeend",item_html)
+    }
+  var elist = 'undefined'.split(',');
+  var cpage = location.pathname;
+  var epage = 'all';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_footer_beautify_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_footer_beautify_injector_config();
+  }
+  </script><script async="" src="/footer-beautify/runtime.js?v=65c2bad2478d"></script><script data-pjax="">
+  function butterfly_swiper_injector_config(){
+    var parent_div_git = document.getElementById('recent-posts');
+    var item_html = '<div class="recent-post-item" style="height: auto;width: 100%"><div class="blog-slider swiper-container-fade swiper-container-horizontal" id="swiper_container"><div class="blog-slider__wrp swiper-wrapper" style="transition-duration: 0ms;"><div class="blog-slider__item swiper-slide" style="width: 750px; opacity: 1; transform: translate3d(0px, 0px, 0px); transition-duration: 0ms;"><a class="blog-slider__img" onclick="pjax.loadUrl(&quot;2026/10/03/hello-world/&quot;);" href="javascript:void(0);" alt=""><img width="48" height="48" src="/img/banner.jpg" alt="" onerror="this.src=https://unpkg.zhimg.com/akilar-candyassets/image/loading.gif; this.onerror = null;"/></a><div class="blog-slider__content"><span class="blog-slider__code">2026-10-03</span><a class="blog-slider__title" onclick="pjax.loadUrl(&quot;2026/10/03/hello-world/&quot;);" href="javascript:void(0);" alt="">这个站怎么用：一览、功能与全部指令</a><div class="blog-slider__text">鸭喵屋的页面入口与常用操作：网页和本地工作台分工、文献与追番同步、文章写作、统一预览及候选包发布流程。</div><a class="blog-slider__button" onclick="pjax.loadUrl(&quot;2026/10/03/hello-world/&quot;);" href="javascript:void(0);" alt="">详情       </a></div></div><div class="blog-slider__item swiper-slide" style="width: 750px; opacity: 1; transform: translate3d(0px, 0px, 0px); transition-duration: 0ms;"><a class="blog-slider__img" onclick="pjax.loadUrl(&quot;2026/10/06/Hexo+GitHub搭建指南/&quot;);" href="javascript:void(0);" alt=""><img width="48" height="48" src="/img/banner.jpg" alt="" onerror="this.src=https://unpkg.zhimg.com/akilar-candyassets/image/loading.gif; this.onerror = null;"/></a><div class="blog-slider__content"><span class="blog-slider__code">2026-10-06</span><a class="blog-slider__title" onclick="pjax.loadUrl(&quot;2026/10/06/Hexo+GitHub搭建指南/&quot;);" href="javascript:void(0);" alt="">Hexo + GitHub 搭建个人博客完整指南</a><div class="blog-slider__text">区分源码管理、静态托管与本站 Cloudflare 发布流程，给出新建和维护两条路径及常见排查。</div><a class="blog-slider__button" onclick="pjax.loadUrl(&quot;2026/10/06/Hexo+GitHub搭建指南/&quot;);" href="javascript:void(0);" alt="">详情       </a></div></div><div class="blog-slider__item swiper-slide" style="width: 750px; opacity: 1; transform: translate3d(0px, 0px, 0px); transition-duration: 0ms;"><a class="blog-slider__img" onclick="pjax.loadUrl(&quot;2026/10/25/博客魔改总览/&quot;);" href="javascript:void(0);" alt=""><img width="48" height="48" src="/img/banner.jpg" alt="" onerror="this.src=https://unpkg.zhimg.com/akilar-candyassets/image/loading.gif; this.onerror = null;"/></a><div class="blog-slider__content"><span class="blog-slider__code">2026-10-25</span><a class="blog-slider__title" onclick="pjax.loadUrl(&quot;2026/10/25/博客魔改总览/&quot;);" href="javascript:void(0);" alt="">博客魔改总览：所有定制功能一览</a><div class="blog-slider__text">鸭喵屋的功能地图：页面入口、网页与本地工作台分工、相册与追番、文献同步、基金与股票模拟，以及数据边界。</div><a class="blog-slider__button" onclick="pjax.loadUrl(&quot;2026/10/25/博客魔改总览/&quot;);" href="javascript:void(0);" alt="">详情       </a></div></div><div class="blog-slider__item swiper-slide" style="width: 750px; opacity: 1; transform: translate3d(0px, 0px, 0px); transition-duration: 0ms;"><a class="blog-slider__img" onclick="pjax.loadUrl(&quot;2026/10/11/东南大学境外参会办理清单/&quot;);" href="javascript:void(0);" alt=""><img width="48" height="48" src="/img/banner.jpg" alt="" onerror="this.src=https://unpkg.zhimg.com/akilar-candyassets/image/loading.gif; this.onerror = null;"/></a><div class="blog-slider__content"><span class="blog-slider__code">2026-10-11</span><a class="blog-slider__title" onclick="pjax.loadUrl(&quot;2026/10/11/东南大学境外参会办理清单/&quot;);" href="javascript:void(0);" alt="">东南大学 · 境外参加国际会议办理清单</a><div class="blog-slider__text">境外参会的会前审批、行前准备和归国报销清单；附官方来源与核验边界，未出境费用须单独确认。</div><a class="blog-slider__button" onclick="pjax.loadUrl(&quot;2026/10/11/东南大学境外参会办理清单/&quot;);" href="javascript:void(0);" alt="">详情       </a></div></div><div class="blog-slider__item swiper-slide" style="width: 750px; opacity: 1; transform: translate3d(0px, 0px, 0px); transition-duration: 0ms;"><a class="blog-slider__img" onclick="pjax.loadUrl(&quot;2026/10/11/VPN与机场笔记/&quot;);" href="javascript:void(0);" alt=""><img width="48" height="48" src="/img/banner.jpg" alt="" onerror="this.src=https://unpkg.zhimg.com/akilar-candyassets/image/loading.gif; this.onerror = null;"/></a><div class="blog-slider__content"><span class="blog-slider__code">2026-10-11</span><a class="blog-slider__title" onclick="pjax.loadUrl(&quot;2026/10/11/VPN与机场笔记/&quot;);" href="javascript:void(0);" alt="">VPN &amp; 机场笔记（资料备份）</a><div class="blog-slider__text">网络连接排查与资料归档：区分网络、TLS、Git 认证和本地服务，不再保留过时的套餐与服务商排名。</div><a class="blog-slider__button" onclick="pjax.loadUrl(&quot;2026/10/11/VPN与机场笔记/&quot;);" href="javascript:void(0);" alt="">详情       </a></div></div></div><div class="blog-slider__pagination swiper-pagination-clickable swiper-pagination-bullets"></div></div></div>';
+    console.log('已挂载butterfly_swiper')
+    parent_div_git.insertAdjacentHTML("afterbegin",item_html)
+    }
+  var elist = 'undefined'.split(',');
+  var cpage = location.pathname;
+  var epage = '/';
+  var flag = 0;
+
+  for (var i=0;i<elist.length;i++){
+    if (cpage.includes(elist[i])){
+      flag++;
+    }
+  }
+
+  if ((epage ==='all')&&(flag == 0)){
+    butterfly_swiper_injector_config();
+  }
+  else if (epage === cpage){
+    butterfly_swiper_injector_config();
+  }
+  </script><script defer="" src="/swiper/swiper.min.js?v=f2ce7eb089bb"></script><script defer="" data-pjax="" src="/swiper/swiper_init.js?v=9f0814c4ab99"></script><div class="js-pjax"><script async="async">var arr = document.getElementsByClassName('recent-post-item');
+for(var i = 0;i<arr.length;i++){
+    arr[i].classList.add('wow');
+    arr[i].classList.add('animate__zoomIn');
+    arr[i].setAttribute('data-wow-duration', '1s');
+    arr[i].setAttribute('data-wow-delay', '');
+    arr[i].setAttribute('data-wow-offset', '');
+    arr[i].setAttribute('data-wow-iteration', '');
+  }</script><script async="async">var arr = document.getElementsByClassName('card-widget');
+for(var i = 0;i<arr.length;i++){
+    arr[i].classList.add('wow');
+    arr[i].classList.add('animate__slideInRight');
+    arr[i].setAttribute('data-wow-duration', '1s');
+    arr[i].setAttribute('data-wow-delay', '');
+    arr[i].setAttribute('data-wow-offset', '');
+    arr[i].setAttribute('data-wow-iteration', '');
+  }</script></div><script async="" src="https://at.alicdn.com/t/font_2032782_8d5kxvn09md.js"></script><!-- hexo injector body_end end --><script type="application/json" id="biko-optional-assets">{"chat":[{"css":"/nanaly/css/noimpty-ai.css?v=8013747c1eaf"},{"css":"/nanaly/css/nanaly-workspace.css?v=aff49c810c39"},{"css":"/nanaly/css/nanaly-notes.css?v=292bbd903418"},{"css":"/nanaly/css/nanaly-delight.css?v=aa17e83e4625"},{"css":"/nanaly/css/nanaly-voice.css?v=fc9bad4184b2"},{"css":"/nanaly/css/nanaly-agent.css?v=dc885c80d503"},{"css":"/nanaly/css/nanaly-shell.css?v=d307e7c1dcb5"},{"css":"/nanaly/css/nanaly-biko-theme.css?v=e166a42fbda3"},{"src":"/nanaly/js/nanaly-identity.js?v=c87436d34ca3"},{"src":"/nanaly/js/nanaly-knowledge.js?v=6fada32a632d"},{"src":"/nanaly/js/nanaly-provider.js?v=05dc61255020"},{"src":"/nanaly/js/nanaly-agent.js?v=15a9f2752f22"},{"src":"/nanaly/js/nanaly-workspace.js?v=17dfff6e219f"},{"src":"/nanaly/js/nanaly-files.js?v=41adfba03a53"},{"src":"/nanaly/js/nanaly-vision.js?v=20c48faa459d"},{"src":"/nanaly/js/nanaly-research.js?v=55f94d964d68"},{"src":"/nanaly/js/nanaly-tasks.js?v=6203ae099d2f"},{"src":"/nanaly/js/nanaly-audio.js?v=918da14f3454"},{"src":"/nanaly/js/nanaly-prosody.js?v=beeaae9626a7"},{"src":"/nanaly/js/nanaly-voice.js?v=7807eaa90c79"},{"src":"/nanaly/js/nanaly-shell.js?v=32b743356927"},{"src":"/nanaly/js/noimpty-ai.js?v=276f4257085f"},{"src":"/nanaly/js/nanaly-agent-ui.js?v=943853d39e8d"},{"src":"/nanaly/js/nanaly-cat-trigger.js?v=1a50ad02bba8"}],"model":[{"src":"https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/dist/click-heart.min.js","attrs":{"id":"click-heart","mobile":"true"}},{"src":"https://cdn.jsdelivr.net/npm/hexo-butterfly-wowjs/lib/wow.min.js"},{"src":"https://cdn.jsdelivr.net/npm/hexo-butterfly-wowjs/lib/wow_init.js"},{"src":"https://cdn.jsdelivr.net/npm/live2d-widget@^3.1.3/lib/L2Dwidget.min.js"},{"code":"L2Dwidget.init({\"pluginRootPath\":\"live2dw/\",\"pluginModelPath\":\"assets/\",\"tagMode\":false,\"log\":false,\"model\":{\"jsonPath\":\"/live2dw/assets/hijiki.model.json\"},\"display\":{\"position\":\"left\",\"width\":150,\"height\":300},\"mobile\":{\"show\":false},\"pluginJsPath\":\"lib/\"});"}]}</script></body></html>

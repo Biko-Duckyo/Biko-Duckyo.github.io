@@ -1,0 +1,39 @@
+/* Shared article checklist presentation; storage keys and control order remain in each article. */
+#article-container .seu-page { padding: 8px 0 24px; color: var(--ui-ink, var(--font-color)); }
+#article-container .seu-layout { grid-template-columns: minmax(0,1fr) 204px; gap: 24px; }
+#article-container .seu-main { min-width: 0; }
+#article-container .seu-section { scroll-margin-top: 96px; }
+#article-container .seu-review-note { padding: 16px 18px; margin: 0 0 20px; border: 1px solid var(--ui-border, #8795a54d); border-radius: 14px; background: var(--ui-surface, var(--card-bg)); color: var(--ui-ink, var(--font-color)); }
+#article-container .seu-review-note p { margin: 6px 0 0; font-size: 14px; line-height: 1.8; }
+#article-container .seu-step-card,
+#article-container .seu-progress-card,
+#article-container .seu-sidenav { background: var(--ui-surface, var(--card-bg)); color: var(--ui-ink, var(--font-color)); border-color: var(--ui-border, #8795a54d); }
+#article-container .seu-step-card { padding: 20px; margin-bottom: 16px; }
+#article-container .seu-check { display: flex; align-items: flex-start; gap: 10px; padding: 12px; min-height: 44px; border-radius: 10px; }
+#article-container .seu-step-check { flex: 0 0 auto; width: 18px; height: 18px; margin-top: 4px; accent-color: var(--ui-accent, #7e96b8); }
+#article-container .seu-main a { overflow-wrap: anywhere; }
+#article-container .seu-main pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+#article-container .seu-main table { font-size: 14px; }
+#article-container .seu-main td,
+#article-container .seu-main th { min-width: 90px; white-space: normal; overflow-wrap: anywhere; }
+#article-container .seu-sidebar { top: 88px; }
+#article-container .seu-sidenav a { min-height: 44px; padding: 10px 12px; }
+#article-container .seu-btn-print { min-height: 44px; }
+#article-container .seu-policy-details { padding: 16px; border: 1px solid var(--ui-border, #8795a54d); border-radius: 14px; }
+#article-container .seu-policy-details summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; font-weight: 600; }
+#article-container .seu-policy-details summary::before { content: '＋'; margin-right: 10px; }
+#article-container .seu-policy-details[open] summary::before { content: '−'; }
+@media (max-width: 900px) {
+  #article-container .seu-layout { grid-template-columns: minmax(0,1fr); gap: 20px; }
+  #article-container .seu-sidebar { position: static; order: -1; width: 100%; }
+  #article-container .seu-sidenav { display: flex; overflow-x: auto; gap: 4px; padding: 6px; }
+  #article-container .seu-sidenav a { flex: 0 0 auto; white-space: nowrap; }
+  #article-container .seu-progress-card { margin: 12px 0; }
+  #article-container .seu-step-card { padding: 16px; }
+  #article-container .seu-review-note { padding: 14px; }
+}
+@media print {
+  #article-container .seu-sidebar, #article-container .seu-btn-print { display: none !important; }
+  #article-container .seu-layout { display: block; }
+  #article-container .seu-review-note, #article-container .seu-step-card { color: #111 !important; background: #fff !important; box-shadow: none; }
+}

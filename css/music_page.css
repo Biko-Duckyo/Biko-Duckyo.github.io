@@ -153,6 +153,8 @@ html[data-theme='light'] .page.type-music {
 /* ---------- 左：唱机 ---------- */
 .bmpg-player {
   align-items: center;
+  /* 右卡改成定高后，网格 stretch 会把左卡一起拉高；内容居中，避免底部空一大截 */
+  justify-content: center;
   gap: 18px;
   padding: clamp(20px, 2.4vw, 30px) clamp(18px, 2.2vw, 26px);
 }
@@ -311,7 +313,10 @@ html[data-theme='dark'] .bmpg-play {
  * 右：歌词 / 歌单
  * ============================================================ */
 .bmpg-side {
-  min-height: 520px;
+  /* 固定高度而不是 min-height：右卡内容（歌词 / 曲目）本来就在卡片内滚动，
+     但高度必须由这里定死，否则换到曲目多的歌单时卡片会被内容撑高、整页跟着上下跳。 */
+  height: clamp(480px, 68dvh, 680px);
+  min-height: 0;
   padding: clamp(14px, 1.8vw, 20px) clamp(14px, 1.8vw, 20px) clamp(12px, 1.6vw, 18px);
   overflow: hidden;
 }
@@ -581,7 +586,7 @@ html[data-theme='dark'] .bmpg-pickmenu { box-shadow: 0 18px 44px rgba(0, 0, 0, .
   white-space: nowrap;
 }
 .bmpg-item.on .nm { color: var(--bmpg-accent); }
-.bmpg-item .ar {
+.bmpg-item .bmpg-track-artist {
   display: block;
   overflow: hidden;
   color: var(--bmpg-mute);
@@ -666,22 +671,23 @@ html[data-theme='dark'] .bmpg-pickmenu { box-shadow: 0 18px 44px rgba(0, 0, 0, .
  * ============================================================ */
 @media screen and (max-width: 980px) {
   .bmpg-main { grid-template-columns: minmax(0, 1fr); }
-  .bmpg-side { min-height: 460px; }
+  /* 单列时右卡跟着视口缩，但上下限保证仍能露出几行歌词 */
+  .bmpg-side { height: clamp(420px, 62dvh, 560px); }
   .bmpg-disc-wrap { width: min(200px, 55%); }
   .bmpg-head { padding-top: 0; }
 }
 
 @media screen and (max-width: 640px) {
-  .bmpg { padding-bottom: 44px; }
+  .bmpg { padding: 0 0 44px; }
   .bmpg-head { padding: 0 2px 18px; }
   .bmpg-title { font-size: 1.85rem; }
   .bmpg-card { border-radius: var(--r-panel); }
   .bmpg-player { gap: 14px; padding: 18px 14px; }
   .bmpg-disc-wrap { width: min(170px, 62%); }
   .bmpg-play { width: 52px !important; height: 52px !important; }
-  .bmpg-ctrl button { width: 38px; height: 38px; }
+  .bmpg-ctrl button { width: 44px; height: 44px; }
   .bmpg-ctrl { gap: 4px; }
-  .bmpg-side { min-height: 420px; }
+  .bmpg-side { height: clamp(360px, 54dvh, 480px); }
   .bmpg-item { grid-template-columns: 40px minmax(0, 1fr) auto; gap: 10px; }
   .bmpg-item .cover { width: 40px; height: 40px; }
   .bmpg-item .dur { display: none; }

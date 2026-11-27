@@ -50,6 +50,7 @@
     focus: '专注',
     news: '资讯动态',
     literature: '文献工具',
+    reader: '文献阅读',
     pdf: 'PDF转写',
     translations: '译文库',
     readings: '原文精读',
@@ -276,6 +277,7 @@
   }
 
   function toast(msg) {
+    if (window.BikoFeedback) { window.BikoFeedback.show(msg); return; }
     var el = $('#toast');
     el.textContent = msg;
     el.classList.add('show');
@@ -305,33 +307,53 @@
     return d.getFullYear() + '年' + (d.getMonth() + 1) + '月' + d.getDate() + '日 ' + days[d.getDay()];
   }
 
-  // ===== 主题切换（与主站同步，使用 localStorage.isDark） =====
+  // ===== 主题切换（与主站共用同一份偏好） =====
+  // 主站 Butterfly 用 saveToLocal 存 localStorage.theme = {"value":"dark","expiry":…}；
+  // 这里原先读的是 localStorage.isDark（'1'/'0'），所以主站切到深色后研思仍是暖米色浅色。
+  function siteTheme() {
+    try {
+      var raw = localStorage.getItem('theme');
+      if (raw && raw.charAt(0) === '{') {
+        var o = JSON.parse(raw);
+        if (o && (o.value === 'dark' || o.value === 'light')) return o.value;
+      } else if (raw === 'dark' || raw === 'light') {
+        return raw;
+      }
+    } catch (e) {}
+    var legacy = localStorage.getItem('isDark');
+    if (legacy === '1') return 'dark';
+    if (legacy === '0') return 'light';
+    return null;
+  }
+
   function initTheme() {
     // ?theme=dark|light 可临时覆盖（方便对比 / 截图 / 分享）
     var q = (location.search.match(/[?&]theme=(light|dark)/) || [])[1];
-    // 与主站同步：读取 localStorage.isDark（主站存储的是 '1'/'0'）
-    var isDark = localStorage.getItem('isDark') === '1';
-    state.theme = q || (isDark ? 'dark' : 'light');
+    var stored = siteTheme();
+    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    state.theme = q || stored || (prefersDark ? 'dark' : 'light');
     applyTheme();
   }
 
   function applyTheme() {
     var btn = $('#themeToggle');
-    if (state.theme === 'dark') {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      // 当前是暗色，显示太阳（点击后变成浅色）
-      if (btn) btn.innerHTML = '<i class="fas fa-sun"></i>';
-    } else {
-      document.documentElement.removeAttribute('data-theme');
-      // 当前是浅色，显示月亮（点击后变成暗色）
-      if (btn) btn.innerHTML = '<i class="fas fa-moon"></i>';
+    // 浅色也写显式值，避免别处按「无属性=浅色」判断时与主站不一致
+    document.documentElement.setAttribute('data-theme', state.theme === 'dark' ? 'dark' : 'light');
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', state.theme === 'dark' ? '#0d1018' : '#f2f5fa');
+    if (btn) {
+      btn.innerHTML = state.theme === 'dark' ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+      btn.setAttribute('aria-label', state.theme === 'dark' ? '切换到浅色' : '切换到深色');
     }
   }
 
   function toggleTheme() {
     state.theme = state.theme === 'dark' ? 'light' : 'dark';
-    // 与主站同步：写入 localStorage.isDark（主站存储的是 '1'/'0'）
-    localStorage.setItem('isDark', state.theme === 'dark' ? '1' : '0');
+    // 写回主站同一份偏好（保持 value/expiry 结构，主站读得到）
+    try {
+      localStorage.setItem('theme', JSON.stringify({ value: state.theme, expiry: Date.now() + 7 * 864e5 }));
+      localStorage.setItem('isDark', state.theme === 'dark' ? '1' : '0');
+    } catch (e) {}
 
     // 从按钮位置扩开的圆形揭示（不支持 View Transition 时直接切）
     var root = document.documentElement;
@@ -378,6 +400,7 @@
     if (panel === 'pdf') checkPdfHealth();
     if (panel === 'translations') loadTranslations();
     if (panel === 'readings') loadReadings();
+    if (panel === 'reader') { loadTranslations(); loadReadings(); }
     if (panel === 'focus') focusRenderAll();   // 专注面板：进度/统计/记录实时刷新
     refreshUnreadBadges();   // 进入即视为已读，红点立刻消
     positionNavInk(true);
@@ -430,50 +453,85 @@
     });
   }
 
+  /* 唯一写入口是迹寻 /calendar/；研思此处只读聚合：
+     未完成待办（kind=todo 且 !done）按 逾期 / 今日 / 后续 分桶，
+     工作记录（kind=log）作为只读研究日志。本页不发任何写请求。 */
+  function bucketTodos(open, today) {
+    var b = { overdue: [], today: [], future: [] };
+    open.forEach(function (t) {
+      if (t.key < today) b.overdue.push(t);
+      else if (t.key === today) b.today.push(t);
+      else b.future.push(t);
+    });
+    return b;
+  }
+
   function loadTodos() {
-    // 从迹寻界面的 API 读取工作记录
     return api('/api/worklog/list').then(function (res) {
       var data = (res && res.data) || {};
-      // 获取今天的日期
-      var d = new Date();
-      var p = function(n) { return String(n).padStart(2, '0'); };
-      var today = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
-      var todayRecords = data[today] || [];
+      var p = function (n) { return String(n).padStart(2, '0'); };
+      var now = new Date();
+      var today = now.getFullYear() + '-' + p(now.getMonth() + 1) + '-' + p(now.getDate());
 
-      // 区分待办和日志
-      var todos = [];
-      var journals = [];
-      todayRecords.forEach(function(text) {
-        if (text.indexOf('[待办]') === 0) {
-          todos.push({ text: text.replace('[待办] ', ''), done: false });
-        } else {
-          journals.push({ content: text, date: today });
-        }
+      var open = [];   // 未完成待办
+      var logs = [];   // 只读工作记录（研究日志）
+      Object.keys(data).forEach(function (key) {
+        var list = Array.isArray(data[key]) ? data[key] : [];
+        list.forEach(function (raw, idx) {
+          var it = (raw && typeof raw === 'object') ? raw : { text: String(raw || '') };
+          var kind = it.kind === 'todo' ? 'todo' : 'log';
+          var done = it.done === true;
+          if (kind === 'todo' && !done) {
+            open.push({
+              id: it.id || '', index: idx, key: key,
+              text: it.text || '', tag: it.tag || '其他',
+              created: key, done: false
+            });
+          } else if (kind === 'log') {
+            logs.push({
+              id: it.id || ('log-' + key + '-' + idx),
+              date: key, created: key,
+              content: it.text || '', type: it.tag || '其他',
+              t: it.t || ''
+            });
+          }
+        });
       });
+      // 日期升序：逾期在前、今日居中、后续靠后；同日保持原始顺序
+      open.sort(function (a, b) { return a.key < b.key ? -1 : a.key > b.key ? 1 : 0; });
 
-      state.todos = todos;
-      state.journal = journals;
+      state.openTodos = open;
+      state.todos = open;                       // 兼容旧渲染引用（全部只读、未完成）
+      state.journal = logs.slice().reverse();   // 最新在前
+      state.todoBuckets = bucketTodos(open, today);
 
       renderDashboardTodos();
       renderDashboardJournal();
-    }).catch(function() {
-      // 如果 API 不存在，显示空状态
+      renderJournal();
+      renderStatusBar();
+      renderTodayBoard();
+      renderWeekReview();
+    }).catch(function () {
+      state.openTodos = [];
       state.todos = [];
       state.journal = [];
+      state.todoBuckets = { overdue: [], today: [], future: [] };
       renderDashboardTodos();
       renderDashboardJournal();
+      renderJournal();
+      renderStatusBar();
+      renderTodayBoard();
     });
   }
 
+  /* 旧 /api/journal 写接口已下线（记录统一由迹寻写入）。
+     数据由 loadTodos 聚合进 state.journal；这里仅补一次渲染，不再发 404 请求。 */
   function loadJournal() {
-    return api('/api/journal').then(function (data) {
-      state.journal = data || [];
-      renderJournal();
-      renderDashboardJournal();
-      // 周回顾里的「日志条数」读的是 state.journal —— 别处几个数据源都重算了，
-      // 唯独这里漏掉，导致那一格永远是加载时的 0。
-      renderWeekReview();
-    });
+    if (!state.journal) state.journal = [];
+    renderJournal();
+    renderDashboardJournal();
+    renderWeekReview();
+    return Promise.resolve();
   }
 
   function loadLiteratureAll() {
@@ -567,16 +625,44 @@
 
   function renderDashboardTodos() {
     var container = $('#dashboardTodos');
-    var pending = state.todos.filter(function (t) { return !t.done; }).slice(0, 4);
-    if (pending.length === 0) {
-      container.innerHTML = '<div style="color:var(--text-muted);font-size:13px;padding:8px 0;">暂无待办，享受当下。</div>';
+    if (!container) return;
+    var b = state.todoBuckets || { overdue: [], today: [], future: [] };
+    var total = b.overdue.length + b.today.length + b.future.length;
+    if (!total) {
+      container.innerHTML = '<div class="todo-mini-empty">暂无未完成待办，享受当下。</div>';
       return;
     }
-    container.innerHTML = pending.map(function (t) {
-      return '<div class="todo-mini-item' + (t.done ? ' done' : '') + '">' +
-        '<div class="todo-mini-check"></div>' +
-        '<span class="todo-mini-text">' + escapeHtml(t.text) + '</span></div>';
-    }).join('');
+    function row(t, cls) {
+      return '<div class="todo-mini-item ' + cls + '">' +
+        '<span class="todo-mini-dot" aria-hidden="true"></span>' +
+        '<span class="todo-mini-text">' + escapeHtml(t.text) + '</span>' +
+        '<span class="todo-mini-meta">' + escapeHtml(t.key.slice(5).replace('-', '/')) + '</span></div>';
+    }
+    var html = '';
+    if (b.overdue.length) html += '<div class="todo-mini-group">已逾期 · ' + b.overdue.length + '</div>' +
+      b.overdue.slice(0, 3).map(function (t) { return row(t, 'is-overdue'); }).join('');
+    if (b.today.length) html += '<div class="todo-mini-group">今天 · ' + b.today.length + '</div>' +
+      b.today.map(function (t) { return row(t, 'is-today'); }).join('');
+    if (b.future.length) html += '<div class="todo-mini-group">后续 · ' + b.future.length + '</div>' +
+      b.future.slice(0, 3).map(function (t) { return row(t, 'is-future'); }).join('');
+    container.innerHTML = html;
+  }
+
+  /* 底部只读状态条：未完成 N（逾期 x · 今日 y · 未来 z），整体点击跳迹寻处理 */
+  function renderStatusBar() {
+    var bar = $('#todoStatusBar');
+    if (!bar) return;
+    var b = state.todoBuckets || { overdue: [], today: [], future: [] };
+    var total = b.overdue.length + b.today.length + b.future.length;
+    if (!total) { bar.hidden = true; bar.innerHTML = ''; return; }
+    bar.hidden = false;
+    bar.innerHTML =
+      '<a class="todo-status-link" href="/calendar/" title="前往迹寻勾选 / 新增待办">' +
+      '<span class="todo-status-main">未完成 <b>' + total + '</b> 项</span>' +
+      '<span class="todo-status-seg is-overdue">逾期 ' + b.overdue.length + '</span>' +
+      '<span class="todo-status-seg is-today">今日 ' + b.today.length + '</span>' +
+      '<span class="todo-status-seg is-future">未来 ' + b.future.length + '</span>' +
+      '<span class="todo-status-go">去迹寻处理 →</span></a>';
   }
 
   function renderDashboardJournal() {
@@ -594,9 +680,11 @@
   }
 
   function updateTodoBadge() {
-    var pending = state.todos.filter(function (t) { return !t.done; }).length;
-    $('#navTodoBadge').textContent = pending;
-    $('#navTodoBadge').style.display = pending > 0 ? '' : 'none';
+    var badge = $('#navTodoBadge');
+    if (!badge) return;
+    var pending = (state.openTodos || []).length;
+    badge.textContent = pending;
+    badge.style.display = pending > 0 ? '' : 'none';
   }
 
   // ===== 渲染：天气 =====
@@ -616,6 +704,7 @@
   function renderWeather() {
     var w = state.news && state.news.data ? state.news.data.weather : null;
     var el = $('#weatherText');
+    if (!el) { if (w) renderWeatherModal(w); return; }
     if (!w) { el.textContent = '天气暂不可用'; return; }
     var cur = w.current || {};
     var temp = cur.temp;
@@ -871,6 +960,7 @@
   // ===== 渲染：待办 =====
   function renderTodos() {
     var container = $('#todoBoard');
+    if (!container) return;   // 研思页无 #todoBoard，整体为只读态，旧面板不再渲染
     if (state.todos.length === 0) {
       container.innerHTML = '<div class="todo-empty"><div class="todo-empty-icon">' + HS_ICONS.check + '</div><div class="todo-empty-text">还没有待办，加一条开始吧</div></div>';
       return;
@@ -901,7 +991,6 @@
         '<span>' + escapeHtml(t.created || '') + '</span>' +
         '</div></div>' +
         '<div class="todo-card-actions">' +
-        (!t.done ? '<button class="todo-card-pomo" data-action="pomo" data-id="' + t.id + '" title="开始 25 分钟专注"><svg class="ico-inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="9" y1="2" x2="15" y2="2"/></svg>' + ((pomoCounts[t.id] || 0) > 0 ? ' ×' + pomoCounts[t.id] : '') + '</button>' : '') +
         '<button class="todo-card-delete" data-action="delete" data-id="' + t.id + '" aria-label="删除">×</button>' +
         '</div></div></div>';
     }
@@ -1053,7 +1142,14 @@
     var board = $('#todayBoard');
     if (!board) return;
 
-    var pending = (state.todos || []).filter(function (t) { return !t.done; });
+    var localToday = (function () {
+      var p = function (n) { return String(n).padStart(2, '0'); };
+      var d = new Date();
+      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+    })();
+    // 去重：今日卡片只列「今日到期」的未完成项；逾期/后续项统一由下方「未完成待办」卡展示
+    var pending = (state.todoBuckets && state.todoBuckets.today) ||
+      (state.todos || []).filter(function (t) { return !t.done && t.key === localToday; });
     var fr = (state.frontier && state.frontier.items) || [];
     var hs = (state.hotspots && state.hotspots.items) || [];
     var wk = (state.weekly && state.weekly.items) || [];
@@ -1078,9 +1174,9 @@
 
     // 1. 今日待办
     html += '<div class="today-col">' +
-      '<div class="today-col-head">今日待办<span class="today-count">' + pending.length + '</span></div>';
+      '<div class="today-col-head">今日到期<span class="today-count">' + pending.length + '</span></div>';
     if (!pending.length) {
-      html += '<div class="today-empty">没有未完成的待办</div>';
+      html += '<div class="today-empty">今天没有到期待办</div>';
     } else {
       html += pending.slice(0, 4).map(function (t, i) {
         return '<div class="today-todo" data-goto="todos">' +
@@ -1311,10 +1407,15 @@
   // ===== 渲染：研究日志（时间线） =====
   function renderJournalTypeFilters() {
     var container = $('#journalTypeFilters');
-    var types = ['全部', '日常', '想法', '问题', '进展'];
+    if (!container) return;
+    var types = ['全部'];
+    state.journal.forEach(function (j) {
+      var t = j.type || '其他';
+      if (types.indexOf(t) < 0) types.push(t);
+    });
     var counts = { '全部': state.journal.length };
     state.journal.forEach(function (j) {
-      var t = j.type || '日常';
+      var t = j.type || '其他';
       counts[t] = (counts[t] || 0) + 1;
     });
     container.innerHTML = types.map(function (t) {
@@ -1345,7 +1446,6 @@
         '<div class="journal-card-head">' +
         '<span class="journal-card-date">' + escapeHtml(j.date || j.created || '') + '</span>' +
         '<span class="journal-type-tag ' + type + '">' + escapeHtml(type) + '</span>' +
-        '<button class="journal-delete-btn" data-action="delete-journal" data-id="' + j.id + '" aria-label="删除日志">×</button>' +
         '</div>' +
         '<div class="journal-card-text">' + renderJournalText(j.content) + '</div>' +
         '</div></div>';
@@ -3029,27 +3129,80 @@
   // ===== 译文库：列表 / 详情 / 检索 / 删除 =====
   var transQuery = '';
   var transCurrentId = '';
+  function withPaperId(row) {
+    return window.SCHOLAR_CONTRACT ? Object.assign({}, row, {
+      paperId: window.SCHOLAR_CONTRACT.archivePaperId(row)
+    }) : row;
+  }
+
   var transLoaded = false;
+  var transLoading = null;
+  var transArchiveError = false;
+  var returnToPaper = null;
+
+  function archiveDoi(row) {
+    var values = [row.doi, row.metadata && row.metadata.doi, row.source, row.title];
+    var dois = new Set();
+    values.forEach(function (value) {
+      var candidate = String(value || '').trim().replace(/^doi:\s*/i, '');
+      if (/^(?:https?:\/\/(?:dx\.)?doi\.org\/)?10\.\d{4,9}\/[^\s<>"?#]+$/i.test(candidate)) {
+        dois.add(window.SCHOLAR_CONTRACT.normalizeDoi(candidate));
+      }
+    });
+    return dois.size === 1 ? Array.from(dois)[0] : '';
+  }
 
   function loadTranslations(force) {
+    if (transLoading) return transLoading;
     if (transLoaded && !force) return Promise.resolve(state.translations || []);
-    return api('/api/pdf/translations').then(function (d) {
-      state.translations = (d && d.translations) || [];
+    transLoading = api('/api/pdf/translations').then(async function (d) {
+      if (!Array.isArray(d && d.translations)) {
+        transArchiveError = true;
+        return state.translations || [];
+      }
+      transArchiveError = false;
+      var items = d.translations.map(withPaperId);
+      // The old list omits metadata. Inspect archived records in bounded batches.
+      for (var offset = 0; offset < items.length; offset += 6) {
+        await Promise.all(items.slice(offset, offset + 6).map(async function (item) {
+          var explicit = archiveDoi(item);
+          if (explicit) { item.verifiedDoi = explicit; return; }
+          var data = await api('/api/pdf/translation/get?id=' + encodeURIComponent(item.id));
+          var record = data && data.record;
+          if (!record) return;
+          var metadataLine = String(record.markdown || '').split(/\r?\n/).slice(0, 12)
+            .map(function (line) { return line.trim().replace(/^[*-]\s+/, ''); })
+            .filter(function (line) { return /^DOI:\s*\S+$/i.test(line); });
+          item.verifiedDoi = archiveDoi(Object.assign({}, item, record, {
+            metadata: record.metadata || { doi: metadataLine.length === 1 ? metadataLine[0] : '' }
+          }));
+        }));
+      }
+      state.translations = items;
       transLoaded = true;
+      return items;
+    }).finally(function () {
+      transLoading = null;
       renderTranslations();
-      return state.translations;
-    }).catch(function () {
-      state.translations = [];
-      renderTranslations();
-      return [];
+      window.dispatchEvent(new Event('scholar:archive-updated'));
     });
+    return transLoading;
   }
+
+  window.SCHOLAR_ARCHIVE = {
+    load: loadTranslations,
+    list: function () { return state.translations || []; },
+    open: function (id, back) {
+      $('[data-readerview="trans"]').click();
+      openTranslationDetail(id, back);
+    }
+  };
 
   function renderTranslations() {
     var list = $('#transList');
     var empty = $('#transEmpty');
     if (!list) return;
-    var items = state.translations || [];
+    var items = (state.translations || []).filter(function (item) { return !item.verifiedDoi; });
     var badge = $('#navTransBadge');
     if (badge) {
       badge.textContent = items.length;
@@ -3067,17 +3220,17 @@
         empty.hidden = false;
         var et = empty.querySelector('.sum-empty-title');
         var ed = empty.querySelector('.sum-empty-desc');
-        if (et) et.textContent = q ? '没有匹配的译文' : '译文库还是空的';
+        if (et) et.textContent = q ? '没有匹配的译文' : transArchiveError ? '历史译文暂不可用' : '暂无待核对的历史译文';
         if (ed) ed.textContent = q
           ? '换个关键词试试，标题、来源和正文片段都能搜'
-          : '在 PDF 转写的「译文」标签翻译完全文后，点「存入译文库」，译文就会归档到这里';
+          : (transArchiveError ? '旧译文服务当前未返回归档列表，可稍后刷新。' : '已确认 DOI 的归档可在「全部文献」查看。');
       }
       return;
     }
     if (empty) empty.hidden = true;
     list.innerHTML = filtered.map(function (t, i) {
       var k = Math.max(1, Math.round((t.chars || 0) / 1000));
-      return '<div class="trans-item" data-id="' + escapeHtml(t.id) + '" style="animation-delay:' + (i * 0.04) + 's">' +
+      return '<div class="trans-item" data-id="' + escapeHtml(t.id) + '" data-paper-id="' + escapeHtml(t.paperId || '') + '" style="animation-delay:' + (i * 0.04) + 's">' +
         '<div class="trans-item-main">' +
           '<div class="trans-item-title">' + escapeHtml(t.title || '未命名译文') + '</div>' +
           '<div class="trans-item-meta">' + escapeHtml(t.source || '') + ' · ' + k + 'k 字 · ' + escapeHtml(t.created_at || '') + '</div>' +
@@ -3091,7 +3244,9 @@
     });
   }
 
-  function openTranslationDetail(id) {
+  function openTranslationDetail(id, back) {
+    returnToPaper = back || null;
+    $('#transBackBtn').textContent = back ? '← 返回文献' : '← 返回历史译文';
     api('/api/pdf/translation/get?id=' + encodeURIComponent(id)).then(function (d) {
       if (!d.ok) { toast('打开失败：' + (d.error || '未知错误')); return; }
       var r = d.record || {};
@@ -3126,6 +3281,9 @@
     transCurrentId = '';
     $('#translationsDetailView').style.display = 'none';
     $('#translationsListView').style.display = '';
+    var back = returnToPaper;
+    returnToPaper = null;
+    if (back) back();
   }
 
   function deleteTranslation() {
@@ -3498,7 +3656,7 @@
   function loadReadings(force) {
     if (readLoaded && !force) return Promise.resolve(state.readings || []);
     return api('/api/pdf/readings').then(function (d) {
-      state.readings = (d && d.readings) || [];
+      state.readings = (Array.isArray(d && d.readings) ? d.readings : []).map(withPaperId);
       readLoaded = true;
       renderReadings();
       return state.readings;
@@ -3541,7 +3699,7 @@
     if (empty) empty.hidden = true;
     list.innerHTML = filtered.map(function (t, i) {
       var k = Math.max(1, Math.round((t.chars || 0) / 1000));
-      return '<div class="trans-item" data-id="' + escapeHtml(t.id) + '" style="animation-delay:' + (i * 0.04) + 's">' +
+      return '<div class="trans-item" data-id="' + escapeHtml(t.id) + '" data-paper-id="' + escapeHtml(t.paperId || '') + '" style="animation-delay:' + (i * 0.04) + 's">' +
         '<div class="trans-item-main">' +
           '<div class="trans-item-title">' + escapeHtml(t.title || '未命名精读') + '</div>' +
           '<div class="trans-item-meta">' + escapeHtml(t.source || '') + ' · ' + k + 'k 字 · ' + escapeHtml(t.created_at || '') + '</div>' +
@@ -4766,7 +4924,8 @@
 
   function initPdfSelectionToolbar() {
     var preview = $('#pdfPreview');
-    if (!preview) return;
+    // $() 在节点缺失时返回安全 Proxy（truthy），必须用 Element 判断，不能只判空
+    if (!(preview instanceof Element)) return;
 
     // 监听预览区内的鼠标抬起（选中完成）
     preview.addEventListener('mouseup', function (e) {
@@ -4882,46 +5041,27 @@
   // ===== 事件绑定 =====
   function bindEvents() {
     // 导航
-    $$('.nav-item').forEach(function (btn) {
+    $$('.nav-item[data-panel]').forEach(function (btn) {
       btn.addEventListener('click', function () { switchPanel(btn.dataset.panel); });
     });
 
-    // 概览里的"查看全部"
+    // 概览里的"查看全部"；研思无独立待办面板，"todos" 跳迹寻页
     $$('.btn-goto').forEach(function (btn) {
-      btn.addEventListener('click', function () { switchPanel(btn.dataset.goto); });
+      btn.addEventListener('click', function (e) {
+        if (btn.dataset.goto === 'todos') { e.preventDefault(); location.href = '/calendar/'; return; }
+        switchPanel(btn.dataset.goto);
+      });
     });
 
-    // 今日工作台：动态内容，用事件委托跳转面板
+    // 今日工作台：动态内容，用事件委托跳转面板；"todos" 同样跳迹寻
     var todayBoardEl = $('#todayBoard');
     if (todayBoardEl) {
       todayBoardEl.addEventListener('click', function (e) {
         var el = e.target.closest('[data-goto]');
         if (!el) return;
+        if (el.dataset.goto === 'todos') { location.href = '/calendar/'; return; }
         switchPanel(el.dataset.goto);
       });
-    }
-
-    // 侧边栏悬浮展开/收起
-    var sidebar = document.querySelector('.sidebar');
-    var trigger = document.getElementById('sidebarTrigger');
-    var hideTimer = null;
-
-    function openSidebar() {
-      if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; }
-      sidebar.classList.add('sidebar-open');
-    }
-    function closeSidebar() {
-      hideTimer = setTimeout(function () {
-        sidebar.classList.remove('sidebar-open');
-      }, 200);  // 延迟 200ms，防止鼠标快速划过误触发
-    }
-
-    if (trigger) {
-      trigger.addEventListener('mouseenter', openSidebar);
-    }
-    if (sidebar) {
-      sidebar.addEventListener('mouseenter', openSidebar);
-      sidebar.addEventListener('mouseleave', closeSidebar);
     }
 
     // 主题切换
@@ -5013,8 +5153,9 @@
       openFolder(card.dataset.path);
     });
 
-    // 日志添加
-    $('#journalAddBtn').addEventListener('click', addJournal);
+    // 研思只读：写接口 /api/journal 已下线（记录统一在迹寻写入），不绑定添加按钮
+    var journalAddBtn = $('#journalAddBtn');
+    if (journalAddBtn) journalAddBtn.disabled = true;
 
     // 刷新资讯
     $('#refreshBtn').addEventListener('click', refreshNews);
@@ -5088,22 +5229,14 @@
       });
     }
 
-    // ===== 专注浮条（其他面板也能看到正在跑的一轮）=====
+    // 番茄浮条已退役：由底部只读状态条 #todoStatusBar 替代，不再绑定跳转与计时操作
     var pomoPause = $('#pomoPauseBtn');
     if (pomoPause) {
-      pomoPause.addEventListener('click', function (e) {
-        e.stopPropagation();
-        if (focusState.paused) focusResume(); else focusPause();
-      });
+      pomoPause.addEventListener('click', function (e) { e.stopPropagation(); });
     }
     var pomoStop = $('#pomoStopBtn');
     if (pomoStop) {
-      pomoStop.addEventListener('click', function (e) { e.stopPropagation(); focusGiveUp(); });
-    }
-    // 点浮条空白处 → 跳到专注面板
-    var pomoTimer = $('#pomoTimer');
-    if (pomoTimer) {
-      pomoTimer.addEventListener('click', function () { switchPanel('focus'); });
+      pomoStop.addEventListener('click', function (e) { e.stopPropagation(); });
     }
 
     // ===== 专注面板 =====
@@ -5725,13 +5858,20 @@
   //   滑动导航胶囊 · ⌘K 命令面板 · URL 深链 · 吸顶顶栏 · 滚动记忆
   // ============================================================
 
-  var scrollMemory = {};
+  var scrollMemory = window.BikoView?.read('scholar')?.scroll || {};
+  var supportBox = document.querySelector('.scholar-support');
+  if (supportBox) supportBox.open = window.BikoView?.read('scholar')?.supportOpen === true;
+  window.BikoView?.register('scholar', function () {
+    scrollMemory[state.panel] = window.scrollY || 0;
+    return { scroll: scrollMemory, panel: state.panel, supportOpen: !!supportBox?.open };
+  });
 
   function rememberScroll() { scrollMemory[state.panel] = window.scrollY || 0; }
 
   function restoreScroll(panel) {
     var y = scrollMemory[panel] || 0;
-    requestAnimationFrame(function () { window.scrollTo(0, y); });
+    if (window.BikoView && y > 0) window.BikoView.restoreScroll(y, document.querySelector('.main'));
+    else requestAnimationFrame(function () { window.scrollTo(0, y); });
   }
 
   /* ---------- 滑动导航胶囊 ---------- */
@@ -5888,8 +6028,8 @@
       .slice(0, 4).forEach(function (t) {
         items.push({
           group: '待办事项', label: t.text, keys: t.text,
-          icon: CM_ICONS.check || '', sub: '待办',
-          run: function () { switchPanel('todos'); }
+          icon: CM_ICONS.check || '', sub: '迹寻处理',
+          run: function () { location.href = '/calendar/'; }
         });
       });
     summaryAll.filter(function (s) {
@@ -6047,597 +6187,44 @@
     window.addEventListener('hashchange', applyHash);
   }
 
-  // ===== 侧边栏悬浮式初始化 =====
-  function initSidebar() {
-    var sidebar = document.querySelector('.sidebar');
-    var trigger = document.querySelector('.sidebar-trigger');
-    if (!sidebar || !trigger) return;
-
-    // 鼠标移到触发区域，展开侧边栏
-    trigger.addEventListener('mouseenter', function() {
-      sidebar.classList.add('sidebar-open');
+  // ===== 文献阅读面板初始化（只读 + 桌面端引导） =====
+  function initReader() {
+    function goDesktop() {
+      var doi = $('#panel-reader').dataset.paperDoi || '';
+      window.location.href = window.SCHOLAR_CONTRACT.desktopLink(doi);
+    }
+    // 三个只读视图 Tab 切换
+    var tabs = $$('#readerTabs .reader-tab');
+    tabs.forEach(function (tab) {
+      tab.addEventListener('click', function () {
+        var key = tab.dataset.readerview;
+        tabs.forEach(function (t) { t.classList.toggle('active', t === tab); });
+        $$('#panel-reader .reader-view').forEach(function (v) {
+          v.classList.toggle('active', v.id === 'reader-view-' + key);
+        });
+      });
     });
-
-    // 鼠标移出侧边栏，收起侧边栏
-    sidebar.addEventListener('mouseleave', function() {
-      sidebar.classList.remove('sidebar-open');
-    });
+    // 桌面端引导：侧边栏入口 + 标注本视图内按钮
+    $('#desktopOpenLink').addEventListener('click', goDesktop);
+    $('#readerDesktopBtnAnnot').addEventListener('click', goDesktop);
   }
-
-  // ===== 文斋开拓面板初始化 =====
-  function initWenzhai() {
-    // ===== 文斋开拓状态 =====
-    var wenzhaiState = {
-      file: null,
-      fileName: '',
-      fileSize: 0,
-      transcription: '',
-      translation: '',
-      zoom: 100,
-      currentPage: 1,
-      totalPages: 1
-    };
-
-    // 标签页切换
-    var tabs = $$('.wenzhai-tab');
-    tabs.forEach(function(tab) {
-      tab.addEventListener('click', function() {
-        var target = this.dataset.tab;
-        
-        // 更新标签页状态
-        tabs.forEach(function(t) { t.classList.remove('is-on'); });
-        this.classList.add('is-on');
-        
-        // 更新面板内容
-        var panes = $$('.wenzhai-pane');
-        panes.forEach(function(pane) {
-          if (pane.dataset.pane === target) {
-            pane.classList.add('is-on');
-          } else {
-            pane.classList.remove('is-on');
-          }
-        });
-      });
-    });
-    
-    // 笔记面板显示/隐藏
-    var notePanelBtn = $('#wenzhaiNotePanel');
-    var notePanel = $('#wenzhaiNotePanelEl');
-    var noteCloseBtn = $('#wenzhaiNoteClose');
-    
-    if (notePanelBtn && notePanel) {
-      notePanelBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        notePanel.hidden = !notePanel.hidden;
-      });
-    }
-    
-    if (noteCloseBtn && notePanel) {
-      noteCloseBtn.addEventListener('click', function() {
-        notePanel.hidden = true;
-      });
-    }
-    
-    // 更多菜单显示/隐藏
-    var moreBtn = $('#wenzhaiMore');
-    var morePanel = $('#wenzhaiMorePanel');
-    
-    if (moreBtn && morePanel) {
-      moreBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        morePanel.hidden = !morePanel.hidden;
-      });
-    }
-    
-    // 模式切换：沉浸式/对照
-    var modeBtn = $('#wenzhaiModeBtn');
-    var mainArea = $('#wenzhaiMain');
-    var translationPane = $('#wenzhaiTranslationPane');
-    var translateCloseBtn = $('#wenzhaiTranslateClose');
-    
-    if (modeBtn && mainArea && translationPane) {
-      modeBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        var isActive = mainArea.classList.toggle('has-translation');
-        this.classList.toggle('active', isActive);
-        translationPane.hidden = !isActive;
-        this.innerHTML = isActive 
-          ? '<i class="fas fa-pen-to-square"></i><span>沉浸式模式</span>'
-          : '<i class="fas fa-columns"></i><span>对照模式</span>';
-      });
-    }
-    
-    // 关闭翻译面板
-    if (translateCloseBtn && mainArea && modeBtn && translationPane) {
-      translateCloseBtn.addEventListener('click', function() {
-        mainArea.classList.remove('has-translation');
-        translationPane.hidden = true;
-        modeBtn.classList.remove('active');
-        modeBtn.innerHTML = '<i class="fas fa-columns"></i><span>对照模式</span>';
-      });
-    }
-
-    // ===== PDF 上传功能 =====
-    var fileInput = $('#wenzhai-file');
-    var dropzone = $('#wenzhaiDropzone');
-    var openBtn = $('#wenzhai-open');
-    var sourceInput = $('#wenzhai-source');
-    var emptyState = $('#wenzhaiEmptyState');
-    var progressArea = $('#wenzhaiProgress');
-    var progressStage = $('#wenzhaiProgressStage');
-    var progressPct = $('#wenzhaiProgressPct');
-    var progressFill = $('#wenzhaiProgressFill');
-    var editorBody = $('#wenzhaiEditorBody');
-    var translationBody = $('#wenzhaiTranslationBody');
-    var docTitle = $('#wenzhaiDocTitle');
-
-    // 文件选择
-    if (fileInput) {
-      fileInput.addEventListener('change', function() {
-        if (this.files && this.files[0]) {
-          handleWenzhaiFile(this.files[0]);
-        }
-      });
-    }
-
-    // 拖拽上传
-    if (dropzone) {
-      ['dragenter', 'dragover'].forEach(function(ev) {
-        dropzone.addEventListener(ev, function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          dropzone.classList.add('dragging');
-        });
-      });
-      ['dragleave', 'dragend', 'drop'].forEach(function(ev) {
-        dropzone.addEventListener(ev, function(e) {
-          e.preventDefault();
-          e.stopPropagation();
-          dropzone.classList.remove('dragging');
-        });
-      });
-      dropzone.addEventListener('drop', function(e) {
-        var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
-        if (f) handleWenzhaiFile(f);
-      });
-    }
-
-    // 打开按钮（DOI/链接）
-    if (openBtn && sourceInput) {
-      openBtn.addEventListener('click', function() {
-        var source = sourceInput.value.trim();
-        if (!source) {
-          toast('请先输入 DOI 或 PDF 链接');
-          return;
-        }
-        
-        // 隐藏空状态，显示进度
-        var workspace = document.querySelector('.wenzhai-workspace');
-        if (workspace) workspace.classList.remove('show-empty');
-        if (progressArea) progressArea.hidden = false;
-        
-        showWenzhaiProgress('正在解析 DOI/链接…', 0);
-        
-        // 调用 API 解析 DOI/链接
-        api('/api/pdf/from-url', {
-          method: 'POST',
-          body: JSON.stringify({ url: source }),
-        }).then(function(d) {
-          if (!d.ok) throw new Error(d.error || '解析失败');
-          
-          wenzhaiState.jobId = d.jobId;
-          wenzhaiState.fileName = d.title || source;
-          
-          showWenzhaiProgress('排队中…', 20);
-          
-          // 轮询状态
-          pollWenzhaiStatus();
-        }).catch(function(e) {
-          failWenzhaiJob(e.message || String(e));
-        });
-      });
-    }
-
-    // 处理文件
-    function handleWenzhaiFile(file) {
-      wenzhaiState.file = file;
-      wenzhaiState.fileName = file.name;
-      wenzhaiState.fileSize = file.size;
-      
-      // 开始真实的转写流程
-      startWenzhaiJob(file);
-    }
-
-    // 开始真实的转写任务
-    function startWenzhaiJob(file) {
-      // 隐藏空状态，显示进度
-      var workspace = document.querySelector('.wenzhai-workspace');
-      if (workspace) workspace.classList.remove('show-empty');
-      if (progressArea) progressArea.hidden = false;
-      
-      showWenzhaiProgress('上传文件中…', 0);
-      
-      // 1. 上传文件
-      fetch('/api/pdf/upload?name=' + encodeURIComponent(file.name), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/pdf' },
-        body: file,
-      }).then(function(r) { return r.json(); }).then(function(up) {
-        if (!up.ok) throw new Error(up.error || '上传失败');
-        showWenzhaiProgress('已上传，提交解析任务…', 10);
-        
-        // 2. 提交任务
-        return api('/api/pdf/submit', {
-          method: 'POST',
-          body: JSON.stringify({
-            pdfPath: up.pdfPath,
-            engine: 'local',
-            formula: true,
-            table: true,
-          }),
-        });
-      }).then(function(sub) {
-        if (!sub.ok) throw new Error(sub.error || '提交失败');
-        wenzhaiState.jobId = sub.jobId;
-        showWenzhaiProgress('排队中…', 20);
-        
-        // 3. 轮询状态
-        pollWenzhaiStatus();
-      }).catch(function(e) {
-        failWenzhaiJob(e.message || String(e));
-      });
-    }
-
-    // 显示进度
-    function showWenzhaiProgress(stage, pct) {
-      if (progressStage) progressStage.textContent = stage;
-      if (progressPct) progressPct.textContent = Math.round(pct) + '%';
-      if (progressFill) progressFill.style.width = pct + '%';
-    }
-
-    // 轮询转写状态
-    function pollWenzhaiStatus() {
-      var miss = 0;
-      var timer = setInterval(function() {
-        api('/api/pdf/status?jobId=' + encodeURIComponent(wenzhaiState.jobId)).then(function(st) {
-          miss = 0;
-          if (st.status === 'queued' || st.status === 'running') {
-            showWenzhaiProgress(st.progressText || '解析中…', 20 + (st.progress || 0) * 0.6);
-          } else if (st.status === 'done') {
-            clearInterval(timer);
-            showWenzhaiProgress('正在加载结果…', 90);
-            loadWenzhaiResult();
-          } else if (st.status === 'error') {
-            clearInterval(timer);
-            failWenzhaiJob(st.error || '解析失败');
-          }
-        }).catch(function() {
-          miss += 1;
-          if (miss >= 8) {
-            clearInterval(timer);
-            failWenzhaiJob('无法连接转写引擎（连续多次无响应）');
-          }
-        });
-      }, 1500);
-    }
-
-    // 加载转写结果
-    function loadWenzhaiResult() {
-      api('/api/pdf/result?jobId=' + encodeURIComponent(wenzhaiState.jobId)).then(function(d) {
-        if (!d.ok) throw new Error(d.error || '读取结果失败');
-        
-        wenzhaiState.transcription = d.markdown;
-        
-        // 显示主内容区
-        if (progressArea) progressArea.hidden = true;
-        if (mainArea) mainArea.classList.add('active');
-        if (docTitle) docTitle.textContent = wenzhaiState.fileName;
-        if (editorBody) editorBody.innerHTML = wenzhaiState.transcription;
-        
-        toast('转写完成');
-      }).catch(function(e) {
-        failWenzhaiJob(e.message || String(e));
-      });
-    }
-
-    // 失败处理
-    function failWenzhaiJob(msg) {
-      if (progressArea) progressArea.hidden = true;
-      var workspace = document.querySelector('.wenzhai-workspace');
-      if (workspace) workspace.classList.add('show-empty');
-      toast('转写失败：' + msg);
-    }
-
-    // 翻译按钮
-    var translateBtn = $('#wenzhaiTranslate');
-    if (translateBtn) {
-      translateBtn.addEventListener('click', function() {
-        if (!wenzhaiState.jobId) {
-          toast('请先上传并转写 PDF');
-          return;
-        }
-        
-        toast('正在生成中文翻译…');
-        
-        // 调用 API 翻译
-        api('/api/pdf/llm/translate', {
-          method: 'POST',
-          body: JSON.stringify({ jobId: wenzhaiState.jobId }),
-        }).then(function(d) {
-          if (!d.ok) throw new Error(d.error || '翻译失败');
-          
-          wenzhaiState.translation = d.markdown;
-          
-          if (translationBody) translationBody.innerHTML = wenzhaiState.translation;
-          
-          // 自动切换到对照模式
-          if (modeBtn && mainArea && translationPane) {
-            mainArea.classList.add('has-translation');
-            translationPane.hidden = false;
-            modeBtn.classList.add('active');
-            modeBtn.innerHTML = '<i class="fas fa-pen-to-square"></i><span>沉浸式模式</span>';
-          }
-          
-          toast('翻译完成');
-        }).catch(function(e) {
-          toast('翻译失败：' + (e.message || String(e)));
-        });
-      });
-    }
-
-    // ===== 操作功能 =====
-    // 复制按钮
-    var copyBtn = $('#wenzhaiCopyBtn');
-    if (copyBtn) {
-      copyBtn.addEventListener('click', function() {
-        if (!wenzhaiState.transcription) {
-          toast('没有可复制的内容');
-          return;
-        }
-        navigator.clipboard.writeText(wenzhaiState.transcription).then(function() {
-          toast('已复制到剪贴板');
-        });
-      });
-    }
-
-    // 下载按钮
-    var downloadBtn = $('#wenzhaiDownloadBtn');
-    if (downloadBtn) {
-      downloadBtn.addEventListener('click', function() {
-        if (!wenzhaiState.transcription) {
-          toast('没有可下载的内容');
-          return;
-        }
-        var blob = new Blob([wenzhaiState.transcription], { type: 'text/markdown' });
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = (wenzhaiState.fileName || 'document').replace('.pdf', '.md');
-        a.click();
-        URL.revokeObjectURL(url);
-        toast('已下载 Markdown 文件');
-      });
-    }
-
-    // 存入文献库按钮
-    var saveBtn = $('#wenzhaiSaveBtn');
-    if (saveBtn) {
-      saveBtn.addEventListener('click', function() {
-        if (!wenzhaiState.transcription) {
-          toast('没有可保存的内容');
-          return;
-        }
-        toast('已存入文献库（模拟）');
-      });
-    }
-
-    // ===== 摘要生成功能 =====
-    var summaryBtn = $('#wenzhaiSummary');
-    if (summaryBtn) {
-      summaryBtn.addEventListener('click', function() {
-        if (!wenzhaiState.jobId) {
-          toast('请先上传并转写 PDF');
-          return;
-        }
-        
-        toast('正在生成摘要…');
-        
-        // 调用 API 生成摘要
-        api('/api/pdf/llm/summarize', {
-          method: 'POST',
-          body: JSON.stringify({ jobId: wenzhaiState.jobId }),
-        }).then(function(d) {
-          if (!d.ok) throw new Error(d.error || '摘要生成失败');
-          
-          var summary = d.markdown;
-          
-          // 把摘要插入到编辑区顶部
-          var editorBody = $('#wenzhaiEditorBody');
-          if (editorBody) {
-            editorBody.innerHTML = summary + '\n\n---\n\n' + editorBody.innerHTML;
-          }
-          
-          toast('摘要生成完成');
-        }).catch(function(e) {
-          toast('摘要生成失败：' + (e.message || String(e)));
-        });
-      });
-    }
-
-    // ===== 缩放功能 =====
-    var zoomInBtn = $('#wenzhaiZoomIn');
-    var zoomOutBtn = $('#wenzhaiZoomOut');
-    var zoomLabel = $('#wenzhaiZoomLabel');
-    var editorBody = $('#wenzhaiEditorBody');
-    var fitWidthBtn = $('#wenzhaiFitWidth');
-    var fitPageBtn = $('#wenzhaiFitPage');
-
-    if (zoomInBtn) {
-      zoomInBtn.addEventListener('click', function() {
-        wenzhaiState.zoom = Math.min(wenzhaiState.zoom + 10, 200);
-        updateZoom();
-      });
-    }
-
-    if (zoomOutBtn) {
-      zoomOutBtn.addEventListener('click', function() {
-        wenzhaiState.zoom = Math.max(wenzhaiState.zoom - 10, 50);
-        updateZoom();
-      });
-    }
-
-    if (fitWidthBtn) {
-      fitWidthBtn.addEventListener('click', function() {
-        wenzhaiState.zoom = 100;
-        updateZoom();
-        toast('已适宽');
-      });
-    }
-
-    if (fitPageBtn) {
-      fitPageBtn.addEventListener('click', function() {
-        wenzhaiState.zoom = 80;
-        updateZoom();
-        toast('已整页');
-      });
-    }
-
-    function updateZoom() {
-      if (zoomLabel) zoomLabel.textContent = wenzhaiState.zoom + '%';
-      if (editorBody) editorBody.style.fontSize = (wenzhaiState.zoom / 100 * 16) + 'px';
-    }
-
-    // ===== 面板功能 =====
-    var outlineBtn = $('#wenzhaiOutline');
-    var searchBtn = $('#wenzhaiSearch');
-    var regionZoomBtn = $('#wenzhaiRegionZoom');
-    var annotRegionBtn = $('#wenzhaiAnnotRegion');
-
-    if (outlineBtn) {
-      outlineBtn.addEventListener('click', function() {
-        toast('目录功能（模拟）');
-      });
-    }
-
-    if (searchBtn) {
-      searchBtn.addEventListener('click', function() {
-        toast('全文搜索功能（模拟）');
-      });
-    }
-
-    if (regionZoomBtn) {
-      regionZoomBtn.addEventListener('click', function() {
-        toast('图区放大功能（模拟）');
-      });
-    }
-
-    if (annotRegionBtn) {
-      annotRegionBtn.addEventListener('click', function() {
-        toast('图区批注功能（模拟）');
-      });
-    }
-
-    // ===== 顶栏左侧功能 =====
-    var libraryBtn = $('#wenzhaiLibrary');
-    var exportMdBtn = $('#wenzhaiExportMd');
-    var exportImgBtn = $('#wenzhaiExportImg');
-    var helpBtn = $('#wenzhaiHelp');
-
-    if (libraryBtn) {
-      libraryBtn.addEventListener('click', function() {
-        toast('我的文献库功能（模拟）');
-      });
-    }
-
-    if (exportMdBtn) {
-      exportMdBtn.addEventListener('click', function() {
-        if (!wenzhaiState.transcription) {
-          toast('没有可导出的内容');
-          return;
-        }
-        var blob = new Blob([wenzhaiState.transcription], { type: 'text/markdown' });
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = (wenzhaiState.fileName || 'document').replace('.pdf', '.md');
-        a.click();
-        URL.revokeObjectURL(url);
-        toast('已导出 Markdown 文件');
-      });
-    }
-
-    if (exportImgBtn) {
-      exportImgBtn.addEventListener('click', function() {
-        toast('导出长图功能（模拟）');
-      });
-    }
-
-    if (helpBtn) {
-      helpBtn.addEventListener('click', function() {
-        toast('使用说明功能（模拟）');
-      });
-    }
-
-    // ===== 翻页功能 =====
-    var prevPageBtn = $('#wenzhaiPrevPage');
-    var nextPageBtn = $('#wenzhaiNextPage');
-    var pageLabel = $('#wenzhaiPageLabel');
-
-    if (prevPageBtn) {
-      prevPageBtn.addEventListener('click', function() {
-        wenzhaiState.currentPage = Math.max(wenzhaiState.currentPage - 1, 1);
-        updatePage();
-      });
-    }
-
-    if (nextPageBtn) {
-      nextPageBtn.addEventListener('click', function() {
-        wenzhaiState.currentPage = Math.min(wenzhaiState.currentPage + 1, wenzhaiState.totalPages);
-        updatePage();
-      });
-    }
-
-    function updatePage() {
-      if (pageLabel) pageLabel.textContent = wenzhaiState.currentPage + ' / ' + wenzhaiState.totalPages;
-    }
-
-    // ===== 全屏功能 =====
-    var fullscreenBtn = $('#wenzhaiFullscreen');
-    if (fullscreenBtn) {
-      fullscreenBtn.addEventListener('click', function() {
-        var panel = $('#panel-wenzhai');
-        if (!panel) return;
-        
-        if (!document.fullscreenElement) {
-          panel.requestFullscreen().catch(function() {
-            toast('全屏功能不可用');
-          });
-        } else {
-          document.exitFullscreen();
-        }
-      });
-    }
-
-    // 点击其他区域关闭浮动面板
-    document.addEventListener('click', function() {
-      if (notePanel) notePanel.hidden = true;
-      if (morePanel) morePanel.hidden = true;
-    });
-  }
-
   // ===== 初始化 =====
   function init() {
+    var release = window.SCHOLAR_RELEASE;
+    if (release) document.querySelectorAll('[data-scholar-version]').forEach(function (node) {
+      node.textContent = '研思 ' + release.version + ' · ' + release.buildId;
+    });
     initTheme();
-    initSidebar();
     $('#panelDate').textContent = formatDate(new Date());
     initV3();
     bindEvents();
     initPdfSelectionToolbar();
     initPdfImageLightbox();
-    initWenzhai();
-    // 恢复未跑完的一轮专注（刷新/关标签都能接着跑），并先渲染一次面板
-    focusRestore();
-    focusRenderAll();
+    initReader();
+    // 番茄专注计时已退役：不再恢复旧的 localStorage 计时状态、不再渲染计时浮条；
+    // 周回顾里的「专注分钟」纯本地统计仍由 renderWeekReview 直接读取，不受影响。
+    // focusRestore();
+    // focusRenderAll();
     // 侧栏徽标预取：归档型面板计数启动即加载，不必等用户点进面板（本地轻接口）
     loadFrontier().catch(function () {});
     loadHotspots().catch(function () {});
@@ -6653,7 +6240,10 @@
     });
     loadAll().then(function () {
       // focusRenderAll();   // 专注功能已删除，注释掉
-      if (!applyHash()) switchPanel('dashboard');
+      if (!applyHash()) {
+        var rememberedPanel = window.BikoView?.read('scholar')?.panel;
+        switchPanel(rememberedPanel && document.querySelector('.nav-item[data-panel="' + rememberedPanel + '"]') ? rememberedPanel : 'dashboard');
+      }
     });
   }
 

@@ -1,371 +1,602 @@
 // ======================================================
-// 顶栏左侧天气组件（和风天气 QWeather · 同源代理版）
-// 显示：天气图标 + 温度 + 天气状况 + 空气质量 + 预警
-// 安全说明：API Key 与专属 Host 均保存在服务端（functions/api/weather），
-//           前端只请求本站同源 /api/weather/*，源码中不再出现任何密钥。
-// 定位策略：优先浏览器 Geolocation（需用户授权）→ 失败则回退默认城市，
-//           不再把访客 IP 交给第三方定位服务，仅用坐标经代理反查城市。
-//
-// 用到的 4 个和风接口（全部经同源代理转发）：
-//   1) GeoAPI      /api/weather/city?q=lon,lat  → 用浏览器坐标反查城市（在用！）
-//   2) 实时天气     /api/weather/now?loc=ID       → 温度 + 天气图标 + 天气文字
-//   3) 空气质量     /api/weather/air?loc=ID       → 末尾 AQI 等级（优/良/轻度…）
-//   4) 气象预警     /api/weather/warning?loc=ID   → 有预警时补一个橙色 ⚠️
-// 说明：GeoAPI 并非「没用到的」，浏览器定位拿到经纬度后必须经它反查 locationId，
-//       ／now 等接口只接受 locationId，不接受裸坐标。
+// 天气组件（和风天气 QWeather · 全量 v1 坐标口径 · 同源代理版）
+// 渲染目标：
+//   1) 顶栏胶囊 #he-plugin-simple（图标 + 城市 + 温度 + 状况 + AQI + 预警）
+//   2) 首页卡片 .dash-weather（大温度/7 日条/逐小时/统计/AQI/手动搜索）
+//   3) 时钟卡 #hexo_electric_clock（状况 + 地点）
+// 安全：Key 与专属 Host 只存服务端 functions/api/weather，前端永不接触密钥。
+// 城市策略：浏览器自动定位 → Geo 反查城市；失败则不静默兜底，首页卡片提示并开放
+//           手动搜索（搜索框仅存在于首页卡片，顶栏胶囊不做搜索）；手动选择的城市
+//           写入 localStorage，换机/换浏览器不共享（纯本地偏好，无后端账号体系）。
+// 接口（经同源代理 /api/weather/*，统一 v1 坐标接口，Geo 保留 v2）：
+//   city     GET /city?q=<城市名|lon,lat>
+//   now      GET /now?lat=&lon=
+//   daily    GET /daily?lat=&lon=&days=7
+//   hourly   GET /hourly?lat=&lon=&hours=24
+//   air      GET /air?lat=&lon=
+//   warning  GET /warning?lat=&lon=
 // ======================================================
 (function () {
+  'use strict';
+
   // ====== 配置区 ======
-  var PROXY = '/api/weather';            // 同源代理前缀（Key 在服务端）
-  var DEFAULT_LOCATION = '101190101';    // 兜底：南京
-  var DEFAULT_CITY = '南京';
-  var LOCATION_CACHE_KEY = 'biko-weather-loc';
-  var LOCATION_CACHE_TTL = 6 * 60 * 60 * 1000; // 定位结果缓存 6 小时，避免反复弹权限
-
-  // ====== 本地预览开关 ======
-  // true = 用 mock 假数据预览 UI（本地开发无 Cloudflare Functions 时用）
-  // false = 走真实 API（部署到 Cloudflare Pages 后改回 false）
+  var PROXY = '/api/weather';
+  var CACHE_KEY = 'biko-weather-loc';
+  var TTL_AUTO = 6 * 60 * 60 * 1000;      // 自动定位缓存 6 小时（避免反复弹权限）
+  var TTL_MANUAL = 24 * 60 * 60 * 1000;   // 手动选择缓存 24 小时
+  // 本地无 Functions（hexo server）时用假数据目视 UI；线上必须 false
   var USE_MOCK = false;
-  // ====================
 
-  // 和风天气 code → FontAwesome 图标
-  var ICON_MAP = {
-    '100': 'sun',      '150': 'sun',
-    '101': 'cloud-sun','151': 'cloud-sun','152': 'cloud-sun','153': 'cloud-sun',
-    '102': 'cloud-sun','103': 'cloud-sun',
-    '104': 'cloud',
-    '300': 'cloud-showers-heavy','301': 'cloud-showers-heavy',
-    '302': 'bolt','303': 'bolt','304': 'bolt',
-    '305': 'cloud-showers-heavy','306': 'cloud-showers-heavy','307': 'cloud-showers-heavy','308': 'cloud-showers-heavy',
-    '309': 'cloud-sun-rain','310': 'cloud-showers-heavy','311': 'cloud-showers-heavy','312': 'cloud-showers-heavy',
-    '313': 'cloud-showers-heavy','314': 'cloud-showers-heavy','315': 'cloud-showers-heavy','316': 'cloud-showers-heavy',
-    '317': 'cloud-showers-heavy','318': 'cloud-showers-heavy',
-    '399': 'cloud-showers-heavy',
-    '400': 'snowflake','401': 'snowflake','402': 'snowflake','403': 'snowflake',
-    '404': 'cloud-meatball','405': 'cloud-meatball','406': 'cloud-meatball','407': 'cloud-meatball',
-    '408': 'snowflake','409': 'snowflake','410': 'cloud-showers-heavy',
-    '499': 'snowflake',
-    '500': 'smog','501': 'smog','502': 'smog','503': 'smog','504': 'smog','507': 'smog','508': 'smog',
-    '509': 'smog','510': 'smog','511': 'smog','512': 'smog','513': 'smog','514': 'smog','515': 'smog',
-    '900': 'thermometer-empty','901': 'temperature-low','999': 'truck'
+  var WEEK = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+  var WIND_CN = {
+    n: '北', nne: '北北东北', ne: '东北', ene: '东北东',
+    e: '东', ese: '东南东', se: '东南', sse: '南南东',
+    s: '南', ssw: '南南西', sw: '西南', wsw: '西南西',
+    w: '西', wnw: '西北西', nw: '西北', nnw: '北西北',
+    none: '不定', vrb: '不定'
   };
 
-  var AQI_MAP = [
-    { max: 50,  label: '优',   color: '#4caf50' },
-    { max: 100, label: '良',   color: '#ffc107' },
-    { max: 150, label: '轻度', color: '#ff9800' },
-    { max: 200, label: '中度', color: '#f44336' },
-    { max: 300, label: '重度', color: '#9c27b0' },
-    { max: 9999,label: '严重', color: '#795548' }
-  ];
+  var busy = false;
 
-  // 8s 超时 + 统一错误抛出的 JSON 请求
-  function fetchJSON(url) {
-    var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    var timer = controller ? setTimeout(function () { controller.abort(); }, 8000) : null;
-    return fetch(url, controller ? { signal: controller.signal } : undefined)
+  // ---------- 基础工具 ----------
+  function fetchJSON(url, signal) {
+    var controller = (typeof AbortController !== 'undefined') ? new AbortController() : null;
+    var timer = controller ? setTimeout(function () { controller.abort(); }, 10000) : null;
+    var opts = controller ? { signal: signal || controller.signal } : undefined;
+    return fetch(url, opts)
       .then(function (r) {
+        if (timer) clearTimeout(timer);
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();
       })
       .then(function (data) {
-        if (timer) clearTimeout(timer);
-        if (data && data.error) throw new Error(data.error);
+        if (data && data.error) throw new Error(data.error.message || data.error);
         return data;
-      })
-      .catch(function (err) {
-        if (timer) clearTimeout(timer);
-        throw err;
       });
   }
 
-  function readCachedLocation() {
+  function qs(sel, root) { return (root || document).querySelector(sel); }
+  function qsa(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
+
+  function setText(root, sel, text) {
+    var el = qs(sel, root);
+    if (el) el.textContent = text;
+  }
+
+  function qi(code) { return 'qi-' + (code || '999'); }
+  function weekCN(d) { return WEEK[d.getDay()]; }
+  function windCN(c) { return WIND_CN[c] || '微风'; }
+
+  // ---------- 缓存（纯本地，换机不共享；云端同步由后端方案另行承担） ----------
+  function readLoc() {
     try {
-      var raw = window.localStorage.getItem(LOCATION_CACHE_KEY);
+      var raw = window.localStorage.getItem(CACHE_KEY);
       if (!raw) return null;
-      var parsed = JSON.parse(raw);
-      if (!parsed || !parsed.id || Date.now() - parsed.ts > LOCATION_CACHE_TTL) return null;
-      return parsed;
+      var o = JSON.parse(raw);
+      if (!o || !isFinite(o.lat) || !isFinite(o.lon)) return null;
+      var ttl = o.source === 'manual' ? TTL_MANUAL : TTL_AUTO;
+      if (Date.now() - o.ts > ttl) return null;
+      return o;
     } catch (e) { return null; }
   }
-
-  function writeCachedLocation(loc) {
+  function writeLoc(loc, source) {
     try {
-      window.localStorage.setItem(LOCATION_CACHE_KEY,
-        JSON.stringify({ id: loc.locationId, name: loc.cityName, ts: Date.now() }));
+      window.localStorage.setItem(CACHE_KEY, JSON.stringify({
+        id: loc.id, name: loc.name, lat: loc.lat, lon: loc.lon,
+        source: source, ts: Date.now()
+      }));
     } catch (e) {}
   }
+  function clearLoc() { try { window.localStorage.removeItem(CACHE_KEY); } catch (e) {} }
 
-  // 用经纬度经代理反查城市（geo/v2/city/lookup 支持 "lon,lat"）
-  function lookupByCoords(lon, lat) {
-    return fetchJSON(PROXY + '/city?q=' + encodeURIComponent(lon.toFixed(2) + ',' + lat.toFixed(2)))
-      .then(function (geoData) {
-        if (geoData.code === '200' && geoData.location && geoData.location[0]) {
-          return { locationId: geoData.location[0].id, cityName: geoData.location[0].name };
-        }
-        throw new Error('geo lookup failed');
-      });
+  // ---------- 数据归一化（把 v1 原始结构转成渲染层可用的扁平对象） ----------
+  function normalizeNow(raw) {
+    if (!raw || !raw.condition) return null;
+    var c = raw.condition || {};
+    var hum = Number(raw.humidity);
+    if (!isFinite(hum)) hum = NaN;
+    return {
+      code: String(c.code || ''),
+      text: c.text || '',
+      temp: Math.round(Number((raw.temperature || {}).value)),
+      feels: Math.round(Number((raw.feelsLike || {}).value)),
+      humidity: isFinite(hum) ? (hum <= 1 ? Math.round(hum * 100) : Math.round(hum)) : NaN,
+      windScale: Number((raw.wind || {}).scale),
+      windCompass: ((raw.wind || {}).direction || {}).compass || ''
+    };
   }
 
-  // 浏览器定位（用户授权）→ 反查城市；任何失败都回退默认城市，绝不外发 IP
-  function locate() {
-    var cached = readCachedLocation();
-    if (cached) return Promise.resolve({ locationId: cached.id, cityName: cached.name, fallback: false });
-
-    return new Promise(function (resolve) {
-      if (!navigator.geolocation) return resolve(null);
-      navigator.geolocation.getCurrentPosition(
-        function (pos) { resolve(pos.coords); },
-        function () { resolve(null); },
-        { timeout: 6000, maximumAge: 10 * 60 * 1000, enableHighAccuracy: false }
-      );
-    }).then(function (coords) {
-      if (!coords) return null;
-      return lookupByCoords(coords.longitude, coords.latitude).catch(function () { return null; });
-    }).then(function (loc) {
-      if (loc) {
-        writeCachedLocation(loc);
-        return { locationId: loc.locationId, cityName: loc.cityName, fallback: false };
-      }
-      // 定位被拒 / 失败：回退默认城市，并标记 fallback 以便给出提示
-      return { locationId: DEFAULT_LOCATION, cityName: DEFAULT_CITY, fallback: true };
+  function normalizeDaily(raw) {
+    if (!raw || !Array.isArray(raw.days)) return [];
+    return raw.days.map(function (d, i) {
+      var day = d.daytime || {}, night = d.nighttime || {};
+      var dc = day.condition || {}, nc = night.condition || {};
+      var dt = new Date(d.forecastStartTime);
+      var pop = Number((day.precipitation || {}).probability);
+      return {
+        label: i === 0 ? '今天' : i === 1 ? '明天' : weekCN(dt),
+        code: String(dc.code || nc.code || ''),
+        text: dc.text || nc.text || '',
+        tMax: Math.round(Number((d.temperatureMax || {}).value)),
+        tMin: Math.round(Number((d.temperatureMin || {}).value)),
+        pop: Math.round((isFinite(pop) ? pop : 0) * 100)
+      };
     });
   }
 
-  function render(data) {
+  function normalizeHourly(raw) {
+    if (!raw || !Array.isArray(raw.hours)) return [];
+    return raw.hours.slice(0, 4).map(function (h, i) {
+      var c = h.condition || {};
+      var dt = new Date(h.forecastTime);
+      var hh = dt.getHours();
+      return {
+        label: i === 0 ? '现在' : (hh < 10 ? '0' + hh : hh) + ':00',
+        code: String(c.code || ''),
+        text: c.text || '',
+        temp: Math.round(Number((h.temperature || {}).value))
+      };
+    });
+  }
+
+  function normalizeAir(raw) {
+    if (!raw || !Array.isArray(raw.indexes) || !raw.indexes.length) return null;
+    var idx = null;
+    for (var i = 0; i < raw.indexes.length; i++) {
+      if (raw.indexes[i].code === 'cn-mee') { idx = raw.indexes[i]; break; }
+    }
+    if (!idx) idx = raw.indexes[0];
+    var color = idx.color
+      ? 'rgba(' + idx.color.red + ',' + idx.color.green + ',' + idx.color.blue + ',' + (idx.color.alpha == null ? 1 : idx.color.alpha) + ')'
+      : '';
+    return {
+      aqi: idx.aqiDisplay != null ? idx.aqiDisplay : idx.aqi,
+      category: idx.category || '',
+      color: color,
+      pollutant: idx.primaryPollutant ? idx.primaryPollutant.name : ''
+    };
+  }
+
+  function normalizeWarning(raw) {
+    if (!raw) return false;
+    if (raw.metadata && raw.metadata.zeroResult === true) return false;
+    return Array.isArray(raw.alerts) && raw.alerts.length > 0;
+  }
+
+  function normalizeCity(raw) {
+    if (!raw || !Array.isArray(raw.location) || !raw.location.length) return null;
+    var g = raw.location[0];
+    return { id: g.id, name: g.name, lat: Number(g.lat), lon: Number(g.lon), adm1: g.adm1, adm2: g.adm2 };
+  }
+
+  // ---------- 定位 ----------
+  function geolocate() {
+    return new Promise(function (resolve) {
+      if (!navigator.geolocation) return resolve(null);
+      var done = false;
+      navigator.geolocation.getCurrentPosition(
+        function (pos) { done = true; resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude }); },
+        function () { resolve(null); },
+        { timeout: 8000, maximumAge: 10 * 60 * 1000, enableHighAccuracy: false }
+      );
+      setTimeout(function () { if (!done) resolve(null); }, 9000);
+    });
+  }
+
+  function autoLocate() {
+    return geolocate().then(function (c) {
+      if (!c) return null;
+      return fetchJSON(PROXY + '/city?q=' + encodeURIComponent(c.lon.toFixed(2) + ',' + c.lat.toFixed(2)))
+        .then(normalizeCity);
+    });
+  }
+
+  // ---------- 渲染 ----------
+  function renderTopBar(p) {
     var box = document.getElementById('he-plugin-simple');
     if (!box) return;
-    var now = data.now;
-    var icon = ICON_MAP[now.icon] || 'cloud';
-    var aqiHtml = '';
-    if (data.aqi !== null && data.aqi !== undefined) {
-      var level = AQI_MAP.find(function (a) { return data.aqi <= a.max; });
-      aqiHtml = '<span class="bn-aqi" style="color:' + level.color + ';">· ' + level.label + '</span>';
-    }
-    var warnHtml = data.warning ? ' <i class="fas fa-exclamation-triangle bn-warn" title="当前有气象预警"></i>' : '';
-    // 定位（城市）+ 天气图标 + 温度 + 状况 + 空气质量
-    var cityTitle = data.fallback ? ' title="未能获取定位，显示默认城市"' : '';
-    var cityHtml = '<span class="bn-city" title="' + data.cityName + '"><i class="fas fa-location-dot"></i> ' + data.cityName + '</span>';
-    // 常规态只露图标（由 CSS 的 .bn-weather 收起控制），
-    // 鼠标悬停顶栏左区时 .bn-wx-detail 展开显示：温度 / 状况 / AQI / 预警
+    box.style.display = '';
+    var now = p.now;
+    var aqiHtml = p.air
+      ? '<span class="bn-aqi" style="color:' + p.air.color + ';">· ' + p.air.aqi + ' ' + p.air.category + '</span>'
+      : '';
+    var warnHtml = p.warning
+      ? ' <i class="fas fa-exclamation-triangle bn-warn" title="当前有气象预警"></i>'
+      : '';
     box.innerHTML =
-      '<span class="bn-wx-icon" aria-hidden="true"><i class="fas fa-' + icon + '"></i></span>' +
+      '<span class="bn-wx-icon" aria-hidden="true"><i class="' + qi(now.code) + '"></i></span>' +
       '<span class="bn-wx-detail">' +
-        cityHtml +
-        '<span class="bn-wx"><i class="fas fa-' + icon + '"></i> ' + now.temp + '° ' + now.text + '</span>' +
+        '<span class="bn-city" title="' + p.loc.name + '"><i class="fas fa-location-dot"></i> ' + p.loc.name + '</span>' +
+        '<span class="bn-wx"><i class="' + qi(now.code) + '"></i> ' + now.temp + '° ' + now.text + '</span>' +
         aqiHtml + warnHtml +
       '</span>';
-
-    // 同时更新侧边栏时钟卡片上的天气和地点
-    var clockCard = document.getElementById('hexo_electric_clock');
-    if (clockCard) {
-      var weekMap2 = { MON: '周一', TUE: '周二', WED: '周三', THU: '周四', FRI: '周五', SAT: '周六', SUN: '周日' };
-      var dateEl = clockCard.querySelector('.card-clock-clockdate');
-      if (dateEl) {
-        var txt = dateEl.textContent;
-        for (var en in weekMap2) { txt = txt.replace(en, weekMap2[en]); }
-        dateEl.textContent = txt;
-      }
-      var weatherEl = clockCard.querySelector('.card-clock-weather');
-      if (weatherEl) weatherEl.textContent = ' ' + now.text + ' ' + now.temp + '°C';
-      var locEl = clockCard.querySelector('.card-clock-location');
-      if (locEl) locEl.textContent = ' ' + data.cityName;
-    }
-
-    // 更新首页 dashboard 天气卡（如果存在）
-    renderDashboardWeather(data);
   }
 
-  /* 填充首页 dashboard 天气卡（.dash-weather） */
-  function renderDashboardWeather(data) {
-    var card = document.querySelector('.dash-weather');
+  function renderDashboard(p) {
+    var card = qs('.dash-weather');
     if (!card) return;
-    var now = data.now;
-    var icon = ICON_MAP[now.icon] || 'cloud';
+    card.style.display = '';
+    var now = p.now;
 
-    // 城市名
-    var cityEl = card.querySelector('.dash-weather__city');
-    if (cityEl) cityEl.innerHTML = '<i class="fas fa-map-marker-alt"></i> ' + data.cityName;
-
-    // 大温度
-    var tempEl = card.querySelector('.dash-weather__temp');
-    if (tempEl) tempEl.textContent = now.temp + '°';
-
-    // 天气图标
-    var iconEl = card.querySelector('.dash-weather__icon');
-    if (iconEl) iconEl.innerHTML = '<i class="fas fa-' + icon + '"></i>';
-
-    // 天气描述
-    var descEl = card.querySelector('.dash-weather__desc');
-    if (descEl) descEl.textContent = now.text;
-
-    // 最高/最低温（从 7d 预报取今天）
-    if (data.daily && data.daily[0]) {
-      var rangeEl = card.querySelector('.dash-weather__range');
-      if (rangeEl) rangeEl.textContent = '最高' + data.daily[0].tempMax + '° · 最低' + data.daily[0].tempMin + '°';
+    var cityEl = qs('.dash-weather__city', card);
+    if (cityEl) {
+      var srcTag = p.loc.source === 'manual' ? '手动' : '自动';
+      cityEl.innerHTML = '<i class="fas fa-map-marker-alt"></i> ' +
+        '<span class="dash-weather__city-name">' + p.loc.name + '</span>' +
+        '<span class="dash-weather__src">' + srcTag + '</span>';
     }
 
-    // 未来4小时预报
-    if (data.hourly && data.hourly.length >= 4) {
-      var hours = card.querySelectorAll('.dash-weather__hour');
-      for (var i = 0; i < hours.length && i < 4; i++) {
-        var h = data.hourly[i];
-        var label = i === 0 ? '现在' : i + '小时';
-        var hIcon = ICON_MAP[h.icon] || 'cloud';
-        hours[i].innerHTML =
-          '<div class="dash-weather__hour-label">' + label + '</div>' +
-          '<div class="dash-weather__hour-icon"><i class="fas fa-' + hIcon + '"></i></div>' +
-          '<div class="dash-weather__hour-temp">' + h.temp + '°</div>';
+    setText(card, '.dash-weather__temp', now.temp + '°');
+    var iconEl = qs('.dash-weather__icon', card);
+    if (iconEl) iconEl.innerHTML = '<i class="' + qi(now.code) + '"></i>';
+    setText(card, '.dash-weather__desc', now.text);
+
+    if (p.daily && p.daily.length) {
+      var d0 = p.daily[0];
+      setText(card, '.dash-weather__range', '最高' + d0.tMax + '° · 最低' + d0.tMin + '°');
+    }
+
+    var hourEls = qsa('.dash-weather__hour', card);
+    (p.hourly || []).forEach(function (h, i) {
+      if (!hourEls[i]) return;
+      hourEls[i].innerHTML =
+        '<div class="dash-weather__hour-label">' + h.label + '</div>' +
+        '<div class="dash-weather__hour-icon"><i class="' + qi(h.code) + '"></i></div>' +
+        '<div class="dash-weather__hour-temp">' + h.temp + '°</div>';
+    });
+
+    var dailyEl = qs('.dash-weather__daily', card);
+    if (dailyEl) {
+      if (!p.daily || !p.daily.length) {
+        dailyEl.setAttribute('hidden', '');
+      } else {
+        dailyEl.removeAttribute('hidden');
+        dailyEl.innerHTML = p.daily.map(function (d) {
+          return '<div class="dash-weather__day" title="' + d.text + '">' +
+            '<div class="dash-weather__day-name">' + d.label + '</div>' +
+            '<div class="dash-weather__day-icon"><i class="' + qi(d.code) + '"></i></div>' +
+            '<div class="dash-weather__day-temp">' + d.tMax + '°/' + d.tMin + '°</div>' +
+            '<div class="dash-weather__day-pop">' + (d.pop >= 20 ? d.pop + '%' : '') + '</div>' +
+          '</div>';
+        }).join('');
       }
     }
 
-    // 体感/湿度/风速
-    var stats = card.querySelectorAll('.dash-weather__stat');
-    if (stats.length >= 3) {
-      if (now.feelsLike !== undefined) {
-        stats[0].querySelector('span').textContent = now.feelsLike + '°';
-      }
-      if (now.humidity !== undefined) {
-        stats[1].querySelector('span').textContent = now.humidity + '%';
-      }
-      if (now.windScale !== undefined) {
-        stats[2].querySelector('span').textContent = now.windScale + '级';
+    var aqiEl = qs('.dash-weather__aqi', card);
+    if (aqiEl) {
+      if (!p.air) {
+        aqiEl.setAttribute('hidden', '');
+      } else {
+        aqiEl.removeAttribute('hidden');
+        aqiEl.innerHTML =
+          '<span class="dash-weather__aqi-badge" style="color:' + p.air.color + '">' + p.air.aqi + ' ' + p.air.category + '</span>' +
+          (p.air.pollutant ? '<span class="dash-weather__aqi-poll">首要 ' + p.air.pollutant + '</span>' : '') +
+          '<a class="dash-weather__attrib" href="https://developer.qweather.com/attribution.html" target="_blank" rel="noopener">QWeather</a>';
       }
     }
+
+    var alertEl = qs('.dash-weather__alert', card);
+    if (alertEl) {
+      if (!p.warning) {
+        alertEl.setAttribute('hidden', '');
+      } else {
+        alertEl.removeAttribute('hidden');
+        alertEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i> 当前有气象预警，请留意官方信息';
+      }
+    }
+
+    var stats = qsa('.dash-weather__stat', card);
+    if (stats[0]) stats[0].innerHTML = '<i class="fas fa-temperature-half"></i>体感 <span>' + (isFinite(now.feels) ? now.feels + '°' : '--') + '</span>';
+    if (stats[1]) stats[1].innerHTML = '<i class="fas fa-droplet"></i>湿度 <span>' + (isFinite(now.humidity) ? now.humidity + '%' : '--') + '</span>';
+    if (stats[2]) stats[2].innerHTML = '<i class="fas fa-wind"></i>' + windCN(now.windCompass) + '风 <span>' + (now.windScale || '--') + '级</span>';
+
+    var notice = qs('.dash-weather__notice', card);
+    if (notice) { notice.setAttribute('hidden', ''); notice.innerHTML = ''; }
   }
 
-  function renderError() {
+  function renderClock(p) {
+    var clock = document.getElementById('hexo_electric_clock');
+    if (!clock) return;
+    var wEl = qs('.card-clock-weather', clock);
+    if (wEl) wEl.textContent = ' ' + p.now.text + ' ' + p.now.temp + '°C';
+    var hEl = qs('.card-clock-humidity', clock);
+    if (hEl) hEl.textContent = isFinite(p.now.humidity) ? ' 💧' + p.now.humidity + '%' : '';
+    var lEl = qs('.card-clock-location', clock);
+    if (lEl) lEl.textContent = ' ' + p.loc.name;
+  }
+
+  function renderAll(p) {
+    renderTopBar(p);
+    renderDashboard(p);
+    renderClock(p);
+  }
+
+  // ---------- 状态渲染：定位中 / 无定位 / 加载失败 ----------
+  function showNotice(card, html) {
+    var notice = qs('.dash-weather__notice', card);
+    if (!notice) return;
+    notice.removeAttribute('hidden');
+    notice.innerHTML = html;
+  }
+
+  function renderLocating() {
     var box = document.getElementById('he-plugin-simple');
-    if (!box) return;
-    var txt = '<span class="bn-wx-icon" aria-hidden="true"><i class="fas fa-cloud"></i></span>' +
-      '<span class="bn-wx-detail"><span class="bn-city bn-wx-error" title="点击重试">' +
-      '<i class="fas fa-rotate-right"></i> 天气暂不可用</span></span>';
-    box.innerHTML = txt;
-    var retry = box.querySelector('.bn-wx-error');
-    if (retry) {
-      retry.style.cursor = 'pointer';
-      retry.addEventListener('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        box.innerHTML = '';
-        loadWeather();
-      });
-    }
-  }
-
-  var loading = false;
-  // ------------------------------------------------------------
-  // 代理可用性探测（只在 GitHub Pages 上发生一次）
-  // 为什么需要：functions/ 目录是 Cloudflare Pages Functions 专属约定，
-  //   GitHub Pages 不会执行它，/api/weather/* 会直接返回 404。
-  //   本站按 docs/deploy/cloudflare-pages.md 的流程可能部署在 Cloudflare Pages，
-  //   也可能回落到 GitHub Pages 裸托管——两种环境下脚本行为必须都是对的：
-  //     · 可用   → 正常渲染天气
-  //     · 不可用 → 首屏探测一次失败后就不再重试，避免每次 pjax 换页
-  //                都再打 3 个必然 404 的请求（控制台刷红 + 白等 8s 超时）
-  // ------------------------------------------------------------
-  var PROXY_STATE = 'unknown'; // unknown | ok | unavailable
-
-  function probeProxy() {
-    if (PROXY_STATE !== 'unknown') return Promise.resolve(PROXY_STATE === 'ok');
-    return fetch(PROXY + '/now?loc=' + DEFAULT_LOCATION, { method: 'HEAD' })
-      .then(function (r) {
-        // 404/405/501 说明这个路径根本不是 Functions 路由；
-        // 其它状态（含 401/500）说明路由存在，只是这次调用有问题，仍标为可用。
-        PROXY_STATE = (r.status === 404 || r.status === 405 || r.status === 501) ? 'unavailable' : 'ok';
-        return PROXY_STATE === 'ok';
-      })
-      .catch(function () {
-        // 网络层失败（断网/被拦）不永久拉黑，下次换页再试
-        return false;
-      });
-  }
-
-  function loadWeather() {
-    if (loading) return;               // 防止 pjax 重复触发导致并发请求
-    var box = document.getElementById('he-plugin-simple');
-    if (!box) return;
-
-    // ====== Mock 模式：本地预览用假数据 ======
-    if (USE_MOCK) {
-      loading = true;
-      setTimeout(function () {
-        render({
-          now: {
-            temp: '18',
-            text: '晴间多云',
-            icon: '101',
-            feelsLike: '17',
-            humidity: '45',
-            windScale: '2'
-          },
-          daily: [
-            { tempMax: '22', tempMin: '13', textDay: '晴间多云', iconDay: '101' },
-            { tempMax: '24', tempMin: '14', textDay: '多云', iconDay: '102' },
-            { tempMax: '21', tempMin: '15', textDay: '小雨', iconDay: '305' }
-          ],
-          hourly: [
-            { temp: '18', text: '晴间多云', icon: '101', time: '现在' },
-            { temp: '19', text: '多云', icon: '102', time: '1小时' },
-            { temp: '20', text: '多云', icon: '102', time: '2小时' },
-            { temp: '19', text: '晴间多云', icon: '101', time: '3小时' }
-          ],
-          aqi: 45,
-          warning: false,
-          cityName: '南京',
-          fallback: false
-        });
-        loading = false;
-      }, 500);
-      return;
-    }
-    // ====== Mock 模式结束 ======
-
-    // 加载态占位，避免出现"空胶囊"看起来像 UI 损坏
-    if (!box.childElementCount) {
+    if (box && box.style.display !== 'none') {
+      box.style.display = '';
       box.innerHTML = '<span class="bn-wx-icon" aria-hidden="true"><i class="fas fa-spinner fa-spin"></i></span>' +
         '<span class="bn-wx-detail"><span class="bn-city" style="opacity:.55;">定位中…</span></span>';
     }
+    var card = qs('.dash-weather');
+    if (card) {
+      card.style.display = '';
+      showNotice(card, '<i class="fas fa-location-crosshairs"></i> 正在获取定位…');
+    }
+  }
 
+  function renderNoLocation() {
+    var box = document.getElementById('he-plugin-simple');
+    if (box) {
+      box.style.display = '';
+      box.innerHTML = '<span class="bn-city bn-wx-error" data-wx-retry title="点击重试定位"><i class="fas fa-location-dot"></i> 未定位 · 重试</span>';
+    }
+    var card = qs('.dash-weather');
+    if (card) {
+      card.style.display = '';
+      showNotice(card, '<i class="fas fa-circle-info"></i> 未获取到定位，点右上角 <b>搜索</b> 选择城市，或点定位按钮重试。');
+      var wrap = qs('.dash-weather__search', card);
+      if (wrap) wrap.classList.add('open');
+    }
+    var clock = document.getElementById('hexo_electric_clock');
+    if (clock) {
+      var wEl = qs('.card-clock-weather', clock);
+      if (wEl) wEl.textContent = '';
+      var hEl = qs('.card-clock-humidity', clock);
+      if (hEl) hEl.textContent = '';
+    }
+  }
+
+  // 诊断：同时写入 window 与 DOM dataset，便于在隔离/无控制台环境定位失败原因
+  function recordErr(tag, err) {
+    var msg = tag + ' :: ' + (err && (err.stack || err.message || err));
+    window.__wxErr = msg;
+    var n = document.querySelector('.dash-weather__notice');
+    if (n) n.setAttribute('data-wx-err', String(msg).slice(0, 900));
+  }
+
+  function renderFetchError(loc) {
+    var box = document.getElementById('he-plugin-simple');
+    if (box) {
+      box.style.display = '';
+      box.innerHTML = '<span class="bn-wx-icon" aria-hidden="true"><i class="fas fa-cloud"></i></span>' +
+        '<span class="bn-wx-detail"><span class="bn-city bn-wx-error" data-wx-retry title="点击重试"><i class="fas fa-rotate-right"></i> 天气暂不可用</span></span>';
+    }
+    var card = qs('.dash-weather');
+    if (card) {
+      card.style.display = '';
+      showNotice(card, '<i class="fas fa-triangle-exclamation"></i> 天气数据加载失败，<a href="javascript:void(0)" data-wx-retry>点击重试</a>。');
+    }
+    // 失败但已有缓存城市时，保留最后一次数据不被清空
+    if (loc && lastPayload && lastPayload.loc && loc.name === lastPayload.loc.name) {
+      renderDashboard(lastPayload);
+      renderClock(lastPayload);
+    }
+  }
+
+  // ---------- 主流程 ----------
+  var PROXY_STATE = 'unknown'; // unknown | ok | unavailable
+  function probeProxy() {
+    if (PROXY_STATE !== 'unknown') return Promise.resolve(PROXY_STATE === 'ok');
+    return fetch(PROXY + '/now?lat=32.04&lon=118.77', { method: 'HEAD' })
+      .then(function (r) {
+        PROXY_STATE = (r.status === 404 || r.status === 405 || r.status === 501) ? 'unavailable' : 'ok';
+        return PROXY_STATE === 'ok';
+      })
+      .catch(function () { return false; });
+  }
+
+  function hideOnStaticHost() {
+    var box = document.getElementById('he-plugin-simple');
+    if (box) box.style.display = 'none';
+    var card = qs('.dash-weather');
+    if (card) card.style.display = 'none';
+    var clock = document.getElementById('hexo_electric_clock');
+    if (clock) {
+      var wEl = qs('.card-clock-weather', clock);
+      if (wEl) wEl.textContent = '';
+      var hEl = qs('.card-clock-humidity', clock);
+      if (hEl) hEl.textContent = '';
+    }
+  }
+
+  var lastPayload = null;
+
+  function fetchWeather(loc) {
+    busy = true;
+    var q = 'lat=' + encodeURIComponent(loc.lat) + '&lon=' + encodeURIComponent(loc.lon);
+    fetchJSON(PROXY + '/now?' + q).then(function (nowRaw) {
+      return Promise.all([
+        Promise.resolve(nowRaw),
+        fetchJSON(PROXY + '/daily?' + q + '&days=7').catch(function () { return null; }),
+        fetchJSON(PROXY + '/hourly?' + q + '&hours=24').catch(function () { return null; }),
+        fetchJSON(PROXY + '/air?' + q).catch(function () { return null; }),
+        fetchJSON(PROXY + '/warning?' + q).catch(function () { return null; })
+      ]);
+    }).then(function (rs) {
+      var payload = {
+        loc: loc,
+        now: normalizeNow(rs[0]),
+        daily: normalizeDaily(rs[1]),
+        hourly: normalizeHourly(rs[2]),
+        air: normalizeAir(rs[3]),
+        warning: normalizeWarning(rs[4])
+      };
+      if (!payload.now) {
+        recordErr('BAD_NOW', new Error('bad now payload :: raw=' + JSON.stringify(rs[0]).slice(0, 300)));
+        throw new Error('bad now payload');
+      }
+      lastPayload = payload;
+      try {
+        renderAll(payload);
+      } catch (renderErr) {
+        recordErr('RENDER', renderErr);
+        throw renderErr;
+      }
+    }).catch(function (err) {
+      recordErr('FETCH', err);
+      renderFetchError(loc);
+    }).then(function () { busy = false; });
+  }
+
+  function start() {
+    if (busy) return;
     probeProxy().then(function (available) {
-      if (!available) {
-        // 静态托管环境：收起容器，不再浪费一次定位授权与 3 个 404 请求
-        box.style.display = 'none';
+      if (!available) { hideOnStaticHost(); return; }
+
+      if (USE_MOCK) {
+        var mock = buildMock();
+        lastPayload = mock;
+        renderAll(mock);
         return;
       }
-      return locate().then(function (loc) {
-        return Promise.all([
-          fetchJSON(PROXY + '/now?loc=' + encodeURIComponent(loc.locationId)),
-          fetchJSON(PROXY + '/7d?loc=' + encodeURIComponent(loc.locationId)).catch(function () { return {}; }),
-          fetchJSON(PROXY + '/24h?loc=' + encodeURIComponent(loc.locationId)).catch(function () { return {}; }),
-          fetchJSON(PROXY + '/air?loc=' + encodeURIComponent(loc.locationId)).catch(function () { return {}; }),
-          fetchJSON(PROXY + '/warning?loc=' + encodeURIComponent(loc.locationId)).catch(function () { return {}; })
-        ]).then(function (results) {
-          var nowData = results[0];
-          var dailyData = results[1] || {};
-          var hourlyData = results[2] || {};
-          var airData = results[3] || {};
-          var warnData = results[4] || {};
-          if (nowData.code !== '200') throw new Error('weather: ' + nowData.code);
-          render({
-            now: nowData.now,
-            daily: dailyData.code === '200' ? dailyData.daily : null,
-            hourly: hourlyData.code === '200' ? hourlyData.hourly : null,
-            aqi: airData.code === '200' ? parseInt(airData.now.aqi) : null,
-            warning: warnData.code === '200' && warnData.warning && warnData.warning.length > 0,
-            cityName: loc.cityName,
-            fallback: loc.fallback
-          });
-        });
-      }).catch(function () {
-        renderError();
+
+      var cached = readLoc();
+      if (cached) { fetchWeather(cached); return; }
+
+      renderLocating();
+      autoLocate().then(function (g) {
+        if (!g) { renderNoLocation(); return; }
+        writeLoc(g, 'auto');
+        fetchWeather(g);
       });
-    }).then(function () {
-      loading = false;
     });
   }
 
-  if (document.readyState !== 'loading') loadWeather();
-  else document.addEventListener('DOMContentLoaded', loadWeather);
-  document.addEventListener('pjax:complete', function () { setTimeout(loadWeather, 300); });
+  // ---------- 首页手动搜索（仅 .dash-weather） ----------
+  var searchTimer = null;
+  function closeAllResults() {
+    qsa('.dash-weather__results').forEach(function (ul) { ul.innerHTML = ''; });
+    qsa('.dash-weather__search.open').forEach(function (wrap) { wrap.classList.remove('open'); });
+  }
+
+  function toggleSearch(card) {
+    var wrap = qs('.dash-weather__search', card);
+    if (!wrap) return;
+    var open = wrap.classList.toggle('open');
+    var input = qs('.dash-weather__search-input', wrap);
+    var ul = qs('.dash-weather__results', wrap);
+    if (open) {
+      if (input) { input.value = ''; input.focus(); }
+    } else if (ul) { ul.innerHTML = ''; }
+  }
+
+  function scheduleSearch(card, val) {
+    val = (val || '').trim();
+    var ul = qs('.dash-weather__results', card);
+    if (!ul) return;
+    if (searchTimer) clearTimeout(searchTimer);
+    if (!val) { ul.innerHTML = ''; return; }
+    searchTimer = setTimeout(function () {
+      fetchJSON(PROXY + '/city?q=' + encodeURIComponent(val)).then(function (data) {
+        var list = (data && Array.isArray(data.location)) ? data.location.slice(0, 6) : [];
+        ul._list = list;
+        if (!list.length) {
+          ul.innerHTML = '<li class="dash-weather__result-empty">无匹配城市</li>';
+          return;
+        }
+        ul.innerHTML = list.map(function (g, i) {
+          var sub = [g.adm2, g.adm1].filter(Boolean).join(' · ');
+          return '<li class="dash-weather__result-item" data-i="' + i + '">' +
+            '<span class="dash-weather__result-name">' + g.name + '</span>' +
+            (sub ? '<span class="dash-weather__result-sub">' + sub + '</span>' : '') +
+          '</li>';
+        }).join('');
+      }).catch(function () {
+        ul.innerHTML = '<li class="dash-weather__result-empty">搜索失败，请重试</li>';
+      });
+    }, 300);
+  }
+
+  function chooseCity(item) {
+    var card = item.closest('.dash-weather');
+    if (!card) return;
+    var ul = qs('.dash-weather__results', card);
+    var list = (ul && ul._list) || [];
+    var g = list[Number(item.getAttribute('data-i'))];
+    if (!g) return;
+    var loc = { id: g.id, name: g.name, lat: Number(g.lat), lon: Number(g.lon), source: 'manual' };
+    writeLoc(loc, 'manual');
+    closeAllResults();
+    fetchWeather(loc);
+  }
+
+  function resetAndLocate() {
+    clearLoc();
+    closeAllResults();
+    start();
+  }
+
+  function bindInteractions() {
+    if (window.__BIKO_WX_BIND__) return;
+    window.__BIKO_WX_BIND__ = true;
+
+    document.addEventListener('click', function (e) {
+      var retry = e.target.closest && e.target.closest('[data-wx-retry]');
+      if (retry) { e.preventDefault(); start(); return; }
+
+      var btn = e.target.closest && e.target.closest('[data-wx]');
+      if (btn) {
+        var card = btn.closest('.dash-weather');
+        var kind = btn.getAttribute('data-wx');
+        if (kind === 'search' && card) toggleSearch(card);
+        else if (kind === 'locate' && card) resetAndLocate();
+        return;
+      }
+      var item = e.target.closest && e.target.closest('.dash-weather__result-item');
+      if (item) { chooseCity(item); return; }
+      if (!(e.target.closest && e.target.closest('.dash-weather__search'))) closeAllResults();
+    });
+
+    document.addEventListener('input', function (e) {
+      var input = e.target.closest && e.target.closest('.dash-weather__search-input');
+      if (!input) return;
+      scheduleSearch(input.closest('.dash-weather'), input.value);
+    });
+
+    document.addEventListener('focusout', function (e) {
+      if (e.target.closest && e.target.closest('.dash-weather__search-input')) {
+        setTimeout(closeAllResults, 180);
+      }
+    });
+  }
+
+  // ---------- Mock（仅本地目视，线上 false） ----------
+  function buildMock() {
+    return {
+      loc: { name: '南京', source: 'auto' },
+      now: { code: '101', text: '多云', temp: 18, feels: 17, humidity: 46, windScale: 2, windCompass: 'ne' },
+      daily: [
+        { label: '今天', code: '101', tMax: 22, tMin: 13, pop: 10 },
+        { label: '明天', code: '102', tMax: 24, tMin: 14, pop: 0 },
+        { label: '周四', code: '305', tMax: 21, tMin: 15, pop: 60 },
+        { label: '周五', code: '104', tMax: 20, tMin: 14, pop: 20 },
+        { label: '周六', code: '101', tMax: 23, tMin: 15, pop: 5 },
+        { label: '周日', code: '103', tMax: 25, tMin: 16, pop: 0 },
+        { label: '周一', code: '305', tMax: 19, tMin: 12, pop: 45 }
+      ],
+      hourly: [
+        { label: '现在', code: '101', temp: 18 },
+        { label: '10:00', code: '101', temp: 19 },
+        { label: '11:00', code: '102', temp: 20 },
+        { label: '12:00', code: '102', temp: 21 }
+      ],
+      air: { aqi: 45, category: '优', color: 'rgba(76,175,80,1,.9)', pollutant: 'PM 10' },
+      warning: false
+    };
+  }
+
+  // ---------- 启动 ----------
+  bindInteractions();
+  if (document.readyState !== 'loading') start();
+  else document.addEventListener('DOMContentLoaded', start);
+  document.addEventListener('pjax:complete', function () { setTimeout(start, 300); });
 })();

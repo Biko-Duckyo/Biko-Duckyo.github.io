@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 430" font-family="'Microsoft YaHei','PingFang SC','Noto Sans SC',sans-serif">
+  <defs>
+    <marker id="t17" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#2563eb"/></marker>
+  </defs>
+  <rect x="8" y="8" width="804" height="414" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="410" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="#334155">射频前端两大任务：调谐（谐振 X=0）与匹配（ZC = Z0 = 50 Ω）</text>
+
+  <!-- 上排：电路元件 -->
+  <g font-size="12" text-anchor="middle">
+    <rect x="34" y="86" width="150" height="74" rx="8" fill="#dbeafe" stroke="#93c5fd"/>
+    <text x="109" y="112" fill="#1d4ed8" font-weight="700">线圈支路</text>
+    <text x="109" y="132" fill="#475569">L 电感 · R 电阻</text>
+    <text x="109" y="150" fill="#475569">元件与负载共同影响响应</text>
+
+    <rect x="244" y="86" width="150" height="74" rx="8" fill="#ede9fe" stroke="#c4b5fd"/>
+    <text x="319" y="112" fill="#6d28d9" font-weight="700">CT 调谐电容</text>
+    <text x="319" y="132" fill="#475569">主要调节谐振频率</text>
+    <text x="319" y="150" fill="#475569">等效 LC 仅作近似</text>
+
+    <rect x="454" y="86" width="150" height="74" rx="8" fill="#ede9fe" stroke="#c4b5fd"/>
+    <text x="529" y="112" fill="#6d28d9" font-weight="700">CM 匹配电容</text>
+    <text x="529" y="132" fill="#475569">调节输入阻抗</text>
+    <text x="529" y="150" fill="#475569">具体公式依赖电路拓扑</text>
+
+    <rect x="664" y="86" width="122" height="74" rx="8" fill="#dcfce7" stroke="#86efac"/>
+    <text x="725" y="112" fill="#15803d" font-weight="700">源端</text>
+    <text x="725" y="132" fill="#475569">ZC = Z0</text>
+    <text x="725" y="150" fill="#475569">Z0 = 50 Ω</text>
+  </g>
+  <g stroke="#2563eb" stroke-width="2" marker-end="url(#t17)">
+    <line x1="184" y1="123" x2="242" y2="123"/>
+    <line x1="394" y1="123" x2="452" y2="123"/>
+    <line x1="604" y1="123" x2="662" y2="123"/>
+  </g>
+
+  <!-- 下排：两个判据 -->
+  <g font-size="13" text-anchor="middle">
+    <rect x="74" y="214" width="300" height="92" rx="8" fill="#fef3c7" stroke="#fcd34d"/>
+    <text x="224" y="242" fill="#b45309" font-weight="700">判据一 · 调谐（谐振）</text>
+    <text x="224" y="266" fill="#475569">虚部 X = 0，即 jωL 与 1/(jωC) 抵消</text>
+    <text x="224" y="286" fill="#475569">在工作频率处校准虚部与实部</text>
+
+    <rect x="446" y="214" width="300" height="92" rx="8" fill="#fee2e2" stroke="#fca5a5"/>
+    <text x="596" y="242" fill="#b91c1c" font-weight="700">判据二 · 匹配</text>
+    <text x="596" y="266" fill="#475569">实部 ZC 等于同轴线特征阻抗 50 Ω</text>
+    <text x="596" y="286" fill="#475569">理想匹配减小反射；接收还需考虑噪声</text>
+  </g>
+
+  <text x="410" y="348" text-anchor="middle" font-size="13" fill="#475569">示意图不定义唯一电路连接；先确认拓扑，再推导调谐与阻抗变换关系</text>
+  <text x="410" y="378" text-anchor="middle" font-size="12" fill="#94a3b8">例：¹H @ 5.0 T 约 212.9 MHz；调谐和匹配应在实际负载及工作频率下验证</text>
+  <text x="410" y="400" text-anchor="middle" font-size="12" fill="#94a3b8">配套梯度结构与主动屏蔽需结合设备设计；示意模型不等于完整可施工电路</text>
+</svg>

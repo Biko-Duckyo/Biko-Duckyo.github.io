@@ -201,6 +201,10 @@ a#download:hover {
   border-top-color: #7e96b8;
 }
 
+@media (max-width: 768px) {
+  #loading-box { display: none; }
+}
+
 /* ---------- 11. 导航栏标题栏在深色模式下的过渡 ---------- */
 #nav {
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
@@ -216,7 +220,7 @@ a#download:hover {
   transform: scale(1.1);
 }
 
-/* ---------- 13. 强制右下角工具栏始终可见 ---------- */
+/* ---------- 13. 桌面工具栏（手机覆盖见文件末尾） ---------- */
 #rightside {
   opacity: 1 !important;
   transform: translateZ(0) !important;
@@ -1289,4 +1293,37 @@ body:not(.biko-home) #footer {
 /* 历史上的今天：仅首页 dashboard 保留，文章/归档等内页侧栏隐藏（功能冗余） */
 body:not(.home-dashboard) #history-card-widget {
   display: none !important;
+}
+
+/* ======================================================
+ * 侧栏目录：阅读进度补百分号
+ * 主题只写入 0-100 整数、不带 %，单看像无意义数字；
+ * :not(:empty) 保证顶部（进度为空）时不出现孤立的 %。
+ * 仅作用于目录卡片，不影响回到顶部按钮的 .scroll-percent。
+ * ====================================================== */
+#card-toc .item-headline .toc-percentage:not(:empty)::after {
+  content: '%';
+}
+
+/* Mobile page actions share the header drawer. Only contextual reading controls float. */
+@media (max-width: 768px) {
+  body div#fixedcard-dashboard { display: none !important; }
+  /* All utility launchers live in the header drawer on phones, so no fixed button covers text. */
+  body #rightside { display: none !important; }
+  body #rightside #rightside-config-hide,
+  body #rightside #rightside-config,
+  body #rightside #music-toggle:not(.is-playing),
+  body:not(.biko-scrolled) #rightside #go-up { display: none !important; }
+  body #rightside {
+    right: max(12px, env(safe-area-inset-right, 0px)) !important;
+    bottom: max(16px, env(safe-area-inset-bottom, 0px)) !important;
+    width: auto;
+  }
+  body #rightside #rightside-config-show { gap: 6px; flex-direction: column; }
+  body #rightside button, body #rightside a { width: 44px; height: 44px; border-radius: var(--r-control); }
+  body #rightside #music-toggle { margin-top: 6px; }
+  body:has(#bmpg-player) #rightside #music-toggle { display: none !important; }
+  body #rightside button:hover { transform: none; }
+  body #biko-music-panel { left: 12px; right: 12px; bottom: max(16px, env(safe-area-inset-bottom, 0px)); width: auto; max-width: 390px; }
+  body #biko-music-panel.open { z-index: var(--z-overlay); }
 }

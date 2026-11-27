@@ -4,13 +4,21 @@
  * 面板：旋转唱片 / 歌名歌手 / 进度 / 随机·上下首·播放·音量
  * ============================================================ */
 (function () {
+  /* 幂等守卫：带 data-pjax 的脚本在 pjax 换页时可能被重复 eval，
+     只保留首份闭包，避免重复注册 pjax 监听 / 定时器 / 按钮绑定。
+     注意牌子名与 music_page.js 独立，二者互不阻断。 */
+  if (window.__BIKO_BT_BOOTED) return
+  window.__BIKO_BT_BOOTED = true
+
   var launcher, panel
   var bound = false
   var ui = {}
-  var shuffle = false
   var lastVol = 0.7
 
   function ap() { return window.__BIKO_AP__ || null }
+  /* 顺序模式以实例 options.order 为唯一真相（'random' | 'list'），不另存本地变量；
+     APlayer 的 setMode() 只切换 mini/normal 尺寸，不能用来切随机/循环。 */
+  function isRandom(a) { return !!a && a.options && a.options.order === 'random' }
   function pad(n) { return (n < 10 ? '0' : '') + n }
   function fmt(s) {
     if (!isFinite(s) || s < 0) return '0:00'
@@ -61,11 +69,31 @@
   }
   function renderStatus() {
     var a = ap()
-    if (!a || !ui.status) return
-    var label = shuffle ? '随机播放' : '列表循环'
+    if (!a || !ui.status || !a.list || !a.list.audios) return
+    var label = isRandom(a) ? '随机播放' : '列表循环'
     ui.status.textContent = label + ' · ' + (a.list.index + 1) + '/' + a.list.audios.length
   }
-  function renderAll() { renderMeta(); renderProgress(); renderPlayBtn(); renderStatus() }
+  /* 顺序按钮高亮 / 静音图标与滑块都从实例状态回读，保证与音乐页一致 */
+  function renderModeUI() {
+    var a = ap()
+    var btn = document.getElementById('bmp-shuffle')
+    if (!btn) return
+    var on = !!isRandom(a)
+    btn.classList.toggle('is-active', on)
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false')
+  }
+  function renderVolumeUI() {
+    var a = ap()
+    if (!a || !a.audio) return
+    var muted = !!a.audio.muted || a.audio.volume === 0
+    if (ui.volRange) ui.volRange.value = a.audio.muted ? 0 : a.audio.volume
+    var muteBtn = document.getElementById('bmp-mute')
+    if (muteBtn) {
+      var icon = muteBtn.querySelector('i')
+      if (icon) icon.className = 'fas ' + (muted ? 'fa-volume-xmark' : 'fa-volume-high')
+    }
+  }
+  function renderAll() { renderMeta(); renderProgress(); renderPlayBtn(); renderModeUI(); renderVolumeUI(); renderStatus() }
 
   /* ---------- 播放状态心跳 ----------
    * 与 /music/ 页同一个坑：APlayer 的 play/pause 事件是后置的（要等
@@ -99,22 +127,30 @@
     a.on('loadeddata', function () { renderMeta(); renderProgress() })
     a.on('canplay', function () { renderMeta(); renderProgress() })
     a.on('listswitch', function () { setTimeout(renderAll, 40) })
-    a.on('volumechange', function () {
-      if (ui.volRange) ui.volRange.value = a.audio.muted ? 0 : a.audio.volume
-    })
-    /* 首次渲染：ui.playingState 是 undefined，任何布尔值都会触发真写 */
+    a.on('volumechange', function () { renderVolumeUI() })
+    /* 首次渲染：ui._lastPlaying 为 null，首次比较必然触发真写 */
     renderAll()
   }
 
   /* ---------- 面板开关 ---------- */
+  function isMusicPage() { return /\/music\/?/.test(location.pathname) }
   function openPanel() {
+    if (!panel) return
+    /* R3 双保险：音乐页是整屏播放器，任何路径都不展开小面板（只拦展开，不碰播放状态） */
+    if (isMusicPage()) return
     panel.classList.add('open')
     document.body.classList.add('biko-music-open')
   }
   function closePanel() {
+    /* 守卫：pjax 回调可能早于 buildPanel() 创建闭包 panel，此时无可收的 DOM，直接返回 */
+    if (!panel) return
     panel.classList.remove('open')
     document.body.classList.remove('biko-music-open')
   }
+  /* R2：换页即收起面板卡片。只切 class，绝不调 ap.pause()；
+     launcher 的 is-playing 旋转态由下方 bindAp 的 play/pause 事件独立驱动，
+     播放转、暂停停，与面板是否展开无关。 */
+  function syncPanelRoute() { closePanel() }
 
   /* ---------- 构建面板 ---------- */
   var PANEL_HTML =
@@ -152,7 +188,6 @@
     panel.id = 'biko-music-panel'
     panel.innerHTML = PANEL_HTML
     document.body.appendChild(panel)
-    ui.playingState = null      // 未知态：首次 renderPlayBtn 必须真写一次 DOM
     ui.disc = panel.querySelector('#bmp-disc')
     ui.title = panel.querySelector('#bmp-title')
     ui.artist = panel.querySelector('#bmp-artist')
@@ -171,13 +206,12 @@
       if (a.audio.paused) {
         var p = a.play()
         if (p && p.catch) p.catch(function () {})
-        /* 乐观翻转 + 起表，让图标立刻跟手（理由见 startBeat 处注释） */
-        ui.playingState = true
+        /* 乐观翻转 + 起表，让图标立刻跟手（理由见 startBeat 处注释）；
+           幂等比较用 ui._lastPlaying，见 renderPlayBtn() */
         renderPlayBtn()
         startBeat()
       } else {
         a.pause()
-        ui.playingState = false
         renderPlayBtn()
         stopBeat()
       }
@@ -186,10 +220,9 @@
     panel.querySelector('#bmp-forward').addEventListener('click', function () { var a = ap(); if (a) a.skipForward() })
     panel.querySelector('#bmp-shuffle').addEventListener('click', function () {
       var a = ap()
-      if (!a) return
-      shuffle = !shuffle
-      try { a.setMode(shuffle ? 'random' : 'circulation') } catch (e) {}
-      this.classList.toggle('is-active', shuffle)
+      if (!a || !a.options) return
+      a.options.order = isRandom(a) ? 'list' : 'random'
+      renderModeUI()
       renderStatus()
     })
     ui.seek.addEventListener('input', function () {
@@ -198,24 +231,24 @@
     })
     ui.volRange.addEventListener('input', function () {
       var a = ap()
-      if (!a) return
+      if (!a || !a.audio) return
       var v = parseFloat(this.value)
       if (v > 0) lastVol = v
+      if (a.audio.muted) a.audio.muted = false
       a.volume(Math.round(v * 100), false)
     })
     panel.querySelector('#bmp-mute').addEventListener('click', function () {
       var a = ap()
-      if (!a) return
-      var icon = this.querySelector('i')
-      if (a.audio.volume > 0 && !a.audio.muted) {
-        lastVol = a.audio.volume
+      if (!a || !a.audio) return
+      var muted = !!a.audio.muted || a.audio.volume === 0
+      if (!muted) {
+        if (a.audio.volume > 0) lastVol = a.audio.volume
         a.volume(0, false)
       } else {
-        a.volume(Math.round(lastVol * 100), false)
+        a.audio.muted = false
+        a.volume(Math.round(lastVol * 100) || 70, false)
       }
-      setTimeout(function () {
-        if (icon) icon.className = 'fas ' + (a.audio.volume > 0 && !a.audio.muted ? 'fa-volume-high' : 'fa-volume-xmark')
-      }, 60)
+      renderVolumeUI()
     })
   }
 
@@ -233,7 +266,7 @@
       e.stopPropagation()
       /* 音乐页面本身就是全页播放器，不展开小面板 */
       if (/\/music\/?/.test(location.pathname)) return
-      var isOpen = panel.classList.contains('open')
+      var isOpen = !!(panel && panel.classList.contains('open'))
       // 「点击音乐按钮才播放」：只有用户点左下角音符按钮时才驱动播放，
       // 且必须由这个真实用户手势同步触发，才能满足浏览器自动播放策略。
       if (isOpen) {
@@ -246,8 +279,7 @@
         try {
           var p = a.play()
           if (p && p.catch) p.catch(function () {})
-          /* 乐观翻转：和面板内播放按钮保持同一逻辑 */
-          ui.playingState = true
+          /* 乐观翻转：和面板内播放按钮保持同一逻辑（幂等比较走 _lastPlaying） */
           renderPlayBtn()
           startBeat()
         } catch (err) {}
@@ -265,9 +297,13 @@
        暂停中则保证表是停的。 */
     var a = ap()
     if (a && a.audio) {
-      if (a.audio.paused) { renderPlayBtn(); stopBeat() }
-      else { renderPlayBtn(); startBeat() }
+      renderAll()
+      /* R4：首帧把按钮旋转态也按真实播放态校准（播放转、暂停停），不依赖一次新事件 */
+      if (launcher) launcher.classList.toggle('is-playing', !a.audio.paused)
+      if (a.audio.paused) { stopBeat() } else { startBeat() }
     }
+    /* 注意：同页内 boot 重试（实例晚到、bindAp 重绑）不调用 closePanel，
+       避免把用户手动展开的面板又关掉；路由收敛只放在下方 pjax:complete。 */
   }
   // 轮询等待 #rightside 与 APlayer 就绪
   var tries = 0
@@ -276,5 +312,11 @@
     if ((document.getElementById('music-toggle') && bound) || ++tries > 60) clearInterval(timer)
   }, 300)
   boot()
-  document.addEventListener('pjax:complete', function () { setTimeout(boot, 350) })
+  document.addEventListener('pjax:complete', function () {
+    /* R2：换页先收起面板，避免展开态随 body 常驻节点残留；
+       300ms 再兜一次（pjax 替换异步），随后 boot 重建图标与心跳。 */
+    syncPanelRoute()
+    setTimeout(syncPanelRoute, 300)
+    setTimeout(boot, 350)
+  })
 })()

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 430" font-family="'Microsoft YaHei','PingFang SC','Noto Sans SC',sans-serif">
+  <defs>
+    <marker id="g02" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#2563eb"/></marker>
+  </defs>
+  <rect x="8" y="8" width="804" height="414" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="410" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="#334155">磁性纳米颗粒两条主合成路线与四类核壳壳层</text>
+
+  <!-- 共沉淀 -->
+  <g font-size="12" text-anchor="middle">
+    <rect x="34" y="66" width="360" height="170" rx="8" fill="#dbeafe" stroke="#93c5fd"/>
+    <text x="214" y="92" fill="#1d4ed8" font-weight="700" font-size="13">共沉淀法（水相 · 易放大）</text>
+    <text x="214" y="118" fill="#475569">Fe²⁺:Fe³⁺ = 1:2 · N₂ 除氧 · 碱性沉淀</text>
+    <text x="214" y="140" fill="#475569">75 ℃ 投料 → 滴氨 pH 8.0–8.5 → 85 ℃ 熟化 1 h</text>
+    <text x="214" y="162" fill="#475569">TMAOH 肽化 → 油酸包覆 → PEGsilane 改性</text>
+    <text x="214" y="184" fill="#475569">10 kDa 透析 48 h · 磁柱 1 mL/min 纯化</text>
+    <text x="214" y="212" fill="#1d4ed8">优势：成本低、水相直出 · 局限：分布偏宽、结晶度一般</text>
+  </g>
+
+  <!-- 热分解 -->
+  <g font-size="12" text-anchor="middle">
+    <rect x="426" y="66" width="360" height="170" rx="8" fill="#ede9fe" stroke="#c4b5fd"/>
+    <text x="606" y="92" fill="#6d28d9" font-weight="700" font-size="13">热分解法（有机相 · 窄分布）</text>
+    <text x="606" y="118" fill="#475569">碱式氧化铁 + 油酸 + 十八烯，Ar 保护</text>
+    <text x="606" y="140" fill="#475569">110 ℃ 脱水 → 180 ℃ ×1h → 320 ℃ ×1h</text>
+    <text x="606" y="162" fill="#475569">油酸用量调粒径：8 nm/16 mmol · 16 nm/20 mmol · 20 nm/24 mmol</text>
+    <text x="606" y="184" fill="#475569">正己烷/丙酮洗涤 · DHCA 配体交换转水相 · PO 氧化定价态</text>
+    <text x="606" y="212" fill="#6d28d9">优势：分布窄、结晶高、形貌可控 · 局限：成本高、需配体交换</text>
+  </g>
+
+  <!-- 四类壳层 -->
+  <g font-size="12" text-anchor="middle">
+    <text x="410" y="266" text-anchor="middle" font-size="13" fill="#334155" font-weight="700">核壳 Fe₃O₄@Shell：四类壳层路径</text>
+    <rect x="34" y="280" width="184" height="96" rx="8" fill="#dcfce7" stroke="#86efac"/>
+    <text x="126" y="306" fill="#15803d" font-weight="700">氧化物壳</text>
+    <text x="126" y="328" fill="#475569">SiO₂（Stöber/微乳液）</text>
+    <text x="126" y="348" fill="#475569">介孔 MCM-41/SBA-15 载药</text>
+    <text x="126" y="366" fill="#94a3b8">APTES/MPTS 功能硅烷</text>
+
+    <rect x="234" y="280" width="184" height="96" rx="8" fill="#fef3c7" stroke="#fcd34d"/>
+    <text x="326" y="306" fill="#b45309" font-weight="700">金属壳</text>
+    <text x="326" y="328" fill="#475569">Au 种子生长 / 原位还原</text>
+    <text x="326" y="348" fill="#475569">Pt · MnO₂@Pt 双模态</text>
+    <text x="326" y="366" fill="#94a3b8">还原剂：柠檬酸钠/NaBH₄</text>
+
+    <rect x="434" y="280" width="184" height="96" rx="8" fill="#f1f5f9" stroke="#cbd5e1"/>
+    <text x="526" y="306" fill="#334155" font-weight="700">碳基壳</text>
+    <text x="526" y="328" fill="#475569">高比表面 · 导电</text>
+    <text x="526" y="348" fill="#475569">生物相容 · 复合负载</text>
+    <text x="526" y="366" fill="#94a3b8">吸附与载药平台</text>
+
+    <rect x="634" y="280" width="152" height="96" rx="8" fill="#dbeafe" stroke="#93c5fd"/>
+    <text x="710" y="306" fill="#1d4ed8" font-weight="700">有机功能化</text>
+    <text x="710" y="328" fill="#475569">油酸 · 脂质体</text>
+    <text x="710" y="348" fill="#475569">PEG/PEI/葡聚糖/壳聚糖</text>
+    <text x="710" y="366" fill="#94a3b8">叶酸主动靶向</text>
+  </g>
+
+  <text x="410" y="404" text-anchor="middle" font-size="12" fill="#94a3b8">表征闭环：TEM（粒径形貌）· XRD（物相）· VSM（Ms/Mr/Hc 回线）· SAR 磁热（345 kHz、200–400 Oe、前 30/60/90 s 最大斜率）；补 DLS / ZFC-FC / 穆斯堡尔谱</text>
+</svg>

@@ -3,14 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/css/access-gates.css">
+<script src="/js/custom/access-gates.js"></script>
 <meta name="theme-color" content="#f2f5fa">
 <title>基金管理 · Biko</title>
-<meta name="description" content="个人基金管理：交易记录、持仓总览、净值走势、资产配置">
+<meta name="robots" content="noindex, nofollow">
+<meta name="description" content="个人基金持仓追踪：快照成本、最新净值、组合盈亏与资产配置">
 <link rel="stylesheet" href="/css/vendor/fontawesome.min.css">
 <link rel="stylesheet" href="/css/common_layout.css">
 <link rel="stylesheet" href="/css/biko_subpage.css">
 <link rel="stylesheet" href="/css/biko_theme_toggle.css">
 <link rel="stylesheet" href="/finance/css/finance.css">
+<link rel="stylesheet" href="/css/desktop-shell-sample.css">
+<link rel="stylesheet" href="/css/desktop-shell-workspaces.css">
+<link rel="stylesheet" href="/finance/css/workspace.css">
+<link rel="stylesheet" href="/css/visual-foundations.css">
+<link rel="stylesheet" href="/css/private-workspaces.css">
+<script defer src="/js/custom/desktop-shell-sample.js"></script>
 <script>
 /* 主题脚本必须在 <head> 同步执行，避免深色偏好下的闪白 */
 (function () {
@@ -31,37 +40,73 @@
   }
 })();
 </script>
+<link rel="stylesheet" href="/finance/css/monitor.css">
+<link rel="stylesheet" href="/css/workspace-hierarchy.css">
+<link rel="stylesheet" href="/css/ui-controls.css">
+<link rel="stylesheet" href="/css/interaction-feedback.css">
+<script src="/js/custom/interaction-feedback.js"></script>
 </head>
-<body class="fin-page-body">
+<body class="fin-page-body bss-workspace">
+
+<!-- ================= 门禁层（未解锁时覆盖主体） ================= -->
+<form class="fin-gate" id="finGate" autocomplete="off">
+  <div class="fin-gate-box" id="finGateBox">
+    <div class="fin-gate-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><rect x="5" y="10" width="14" height="11" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/><path d="M12 14v3"/></svg></div>
+    <p class="bss-eyebrow">Private · Finance</p>
+    <h2 class="fin-gate-title">金库已上锁</h2>
+    <p class="fin-gate-sub">输入口令解锁持仓清单；本次会话 12 小时内免重复输入</p>
+    <div class="fin-gate-fields">
+    <div class="fin-gate-input-wrap">
+    <input class="fin-gate-input" id="finGatePass" type="password" aria-label="金库口令"
+           placeholder="请输入口令" autocomplete="current-password" inputmode="text" autocapitalize="off" spellcheck="false">
+    <button class="fin-gate-reveal" id="finGateReveal" type="button" aria-label="显示口令" title="显示口令" aria-controls="finGatePass" aria-pressed="false"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button>
+    </div>
+    <button class="fin-btn fin-btn-primary fin-gate-submit" type="submit">
+      <span>解锁金库</span>
+    </button>
+    <p class="fin-gate-err" id="finGateErr" role="status" aria-live="polite" hidden></p>
+    </div>
+    <a class="fin-gate-back" href="/">&larr; 返回首页</a>
+  </div>
+</form>
 
 <!-- ================= 顶栏 ================= -->
 <header class="fin-topbar">
-  <a class="fin-brand" href="/" title="返回首页">
+  <a class="fin-brand" href="/" title="返回首页" aria-label="返回首页">
     <i class="fas fa-arrow-left"></i>
     <span>返回首页</span>
   </a>
 
   <div class="fin-title">
-    <h1>基金管理</h1>
+    <div><p class="bss-eyebrow">Finance</p><h1>基金金库</h1></div>
     <span class="fin-total" id="fin-total">总资产: --</span>
   </div>
 
   <div class="fin-actions">
-    <button class="fin-btn" id="fin-add-btn" type="button" title="添加交易">
-      <i class="fas fa-plus"></i>
-      <span>添加交易</span>
+    <button class="fin-btn" id="fin-refresh-btn" type="button" title="从代理拉取最新净值" aria-label="刷新净值">
+      <i class="fas fa-rotate"></i>
+      <span class="fin-refresh-label">刷新净值</span>
     </button>
-    <button class="fin-btn" id="fin-theme-toggle" type="button" title="切换主题">
+    <button class="fin-btn" id="fin-theme-toggle" type="button" title="切换主题" aria-label="切换主题">
       <i class="fas fa-moon"></i>
     </button>
   </div>
 </header>
 
-<!-- ================= 主内容区 ================= -->
-<main class="fin-main">
+<!-- ================= 主内容区（解锁后显示） ================= -->
+<main class="fin-main" id="finMain" hidden>
 
-  <!-- 左侧：基金列表 -->
+  <!-- 左侧：分类筛选 + 持仓卡片 -->
   <aside class="fin-sidebar">
+    <div class="fin-card">
+      <h3 class="fin-card-title">
+        <i class="fas fa-filter"></i>
+        分类筛选
+      </h3>
+      <div class="fin-chips" id="fin-filter-chips"></div>
+      <div class="fin-chips" id="fin-profit-chips"></div>
+    </div>
+
     <div class="fin-card">
       <h3 class="fin-card-title">
         <i class="fas fa-list"></i>
@@ -71,168 +116,179 @@
         <div class="fin-empty">
           <i class="fas fa-inbox"></i>
           <p>暂无持仓</p>
-          <p class="fin-hint">点击右上角「添加交易」开始</p>
-        </div>
-      </div>
-    </div>
-
-    <div class="fin-card">
-      <h3 class="fin-card-title">
-        <i class="fas fa-history"></i>
-        最近交易
-      </h3>
-      <div class="fin-tx-list" id="fin-tx-list">
-        <div class="fin-empty">
-          <p>暂无交易记录</p>
         </div>
       </div>
     </div>
   </aside>
 
-  <!-- 中间：净值走势 + 统计 -->
+  <!-- 中间：统计 + 配置 + 明细 -->
   <section class="fin-content">
     <div class="fin-card">
       <div class="fin-stat-row">
         <div class="fin-stat">
-          <div class="fin-stat-label">总市值</div>
+          <div class="fin-stat-label" id="fin-stat-total-label">总市值</div>
           <div class="fin-stat-value" id="fin-stat-total">--</div>
         </div>
         <div class="fin-stat">
-          <div class="fin-stat-label">总收益</div>
+          <div class="fin-stat-label">投入成本</div>
+          <div class="fin-stat-value" id="fin-stat-cost">--</div>
+        </div>
+        <div class="fin-stat">
+          <div class="fin-stat-label" id="fin-stat-profit-label">账面盈亏</div>
           <div class="fin-stat-value fin-stat-profit" id="fin-stat-profit">--</div>
         </div>
         <div class="fin-stat">
-          <div class="fin-stat-label">收益率</div>
+          <div class="fin-stat-label" id="fin-stat-rate-label">账面收益率</div>
           <div class="fin-stat-value fin-stat-profit" id="fin-stat-rate">--</div>
         </div>
         <div class="fin-stat">
-          <div class="fin-stat-label">持仓数量</div>
-          <div class="fin-stat-value" id="fin-stat-count">--</div>
+          <div class="fin-stat-label">今日盈亏（估）</div>
+          <div class="fin-stat-value" id="fin-stat-day">--</div>
         </div>
       </div>
+      <p id="fin-summary-basis" class="fin-hint"></p>
     </div>
 
-    <div class="fin-card">
+    <div class="fin-card" id="fin-market-card">
       <h3 class="fin-card-title">
-        <i class="fas fa-chart-line"></i>
-        净值走势
+        <i class="fas fa-globe-asia"></i>
+        市场概览
       </h3>
-      <div class="fin-chart" id="fin-chart">
-        <div class="fin-empty">
-          <i class="fas fa-chart-line"></i>
-          <p>暂无数据</p>
-          <p class="fin-hint">添加交易后显示走势</p>
-        </div>
+      <div id="fin-market">
+        <div class="fin-mkt-meta fin-mute">市场行情加载中…</div>
       </div>
     </div>
 
     <div class="fin-card">
       <h3 class="fin-card-title">
-        <i class="fas fa-pie-chart"></i>
+        <i class="fas fa-chart-pie"></i>
         资产配置
       </h3>
       <div class="fin-allocation" id="fin-allocation">
-        <div class="fin-empty">
-          <p>暂无配置数据</p>
-        </div>
+        <div class="fin-empty"><p>暂无配置数据</p></div>
+      </div>
+    </div>
+
+    <div class="fin-card" id="fin-history-card">
+      <h3 class="fin-card-title">
+        <i class="fas fa-chart-line"></i>
+        <span class="fin-history-title-text">净值走势</span>
+        <span class="fin-history-range" id="fin-history-range">
+          <button type="button" data-range="3m">3月</button>
+          <button type="button" data-range="6m">6月</button>
+          <button type="button" data-range="1y" class="active">1年</button>
+        </span>
+        <span class="fin-history-bench" id="fin-history-bench">
+          <button type="button" data-bench="fund" class="active">基金</button>
+          <button type="button" data-bench="track">跟踪</button>
+          <button type="button" data-bench="csi">沪深300</button>
+        </span>
+        <span class="fin-history-scope" id="fin-history-scope">
+          <button type="button" data-scope="fund" class="active">单只</button>
+          <button type="button" data-scope="portfolio">组合</button>
+        </span>
+      </h3>
+      <div id="fin-history" class="fin-history-body">
+        <div class="fin-empty"><i class="fas fa-chart-line"></i><p>选择左侧持仓查看历史净值走势</p></div>
+      </div>
+      <div id="fin-est-summary" class="fin-est-summary"></div>
+    </div>
+
+    <div class="fin-card fin-detail-card">
+      <h3 class="fin-card-title">
+        <i class="fas fa-table"></i>
+        持仓明细
+      </h3>
+      <div class="fin-table-wrap">
+        <table class="fin-table">
+          <thead>
+            <tr>
+              <th>名称 / 代码</th>
+              <th class="fin-th-num">收益率</th>
+              <th class="fin-th-num">累计收益</th>
+              <th class="fin-th-num">市值</th>
+              <th class="fin-th-num">最新净值</th>
+              <th class="fin-th-num">日涨跌</th>
+              <th class="fin-th-num">指数/ETF参考</th>
+              <th class="fin-th-num">重仓推算</th>
+              <th class="fin-th-num">份额</th>
+              <th class="fin-th-num">成本</th>
+            </tr>
+          </thead>
+          <tbody id="fin-table-body"></tbody>
+        </table>
       </div>
     </div>
   </section>
 
-  <!-- 右侧：热点面板 -->
+  <!-- 右侧：口径说明 + 免责 -->
   <aside class="fin-rightbar">
     <div class="fin-card">
       <h3 class="fin-card-title">
-        <i class="fas fa-fire"></i>
-        热点追踪
+        <i class="fas fa-info-circle"></i>
+        数据口径
       </h3>
-      <div class="fin-hot-list" id="fin-hot-list">
-        <div class="fin-empty">
-          <p>暂无热点</p>
-          <p class="fin-hint">后续可接 API 自动获取</p>
-        </div>
-      </div>
+      <div class="fin-nav-meta" id="fin-nav-meta"></div>
+      <p class="fin-hint">已公布净值与盘中参考分开展示。</p>
+      <details class="workspace-support"><summary>来源与计算口径</summary>
+      <ul class="fin-notes">
+        <li>净值来源：东方财富已公布单位净值；最新值由代理实时刷新，历史序列由定时任务每日存档，QDII 常滞后 1–2 个交易日。</li>
+        <li>账本口径：当前成本 = 期初快照现金流 + 买入/再投 − 赎回净额；当前份额 = 期初份额 + 买入/再投 − 赎回份额；现金分红只记录、不冲成本。</li>
+        <li>清单为构建期加密发布，页面只读展示流水；调整持仓需更新账本源并重跑加密构建。</li>
+        <li>盘中参考为两列“参考涨跌”，均非官方估值、更不是成交净值：<b>指数/ETF参考列</b>为直通行情（ETF 联接取母 ETF、宽基指数取跟踪指数），实时性高；<b>重仓推算列</b>按季报披露持仓加权（主动基金取股票重仓；债基纳入披露股票与可交易可转债，纯债主体以十年国债 ETF 方向代理，属低覆盖弱参考）。权重按季度披露（滞后约一季度），未披露仓位与无报价债券按 0 处理。QDII（美股夜间时差 + 披露滞后）两列均以“—”标注原因。</li>
+        <li>市场概览仅罗列公开指数 / ETF 的涨跌事实与行情时间，不做走势预测，也不构成买卖建议；非交易时段展示最近收盘行情。场外基金 15:00 前按当晚未知净值成交，盘中参考不改变成交价。</li>
+      </ul>
+      </details>
     </div>
 
-    <div class="fin-card">
-      <h3 class="fin-card-title">
-        <i class="fas fa-lightbulb"></i>
-        未来半月预测
-      </h3>
-      <div class="fin-forecast" id="fin-forecast">
-        <div class="fin-empty">
-          <p>暂无预测</p>
-          <p class="fin-hint">基于政策事件日历</p>
-        </div>
+    <details class="fin-card workspace-support">
+      <summary>账本流水<span>查看已登记的交易</span></summary>
+      <div id="fin-ledger" class="fin-ledger-body">
+        <div class="fin-empty"><p>暂无交易流水</p><p class="fin-hint">当前为期初快照口径，后续买入/赎回将在此记录</p></div>
       </div>
-      <div class="fin-disclaimer">
-        <i class="fas fa-exclamation-triangle"></i>
-        <span>本页面仅为个人记录工具，不构成投资建议。投资有风险，入市需谨慎。</span>
+      <div class="fin-draft">
+        <form id="fin-draft-form" class="fin-draft-form">
+          <select id="fin-draft-code"></select>
+          <select id="fin-draft-action">
+            <option value="buy">买入</option>
+            <option value="sell">赎回</option>
+          </select>
+          <input id="fin-draft-amount" type="number" min="0" step="0.01" placeholder="金额 ¥">
+          <input id="fin-draft-shares" type="number" min="0" step="0.01" placeholder="份额（可选）">
+          <input id="fin-draft-date" type="date">
+          <button type="submit" class="fin-btn">暂存草稿</button>
+        </form>
+        <div id="fin-draft-list" class="fin-tx-list"></div>
+        <p class="fin-hint">草稿仅保存在本机浏览器，不写入加密快照；正式入账需更新账本源并重跑加密构建。</p>
       </div>
+    </details>
+
+    <div class="fin-disclaimer">
+      <i class="fas fa-exclamation-triangle"></i>
+      <span>本页面仅为个人记录工具，不构成投资建议。市场有风险，投资需谨慎。</span>
     </div>
   </aside>
 
 </main>
 
-<!-- ================= 添加交易弹层 ================= -->
-<div class="fin-modal" id="fin-modal" hidden>
-  <div class="fin-modal-mask"></div>
-  <div class="fin-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="fin-modal-title">
-    <div class="fin-modal-head">
-      <h3 id="fin-modal-title">添加交易</h3>
-      <button class="fin-modal-close" id="fin-modal-close" aria-label="关闭">×</button>
-    </div>
-    <div class="fin-modal-body">
-      <form id="fin-form">
-        <div class="fin-form-row">
-          <label for="fin-form-type">交易类型</label>
-          <select id="fin-form-type" required>
-            <option value="buy">买入</option>
-            <option value="sell">卖出</option>
-            <option value="dividend">分红</option>
-          </select>
-        </div>
-        <div class="fin-form-row">
-          <label for="fin-form-code">基金代码</label>
-          <input type="text" id="fin-form-code" placeholder="如 000001" required>
-        </div>
-        <div class="fin-form-row">
-          <label for="fin-form-name">基金名称</label>
-          <input type="text" id="fin-form-name" placeholder="如 华夏成长混合" required>
-        </div>
-        <div class="fin-form-row">
-          <label for="fin-form-date">交易日期</label>
-          <input type="date" id="fin-form-date" required>
-        </div>
-        <div class="fin-form-row">
-          <label for="fin-form-amount">金额（元）</label>
-          <input type="number" id="fin-form-amount" step="0.01" placeholder="1000.00" required>
-        </div>
-        <div class="fin-form-row">
-          <label for="fin-form-nav">净值</label>
-          <input type="number" id="fin-form-nav" step="0.0001" placeholder="1.2345" required>
-        </div>
-        <div class="fin-form-row">
-          <label for="fin-form-fee">手续费</label>
-          <input type="number" id="fin-form-fee" step="0.01" placeholder="0.00" value="0">
-        </div>
-        <div class="fin-form-row">
-          <label for="fin-form-note">备注</label>
-          <input type="text" id="fin-form-note" placeholder="可选">
-        </div>
-      </form>
-    </div>
-    <div class="fin-modal-foot">
-      <button class="fin-btn" id="fin-modal-cancel" type="button">取消</button>
-      <button class="fin-btn fin-btn-primary" id="fin-modal-save" type="button">保存</button>
-    </div>
-  </div>
-</div>
-
 <!-- ================= 脚本 ================= -->
 <script src="/finance/js/store.js"></script>
+<script src="/finance/js/estimate.js"></script>
+<script src="/finance/js/advisory.js"></script>
+<script src="/finance/js/data-state.js"></script>
+<script src="/js/custom/finance_seal.js"></script>
 <script src="/finance/js/app.js"></script>
 <script src="/finance/js/charts.js"></script>
+<script src="/finance/js/research.js"></script>
+<script src="/finance/js/paper-engine.js"></script>
+<script src="/finance/js/paper-research.js"></script>
+<script src="/finance/js/workspace.js"></script>
+<script src="/finance/js/fund-evidence.js"></script>
+<script src="/finance/js/evidence-ui.js"></script>
+<script src="/finance/js/paper-lab-ui.js"></script>
+<script src="/finance/js/exit-plan.js"></script>
+<script src="/finance/js/finance-domains.js"></script>
+<script src="/finance/js/monitor.js"></script>
 
 </body>
 </html>

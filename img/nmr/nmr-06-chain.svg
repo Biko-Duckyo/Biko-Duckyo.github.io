@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 430" font-family="'Microsoft YaHei','PingFang SC','Noto Sans SC',sans-serif">
+  <defs>
+    <marker id="a6" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#2563eb"/></marker>
+  </defs>
+  <rect x="8" y="8" width="804" height="414" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="410" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="#334155">MRI 概念链路（理解顺序；实际时序交织）</text>
+
+  <!-- 第一行节点 y=120 h=56 w=118 -->
+  <g font-size="12" text-anchor="middle">
+    <rect x="22" y="112" width="118" height="56" rx="8" fill="#dbeafe" stroke="#93c5fd"/><text x="81" y="136" fill="#1d4ed8" font-weight="700">① 施加 B₀</text><text x="81" y="156" fill="#475569">静磁场环境</text>
+    <rect x="157" y="112" width="118" height="56" rx="8" fill="#dbeafe" stroke="#93c5fd"/><text x="216" y="136" fill="#1d4ed8" font-weight="700">② 能级分裂</text><text x="216" y="156" fill="#475569">塞曼效应</text>
+    <rect x="292" y="112" width="118" height="56" rx="8" fill="#dbeafe" stroke="#93c5fd"/><text x="351" y="136" fill="#1d4ed8" font-weight="700">③ 形成 M₀</text><text x="351" y="156" fill="#475569">宏观纵向磁化</text>
+    <rect x="427" y="112" width="118" height="56" rx="8" fill="#ede9fe" stroke="#c4b5fd"/><text x="486" y="136" fill="#6d28d9" font-weight="700">④ RF 激发</text><text x="486" y="156" fill="#475569">ωrf = ω₀</text>
+    <rect x="562" y="112" width="118" height="56" rx="8" fill="#ede9fe" stroke="#c4b5fd"/><text x="621" y="136" fill="#6d28d9" font-weight="700">⑤ 横向 Mxy</text><text x="621" y="156" fill="#475569">相位聚合</text>
+  </g>
+  <g stroke="#2563eb" stroke-width="2" marker-end="url(#a6)">
+    <line x1="140" y1="140" x2="155" y2="140"/><line x1="275" y1="140" x2="290" y2="140"/>
+    <line x1="410" y1="140" x2="425" y2="140"/><line x1="545" y1="140" x2="560" y2="140"/>
+  </g>
+
+  <!-- 折行提示 -->
+  <path d="M621,168 C621,205 81,205 81,232" fill="none" stroke="#94a3b8" stroke-dasharray="5 5" marker-end="url(#a6)"/>
+  <text x="350" y="204" text-anchor="middle" font-size="12" fill="#64748b">脉冲关闭，进入弛豫与采集</text>
+
+  <!-- 第二行节点 y=244 h=56 -->
+  <g font-size="12" text-anchor="middle">
+    <rect x="22" y="244" width="118" height="56" rx="8" fill="#dcfce7" stroke="#86efac"/><text x="81" y="268" fill="#15803d" font-weight="700">⑥ 弛豫</text><text x="81" y="288" fill="#475569">T1 / T2 / T2*</text>
+    <rect x="157" y="244" width="118" height="56" rx="8" fill="#dcfce7" stroke="#86efac"/><text x="216" y="268" fill="#15803d" font-weight="700">⑦ 梯度编码</text><text x="216" y="288" fill="#475569">按序列施加</text>
+    <rect x="292" y="244" width="118" height="56" rx="8" fill="#fef3c7" stroke="#fcd34d"/><text x="351" y="268" fill="#b45309" font-weight="700">⑧ 回波读出</text><text x="351" y="288" fill="#475569">SE / GRE</text>
+    <rect x="427" y="244" width="118" height="56" rx="8" fill="#fef3c7" stroke="#fcd34d"/><text x="486" y="268" fill="#b45309" font-weight="700">⑨ K 空间填充</text><text x="486" y="288" fill="#475569">频域矩阵</text>
+    <rect x="562" y="244" width="118" height="56" rx="8" fill="#fee2e2" stroke="#fca5a5"/><text x="621" y="268" fill="#b91c1c" font-weight="700">⑩ 图像重建</text><text x="621" y="288" fill="#475569">按采样方案</text>
+    <rect x="697" y="244" width="108" height="56" rx="8" fill="#fee2e2" stroke="#fca5a5"/><text x="751" y="268" fill="#b91c1c" font-weight="700">⑪ 临床图像</text><text x="751" y="288" fill="#475569">后处理输出</text>
+  </g>
+  <g stroke="#2563eb" stroke-width="2" marker-end="url(#a6)">
+    <line x1="140" y1="272" x2="155" y2="272"/><line x1="275" y1="272" x2="290" y2="272"/>
+    <line x1="410" y1="272" x2="425" y2="272"/><line x1="545" y1="272" x2="560" y2="272"/>
+    <line x1="680" y1="272" x2="695" y2="272"/>
+  </g>
+
+  <text x="410" y="352" text-anchor="middle" font-size="13" fill="#475569">硬件支撑：主磁体（B₀）· 梯度线圈（编码）· 射频线圈（激发与接收）· 接收处理系统（放大 / 写 K 空间 / 重建）</text>
+  <text x="410" y="384" text-anchor="middle" font-size="12" fill="#94a3b8">常规热平衡 MRI：激发、弛豫、梯度与读出交织；轨迹、线圈和采样方式决定重建方法</text>
+</svg>

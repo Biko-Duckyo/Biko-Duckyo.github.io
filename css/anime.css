@@ -95,10 +95,12 @@
   align-items: center;
   flex-wrap: wrap;
 }
+.anime-search-wrap { position: relative; flex: 1; min-width: 200px; display: flex; align-items: center; }
 .anime-search {
   flex: 1;
-  min-width: 200px;
-  padding: 10px 16px;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 34px 10px 16px;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: var(--r-panel-sm);
@@ -109,6 +111,13 @@
 }
 .anime-search:focus { border-color: var(--accent); }
 .anime-search::placeholder { color: var(--second-font-color); }
+.anime-search-clear {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  width: 22px; height: 22px; border-radius: 50%; border: none; background: transparent;
+  color: var(--second-font-color); cursor: pointer; font-size: 1rem; line-height: 1;
+  display: flex; align-items: center; justify-content: center; transition: color 0.15s;
+}
+.anime-search-clear:hover { color: var(--font-color); }
 
 .anime-filters { display: flex; gap: 8px; flex-wrap: wrap; }
 .anime-filter-btn {
@@ -590,7 +599,7 @@
 /* M5 可选 L1 门控遮罩：视觉语言对齐相册解密门（source/css/gallery_gate.css） */
 .anime-gate[hidden] { display: none; }
 .anime-gate {
-  position: fixed; top: 61px; right: 0; bottom: 0; left: 0;
+  position: fixed; top: calc(var(--layout-nav-h) + 1px); right: 0; bottom: 0; left: 0;
   z-index: var(--z-overlay, 100);
   display: grid; place-items: center; padding: 24px;
   overflow: auto; overscroll-behavior: contain;
@@ -648,6 +657,20 @@
 .anime-gate-back { display: inline-block; margin-top: 16px; color: rgba(233, 237, 243, 0.66); font-size: 0.86rem; text-decoration: none; }
 .anime-gate-back:hover, .anime-gate-back:focus-visible { color: #fff; }
 .anime-gate-box.is-shaking { animation: anime-gate-shake var(--t-slow) ease; }
+@media (max-width: 768px) {
+  .anime-gate {
+    top: var(--layout-nav-h);
+    padding: 16px;
+    align-items: safe center;
+  }
+  .anime-gate-box {
+    width: min(100%, var(--gate-panel-w));
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 24px 20px;
+  }
+  .anime-gate-box input { font-size: 16px; }
+}
 @keyframes anime-gate-shake {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-7px); }
@@ -805,3 +828,10 @@
 .am-eps-step:hover { border-color: var(--accent); color: #fff; }
 .am-eps-progress { margin-top: 4px; height: 5px; }
 .am-eps-hint { font-size: 0.78rem; color: #888; }
+.am-eps-done {
+  margin-top: 8px; width: 100%;
+  padding: 7px 10px; border-radius: var(--r-card);
+  border: 1px solid rgba(167, 139, 250, 0.35); background: rgba(167, 139, 250, 0.10);
+  color: #c4b0ff; cursor: pointer; font-size: 0.8rem; transition: all 0.15s;
+}
+.am-eps-done:hover { border-color: var(--accent); color: #fff; background: rgba(167, 139, 250, 0.18); }

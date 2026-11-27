@@ -202,6 +202,21 @@
 
 .gg-panel.is-shaking { animation: gg-shake var(--t-slow) ease; }
 
+@media (max-width: 768px) {
+  .gg-page.gg-gate {
+    top: var(--layout-nav-h);
+    padding: 16px;
+    align-items: safe center;
+  }
+  .gg-panel {
+    width: min(100%, var(--gate-panel-w));
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 24px 20px;
+  }
+  .gg-input { font-size: 16px; }
+}
+
 @keyframes gg-shake {
   0%, 100% { transform: translateX(0); }
   25% { transform: translateX(-7px); }

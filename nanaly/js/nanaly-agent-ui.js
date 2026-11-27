@@ -3,7 +3,7 @@
   if (window.NANALY_AGENT_UI || !window.NANALY_AGENT) return
   const agent = window.NANALY_AGENT
   const node = (tag, content, cls) => { const n = document.createElement(tag); if (content) n.textContent = content; if (cls) n.className = cls; return n }
-  const modal = node('dialog', '', 'nanaly-studio'), title = node('h2','娜娜莉工作室'), status = node('p','','studio-status')
+  const modal = node('dialog', '', 'nanaly-studio'), title = node('h2','多多工作室'), status = node('p','','studio-status')
   status.setAttribute('role','status'); status.setAttribute('aria-live','polite'); title.id = 'studio-title'; modal.setAttribute('aria-labelledby',title.id)
   let previousFocus, running = false, memoryId = '', viewEpoch = 0
   const perform = async (button, fn) => {
@@ -30,7 +30,7 @@
   url.input.placeholder = 'https://你的后端地址'; url.input.required = true; token.input.required = true; token.input.autocomplete = 'off'
   form(connection,[url,token],'连接并读取',async () => { const address=url.input.value; await agent.connect(address,token.input.value); token.input.value = ''; renderLists(); try { localStorage.setItem('nanaly-agent-url',address) } catch (_) {} })
   connection.append(button('重新读取最新记录',() => agent.configured() ? agent.refresh() : agent.resume()),button('断开并清除本页私有数据',() => agent.disconnect()))
-  // 令牌存进娜娜莉的密钥保险箱后，解锁保险箱就自动连接（noimpty-ai.js 的 connectBackend）。
+  // 令牌存进多多的密钥保险箱后，解锁保险箱就自动连接（noimpty-ai.js 的 connectBackend）。
   const vault = node('button','打开密钥保险箱'); vault.type = 'button'
   vault.addEventListener('click',() => { close(); window.NANALY?.requestUnlock?.() })
   connection.append(node('p','不想每次都贴令牌：在密钥保险箱里填上「个人后端令牌」，以后解锁保险箱就会自动连接。'),vault)

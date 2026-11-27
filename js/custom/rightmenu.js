@@ -15,7 +15,7 @@
  *   6. 繁简切换直接调主题的 window.translateFn.translatePage()，不再内置 3 万字映射表
  *   7. 深色模式复用主题的 btf.activateDarkMode / activateLightMode
  *   8. 放行原生菜单：移动端 / 自定义顶栏 / 输入框 / 右侧栏按钮
- *   9. 打开菜单时收起「小黑」AI 面板，避免层级打架
+ *   9. 打开菜单时收起「多多」AI 面板，避免层级打架
  *
  * 依赖的主题全局对象（Butterfly 5.x 均有）：
  *   - btf.activateDarkMode / btf.activateLightMode / btf.saveToLocal
@@ -81,7 +81,7 @@
     var mask = getMask()
     if (mask) mask.classList.add('right-menu-open')
 
-    // 与「小黑」AI 面板（#nanaly-panel，z-index 9003）错开层级：打开菜单时收起它。
+    // 与「多多」AI 面板（#nanaly-panel，z-index 9003）错开层级：打开菜单时收起它。
     // 注意：面板的展开类名是 is-open（见 nanaly/js/noimpty-ai.js 的 openPanel/closePanel），
     // 不是 open；收起时需同步 aria-hidden 与 inert，否则会留下可聚焦的隐藏面板。
     var chat = document.getElementById('nanaly-panel')
@@ -154,6 +154,22 @@
    * 动作
    * --------------------------------------------------------------- */
 
+  // 站内跳转统一走这里：pjax 在运行时优先用它的 loadUrl，
+  // 否则退化为整页跳转。非 <a> 触发的动作（右键菜单）只有这样
+  // 才会被 pjax 接管，不再每次闪一次白屏。
+  function navigate (href) {
+    if (!href) return
+    if (window.pjax && typeof window.pjax.loadUrl === 'function') {
+      try {
+        window.pjax.loadUrl(href)
+        return
+      } catch (err) {
+        // pjax 加载失败时落到下面的整页跳转，行为与改造前一致
+      }
+    }
+    window.location.href = href
+  }
+
   function handleAction (id) {
     switch (id) {
       case 'menu-backward':
@@ -166,7 +182,7 @@
         window.location.reload()
         break
       case 'menu-home':
-        window.location.href = window.location.origin + '/'
+        navigate(window.location.origin + '/')
         break
       case 'menu-darkmode':
         toggleDarkMode()
@@ -229,7 +245,7 @@
       .then(function (r) { return r.ok ? r.json() : null })
       .then(function (data) {
         var list = data && data.posts
-        if (!list || !list.length) { window.location.href = fallback; return }
+        if (!list || !list.length) { navigate(fallback); return }
 
         var here = window.location.pathname
         var pick = list[Math.floor(Math.random() * list.length)]
@@ -242,9 +258,9 @@
             guard++
           }
         }
-        window.location.href = pick
+        navigate(pick)
       })
-      .catch(function () { window.location.href = fallback })
+      .catch(function () { navigate(fallback) })
   }
 })()
 

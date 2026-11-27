@@ -1,0 +1,141 @@
+/* Unlocked Gallery / Anime / Finance refinements. Shared values: common_layout.css.
+   No authentication, media URL, progress, holding or strategy changes. */
+
+/* Gallery: a quiet album surface; charts/photos retain their complete image. */
+body.biko-shell-sample #gal-root {
+  --fg:var(--ui-ink);--fg-strong:var(--ui-ink);--fg-mute:var(--ui-muted);
+  --gal-photo:var(--ui-inset);font-family:var(--ui-font);
+}
+body.biko-shell-sample #gal-root .gal-search input {font:400 16px/1.5 var(--ui-font);border-radius:var(--ui-radius-control)}
+body.biko-shell-sample #gal-root .gal-album-section {
+  padding:24px;border:1px solid var(--ui-separator);border-radius:var(--ui-radius-panel);
+  background:var(--ui-surface);box-shadow:none;min-width:0;
+}
+body.biko-shell-sample #gal-root .gal-album-title {font:600 18px/1.5 var(--ui-font);color:var(--ui-ink);margin-bottom:16px}
+body.biko-shell-sample #gal-root .gal-album-grid {grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:20px}
+body.biko-shell-sample #gal-root .gal-film-card {
+  font-family:var(--ui-font);background:var(--ui-inset);border-color:transparent;
+  border-radius:var(--ui-radius-inset);box-shadow:none;
+}
+body.biko-shell-sample #gal-root .gal-film-card:hover {transform:none;border-color:var(--ui-focus)}
+body.biko-shell-sample #gal-root .gal-film-card__cover {height:clamp(220px,25vw,360px);aspect-ratio:auto}
+body.biko-shell-sample #gal-root .gal-film-card__cover img {object-fit:contain}
+/* The theme dims article images in dark mode; artwork and scientific images
+   must retain their original colors in these media workspaces. */
+body.biko-shell-sample #gal-root img,
+body.biko-shell-sample .gal-lb img,
+body.biko-shell-sample .anime-page .anime-cover-wrap img,
+body.biko-shell-sample .anime-modal img {filter:none}
+body.biko-shell-sample #gal-root .gal-film-card__name {font:500 15px/1.6 var(--ui-font);color:var(--ui-ink);padding:12px 0 12px 14px}
+body.biko-shell-sample #gal-root .gal-film-card__count {font:400 13px/1.6 var(--ui-font);color:var(--ui-muted);padding:13px 14px}
+body.biko-shell-sample .gal-lb {font-family:var(--ui-font)}
+body.biko-shell-sample .gal-lb-title {font-size:16px;line-height:1.5}
+body.biko-shell-sample :is(.gal-lb-caption,.gal-lb-count,.gal-lb-open) {font-size:14px;line-height:1.6}
+body.biko-shell-sample .gal-lb-btn:focus-visible {outline-color:currentColor}
+body.biko-shell-sample .gal-lb-nav {background:var(--ui-photo-control);color:var(--ui-on-photo);border-color:var(--ui-photo-border)}
+
+/* Anime: legible controls and neutral status surfaces, with posters as the focus. */
+body.biko-shell-sample .anime-page {
+  padding:24px;background:var(--ui-glass);border:1px solid var(--ui-border);
+  border-radius:var(--ui-radius-panel);box-shadow:var(--ui-shadow);
+}
+body.biko-shell-sample .anime-page :is(.anime-cloud-bar,.anime-card-sub) {font-size:13px;line-height:1.6;color:var(--ui-muted)}
+body.biko-shell-sample .anime-page :is(.anime-status-tab,.anime-genre-chip,.anime-search-scope button,.anime-filter-controls select,.anime-manage summary) {
+  font:500 14px/1.5 var(--ui-font);border-radius:var(--ui-radius-control);
+}
+body.biko-shell-sample .anime-page .anime-genre-chip {min-height:40px}
+body.biko-shell-sample .anime-page :is(.tab-count,.chip-count) {font-size:13px;opacity:1;margin-left:6px;font-variant-numeric:tabular-nums}
+body.biko-shell-sample .anime-page .anime-card {background:none;border:0;box-shadow:none}
+body.biko-shell-sample .anime-page .anime-card-info {padding:12px 2px 4px}
+body.biko-shell-sample .anime-page .anime-card-title {font:600 16px/1.5 var(--ui-font)}
+body.biko-shell-sample .anime-page .anime-manage-panel {background:var(--ui-raised);border-color:var(--ui-border);box-shadow:var(--ui-shadow)}
+body.biko-shell-sample .anime-page .anime-manage-panel button {font-size:14px}
+
+/* Legacy detail styles used white/grey text on the newly light panel. */
+body.biko-shell-sample .anime-modal {font-family:var(--ui-font);padding:64px 24px 24px;overflow-y:auto;overscroll-behavior:contain}
+body.biko-shell-sample .anime-modal-content {
+  background:var(--ui-surface);color:var(--ui-ink);border-color:var(--ui-border);
+  border-radius:var(--ui-radius-panel);box-shadow:var(--ui-shadow);max-height:calc(100dvh - 88px);
+}
+body.biko-shell-sample .anime-modal-header {border-color:var(--ui-border)}
+body.biko-shell-sample .anime-modal-title {font:600 24px/1.4 var(--ui-font);color:var(--ui-ink);overflow-wrap:anywhere}
+body.biko-shell-sample .anime-modal :is(.am-meta,.am-original,.am-score-label,.am-eps-label,.am-eps-total,.am-eps-hint,.anime-modal-meta) {font-size:14px;line-height:1.65;color:var(--ui-muted)}
+body.biko-shell-sample .anime-modal .am-meta .am-sep {color:var(--ui-muted)}
+body.biko-shell-sample .anime-modal-section h3 {font:600 16px/1.5 var(--ui-font);color:var(--ui-ink)}
+body.biko-shell-sample .anime-modal-summary {font:400 16px/1.75 var(--ui-font);color:var(--ui-ink)}
+body.biko-shell-sample .anime-modal :is(.am-status-btn,.am-score-btn,.am-eps-step,.am-eps-done,.am-link-btn,.am-restart-btn,.am-local-btn.ghost) {
+  font:500 14px/1.5 var(--ui-font);min-height:44px;border:1px solid var(--ui-border);
+  border-radius:var(--ui-radius-control);background:var(--ui-inset);color:var(--ui-ink);box-shadow:none;
+}
+body.biko-shell-sample .anime-modal :is(.am-status-btn,.am-score-btn,.am-eps-step,.am-eps-done,.am-link-btn):hover {background:var(--ui-hover);color:var(--ui-ink);transform:none}
+body.biko-shell-sample .anime-modal :is(.am-status-btn.active,.am-score-btn.active,.am-ep-chip.active) {background:var(--ui-action);color:var(--ui-on-action);border-color:transparent}
+body.biko-shell-sample .anime-modal .am-score-label {flex-basis:100%;margin:0 0 4px}
+body.biko-shell-sample .anime-modal #modalScoreRow {display:grid;grid-template-columns:repeat(10,minmax(36px,1fr));gap:6px;width:100%}
+body.biko-shell-sample .anime-modal .am-score-btn {min-width:36px;padding:6px}
+body.biko-shell-sample .anime-modal .am-eps-count b {color:var(--ui-ink);font-variant-numeric:tabular-nums}
+body.biko-shell-sample .anime-modal .am-eps-step {min-width:44px}
+body.biko-shell-sample .anime-modal .am-eps-done {margin-top:10px}
+body.biko-shell-sample .anime-modal .am-genre-chip {background:var(--ui-inset);color:var(--ui-muted);font-size:13px}
+body.biko-shell-sample .anime-modal .am-link-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px}
+body.biko-shell-sample .anime-modal .am-link-btn {justify-content:center;text-decoration:none}
+body.biko-shell-sample .anime-modal-close {width:44px;height:44px;min-height:44px;border:1px solid var(--ui-border);background:var(--ui-raised);color:var(--ui-ink);border-radius:var(--ui-radius-control);z-index:1}
+
+/* Finance: keep market up/down semantics; reuse the shared type and panel system. */
+body.bss-workspace.fin-page-body {--fin-profit:var(--ui-market-up);--fin-loss:var(--ui-market-down)}
+body.bss-workspace .fin-workbench .fin-card {border-radius:var(--ui-radius-panel);background:var(--ui-surface);border-color:var(--ui-separator);box-shadow:none}
+body.bss-workspace .fin-workbench :is(h2,.fin-card-title) {font:600 20px/1.45 var(--ui-font);color:var(--ui-ink)}
+body.bss-workspace .fin-workbench :is(h3,.fin-card-title h3) {font:600 16px/1.5 var(--ui-font)}
+body.bss-workspace .fin-workbench :is(.fin-stat-label,.fin-fund-item-code,.fin-fund-item-meta,.fin-hot-item-desc,.fin-fee-band,.fin-hint,.fin-disclaimer) {font-size:14px;line-height:1.65}
+body.bss-workspace .fin-workbench :is(.fin-stat-value,.fin-review-metrics strong,.fin-fund-item-value,.fin-table td) {font-family:var(--ui-font);font-variant-numeric:tabular-nums}
+body.bss-workspace .fin-workbench .fin-fund-item {border:1px solid transparent;border-radius:var(--ui-radius-inset);background:var(--ui-inset)}
+body.bss-workspace .fin-workbench .fin-fund-item[aria-pressed=true] {border-color:var(--ui-focus);background:var(--ui-selection);box-shadow:inset 3px 0 var(--ui-focus)}
+body.bss-workspace .fin-workbench .fin-fund-item-name {font-size:15px;font-weight:600;line-height:1.6}
+body.bss-workspace .fin-workbench .fin-profile-details summary {line-height:1.6;padding-block:12px}
+body.bss-workspace .fin-workbench :is(.fin-worknav,.fin-domain-nav) {gap:8px}
+body.bss-workspace .fin-workbench :is(.fin-worknav,.fin-domain-nav) button {border-radius:var(--ui-radius-control);font-weight:500}
+body.bss-workspace .fin-workbench .fin-domain-nav [aria-pressed=true] {color:var(--ui-on-action);background:var(--ui-action)}
+body.bss-workspace .fin-workbench .fin-btn {min-height:44px;border-radius:var(--ui-radius-control)}
+body.bss-workspace .fin-workbench .fin-table-wrap {border-radius:var(--ui-radius-inset);overscroll-behavior-x:contain}
+body.bss-workspace .fin-workbench .fin-table {font-size:14px}
+body.bss-workspace .fin-workbench .fin-history-range button {min-height:40px;min-width:44px;border-radius:var(--ui-radius-control);font-size:14px}
+
+@media(max-width:640px) {
+  body.biko-shell-sample #gal-root .gal-album-section {padding:16px;border-radius:16px}
+  body.biko-shell-sample #gal-root .gal-film-card__cover {height:240px}
+  body.biko-shell-sample #gal-root .gal-film-card__name {font-size:14px}
+  body.biko-shell-sample .gal-lb-bot {align-items:flex-start;gap:12px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+  body.biko-shell-sample .gal-lb-caption {max-width:none;flex:1;min-width:0;margin:0;overflow-wrap:anywhere}
+  body.biko-shell-sample .gal-lb-open {flex:none}
+  body.biko-shell-sample .gal-lb-nav {top:auto;bottom:12px;transform:none}
+  body.biko-shell-sample .anime-page {padding:16px;border-radius:16px}
+  body.biko-shell-sample .anime-page .anime-grid {gap:20px 12px}
+  body.biko-shell-sample .anime-page .anime-card-title {font-size:15px}
+  body.biko-shell-sample .anime-page .anime-card-sub {font-size:13px}
+  body.biko-shell-sample .anime-modal {padding:64px 12px 12px;align-items:flex-start}
+  body.biko-shell-sample .anime-modal-content {width:100%;max-height:calc(100dvh - 76px);border-radius:16px}
+  body.biko-shell-sample .anime-modal-header {flex-direction:row;flex-wrap:wrap;padding:20px;gap:16px}
+  body.biko-shell-sample .anime-modal-cover {width:88px;align-self:flex-start}
+  body.biko-shell-sample .anime-modal .am-head-info {flex:1 1 160px}
+  body.biko-shell-sample .anime-modal-title {font-size:20px}
+  body.biko-shell-sample .anime-modal-body {padding:20px}
+  body.biko-shell-sample .anime-modal .am-score-row {gap:6px}
+  body.biko-shell-sample .anime-modal #modalScoreRow {grid-template-columns:repeat(5,minmax(0,1fr))}
+  body.biko-shell-sample .anime-modal .am-eps-head {flex-wrap:wrap;gap:8px}
+  body.biko-shell-sample .anime-modal .am-eps-count {display:grid;grid-template-columns:44px minmax(0,1fr) 44px;gap:6px;align-items:center;text-align:center;width:100%}
+  body.biko-shell-sample .anime-modal .am-eps-count b {grid-column:2;grid-row:1}
+  body.biko-shell-sample .anime-modal .am-eps-total {grid-column:1/-1;grid-row:2;white-space:nowrap}
+  body.biko-shell-sample .anime-modal .am-eps-step:first-child {grid-column:1;grid-row:1}
+  body.biko-shell-sample .anime-modal .am-eps-step:last-child {grid-column:3;grid-row:1}
+  body.biko-shell-sample .anime-modal .am-link-grid {grid-template-columns:repeat(2,minmax(0,1fr))}
+  body.biko-shell-sample .anime-modal-close {top:12px;right:12px}
+  body.bss-workspace .fin-workbench .fin-stat-row {gap:18px 12px}
+  body.bss-workspace .fin-workbench .fin-card {border-radius:16px}
+  body.bss-workspace .fin-workbench .fin-review-metrics {grid-template-columns:minmax(0,1fr);gap:8px}
+  body.bss-workspace .fin-workbench .fin-review-metrics>div {display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:12px}
+  body.bss-workspace .fin-workbench .fin-review-metrics strong {font-size:20px;margin:0}
+  body.bss-workspace .fin-workbench :is(input,select,textarea) {font-size:16px}
+  body.bss-workspace .fin-workbench .fin-scenario-controls>label {max-width:100%;min-width:0}
+}
+@media(prefers-reduced-motion:reduce) {
+  body.biko-shell-sample :is(.gal-film-card,.anime-card,.anime-modal,.anime-modal-content) {transition:none;transform:none}
+}

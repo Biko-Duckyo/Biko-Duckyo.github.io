@@ -73,6 +73,19 @@
     try { return new URL(String(src), document.baseURI).href } catch (e) { return String(src) }
   }
 
+  /* 只为 ImageKit 的普通原图地址生成展示尺寸；已签名或手动处理的链接保留原样。 */
+  function imagekitUrl (src, edge) {
+    if (!src) return ''
+    try {
+      var url = new URL(src)
+      if (url.protocol !== 'https:' || url.hostname !== 'ik.imagekit.io' ||
+          url.searchParams.has('ik-s') || url.searchParams.has('ik-t') ||
+          url.searchParams.has('tr') || /\/tr:/.test(url.pathname)) return src
+      url.searchParams.set('tr', 'w-' + edge + ',h-' + edge + ',c-at_max,q-80')
+      return url.href
+    } catch (e) { return src }
+  }
+
   function create () {
     var token = null
     var keyBytes = null
@@ -162,15 +175,19 @@
       return list.filter(function (a) { return a && (a.name || (a.photos && a.photos.length)) })
         .map(function (a) {
           var photos = (Array.isArray(a.photos) ? a.photos : []).map(function (p) {
-            if (typeof p === 'string') return { src: absUrl(p), thumb: absUrl(p), caption: '' }
+            if (typeof p === 'string') p = { src: p }
             p = p || {}
+            var original = absUrl(p.src || p.url || '')
             return {
-              src: absUrl(p.src || p.url || ''),
-              thumb: absUrl(p.thumb || p.thumbnail || p.src || p.url || ''),
+              id: p.id || p.fileId || original,
+              src: imagekitUrl(original, 1920),
+              original: original,
+              thumb: imagekitUrl(absUrl(p.thumb || p.thumbnail || original), 800),
               caption: p.caption || p.title || ''
             }
           }).filter(function (p) { return !!p.src })
           return {
+            id: a.id || a.name || '',
             name: a.name || '未命名相册',
             date: a.date || '',
             desc: a.desc || a.description || '',

@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 430" font-family="'Microsoft YaHei','PingFang SC','Noto Sans SC',sans-serif">
+  <defs>
+    <marker id="a5" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#334155"/></marker>
+  </defs>
+  <rect x="8" y="8" width="804" height="414" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="410" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="#334155">K 空间：频率-相位域数据矩阵（中心管对比 · 外周管细节）</text>
+
+  <!-- 网格 8x8，起点(250,105) 格34 -->
+  <g>
+    <!-- 普通格（先画） -->
+    <g fill="#e0f2fe" stroke="#7dd3fc">
+      <!-- 外圈与非中心用浅蓝；下面单独覆盖中心格 -->
+    </g>
+    <g id="cells">
+      <!-- 生成 8x8，中心 2x2 高亮橙，其余浅蓝 -->
+      <!-- 用循环不便（纯静态），直接画矩阵边框与中心块 -->
+    </g>
+  </g>
+
+  <!-- 网格底色块 8*34=272 -->
+  <rect x="250" y="105" width="272" height="272" fill="#e0f2fe" stroke="#38bdf8"/>
+  <!-- 网格线 -->
+  <g stroke="#bae6fd" stroke-width="1">
+    <!-- 竖线 -->
+    <line x1="284" y1="105" x2="284" y2="377"/><line x1="318" y1="105" x2="318" y2="377"/>
+    <line x1="352" y1="105" x2="352" y2="377"/><line x1="386" y1="105" x2="386" y2="377"/>
+    <line x1="420" y1="105" x2="420" y2="377"/><line x1="454" y1="105" x2="454" y2="377"/>
+    <line x1="488" y1="105" x2="488" y2="377"/>
+    <!-- 横线 -->
+    <line x1="250" y1="139" x2="522" y2="139"/><line x1="250" y1="173" x2="522" y2="173"/>
+    <line x1="250" y1="207" x2="522" y2="207"/><line x1="250" y1="241" x2="522" y2="241"/>
+    <line x1="250" y1="275" x2="522" y2="275"/><line x1="250" y1="309" x2="522" y2="309"/>
+    <line x1="250" y1="343" x2="522" y2="343"/>
+  </g>
+  <!-- 中心 2x2 高亮（格 386..420 竖 / 241..275 横 附近；取中心块 386-454,241-309） -->
+  <rect x="386" y="241" width="68" height="68" fill="#fbbf24" opacity="0.85"/>
+  <!-- 中心标记点 -->
+  <circle cx="420" cy="275" r="4" fill="#b45309"/>
+  <text x="420" y="232" text-anchor="middle" font-size="12" font-weight="700" fill="#b45309">中心数据 → 对比度</text>
+
+  <!-- 轴标签 -->
+  <line x1="250" y1="395" x2="522" y2="395" stroke="#334155" marker-end="url(#a5)"/>
+  <text x="528" y="399" font-size="12" fill="#334155">频率编码方向 Gx</text>
+  <line x1="228" y1="377" x2="228" y2="105" stroke="#334155" marker-end="url(#a5)"/>
+  <text x="222" y="100" text-anchor="end" font-size="12" fill="#334155">相位编码 Gy</text>
+
+  <!-- 右侧说明 -->
+  <rect x="560" y="120" width="220" height="90" rx="8" fill="#fff7ed" stroke="#fdba74"/>
+  <text x="575" y="148" font-size="13" font-weight="700" fill="#9a3412">中心（低频区）</text>
+  <text x="575" y="172" font-size="12" fill="#334155">影响整体强度与大尺度结构</text>
+  <text x="575" y="194" font-size="12" fill="#64748b">中心优先采集可得快速低分辨像</text>
+
+  <rect x="560" y="232" width="220" height="90" rx="8" fill="#eff6ff" stroke="#93c5fd"/>
+  <text x="575" y="260" font-size="13" font-weight="700" fill="#1d4ed8">外周（高频区）</text>
+  <text x="575" y="284" font-size="12" fill="#334155">决定分辨率与边缘细节</text>
+  <text x="575" y="306" font-size="12" fill="#64748b">部分傅里叶需相位假设与校正</text>
+
+  <text x="410" y="418" text-anchor="middle" font-size="12" fill="#94a3b8">此图示意常规单线采样；多回波、多线圈与非笛卡尔采样不能直接套用这一时序</text>
+</svg>

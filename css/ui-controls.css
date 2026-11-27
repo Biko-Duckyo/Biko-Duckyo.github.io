@@ -1,0 +1,85 @@
+/* Canonical, opt-in interface controls. No rules target PDF text/canvas,
+   annotation overlays, third-party editors or the homepage tool bookshelf. */
+:is(#ar-root,body.fin-page-body,body.bss-scholar,body.bk-page-body,body.bk-shell) {
+  font-family:var(--ui-font);color:var(--ui-ink);
+}
+:is(#ar-root,body.fin-page-body,body.bss-scholar,body.bk-page-body) :is(
+  .ui-button,.ar-tabs button,.ar-density button,.ar-filters>summary,#ar-more,#ar-reset,
+  .fin-btn,.fin-worknav button,.fin-lab-tab,.btn-primary,.btn-secondary,.btn-home,.btn-refresh) {
+  box-sizing:border-box;min-height:var(--ui-control-height);padding:8px 14px;
+  border-radius:var(--ui-radius-control);font:var(--ui-weight-label) var(--ui-text-control)/1.45 var(--ui-font);
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  text-decoration:none;vertical-align:middle;cursor:pointer;
+  transition:background-color var(--ui-duration) var(--ui-ease),border-color var(--ui-duration) var(--ui-ease),color var(--ui-duration) var(--ui-ease);
+}
+:is(#ar-root,body.fin-page-body,body.bss-scholar,body.bk-page-body) :is(
+  .ui-button,.fin-btn,.btn-secondary,.btn-home,.btn-refresh) {
+  background:var(--ui-raised);color:var(--ui-ink);border:1px solid var(--ui-border);box-shadow:none;
+}
+:is(#ar-root,body.fin-page-body,body.bss-scholar,body.bk-page-body) :is(
+  .ui-button,.fin-btn,.btn-secondary,.btn-home,.btn-refresh):hover:not(:disabled) {
+  background:var(--ui-hover);color:var(--ui-ink);transform:none;box-shadow:none;
+}
+:is(#ar-root,body.fin-page-body,body.bss-scholar,body.bk-page-body) :is(.btn-primary,.fin-btn-primary,.ui-button--primary) {
+  background:var(--ui-action);color:var(--ui-on-action);border:1px solid transparent;box-shadow:none;
+}
+:is(#ar-root,body.fin-page-body,body.bss-scholar,body.bk-page-body) :is(.btn-primary,.fin-btn-primary,.ui-button--primary):hover:not(:disabled) {
+  background:var(--ui-action-hover);color:var(--ui-on-action);opacity:1;transform:none;box-shadow:none;
+}
+:is(#ar-root,body.fin-page-body,body.bss-scholar,body.bk-page-body,body.bk-shell) :is(button,summary,a,input,select,textarea):focus-visible {
+  outline:2px solid var(--ui-focus);outline-offset:3px;
+}
+:is(#ar-root,body.fin-page-body,body.bss-scholar,body.bk-page-body,body.bk-shell) :is(button,input,select,textarea):disabled {
+  opacity:.5;cursor:not-allowed;
+}
+body.bss-scholar .theme-toggle {
+  width:var(--ui-control-height);height:var(--ui-control-height);padding:8px;
+  border-radius:var(--ui-radius-control);background:var(--ui-raised);color:var(--ui-ink);
+  border:1px solid var(--ui-border);box-shadow:none;
+}
+body.bss-scholar .theme-toggle:hover {background:var(--ui-hover)}
+:is(body.fin-page-body,body.bss-scholar) :is(.fin-btn,.btn-home,.btn-refresh,.theme-toggle) svg {width:16px;height:16px;flex:none}
+/* Selected filters and navigation express the same state in both themes. */
+#ar-root .ar-tabs button[aria-selected=true],
+#ar-root .ar-density button.is-active,
+body.fin-page-body :is(.fin-domain-nav,.fin-worknav) button[aria-pressed=true],
+body.fin-page-body .fin-worknav button.active {
+  background:var(--ui-selection);color:var(--ui-action);border-color:var(--ui-action);box-shadow:inset 0 0 0 1px var(--ui-action);
+}
+#ar-root :is(.ar-tabs button,.ar-density button):hover:not([aria-selected=true]):not(.is-active) {background:var(--ui-hover);color:var(--ui-ink)}
+:is(#ar-root,body.fin-page-body,body.bss-scholar) :is(.ui-input,.ar-search input,.ar-select,.fin-search-label input,.todo-input) {
+  min-height:var(--ui-control-height);padding:8px 12px;border:1px solid var(--ui-border);
+  border-radius:var(--ui-radius-control);background:var(--ui-raised);color:var(--ui-ink);
+  font:400 var(--ui-text-control)/1.5 var(--ui-font);box-sizing:border-box;max-width:100%;
+}
+@media(max-width:600px) {
+  body.bss-scholar .theme-toggle {width:var(--ui-touch-height);height:var(--ui-touch-height)}
+  #ar-root .ar-filters {width:100%}
+  #ar-root .ar-filters>summary {display:flex;width:100%;justify-content:space-between}
+  :is(#ar-root,body.fin-page-body,body.bss-scholar,body.bk-page-body) :is(
+    .ui-button,.ar-tabs button,.ar-density button,.ar-filters>summary,#ar-more,#ar-reset,
+    .fin-btn,.fin-worknav button,.fin-lab-tab,.btn-primary,.btn-secondary,.btn-home,.btn-refresh) {min-height:var(--ui-touch-height)}
+  :is(#ar-root,body.fin-page-body,body.bss-scholar) :is(.ui-input,.ar-search input,.ar-select,.fin-search-label input,.todo-input) {font-size:16px;min-height:var(--ui-touch-height)}
+}
+@media(prefers-reduced-motion:reduce) {
+  :is(#ar-root,body.fin-page-body,body.bss-scholar,body.bk-page-body,body.bk-shell) :is(button,summary) {transition:none}
+}
+
+/* The Electron shell uses the same type, action and focus language as its web modules. */
+body.bk-shell{min-height:100vh;background:var(--ui-canvas);color:var(--ui-ink);font:var(--ui-text-body)/var(--ui-leading) var(--ui-font)}
+body.bk-shell header{border-color:var(--ui-border);background:var(--ui-canvas)}
+body.bk-shell nav{background:var(--ui-surface);border:1px solid var(--ui-border);border-radius:999px;padding:4px;box-shadow:var(--ui-shadow)}
+body.bk-shell nav button,body.bk-shell #reader-menu,body.bk-shell #retry,body.bk-shell #website{box-sizing:border-box;min-height:var(--ui-control-height);padding:8px 14px;border:1px solid transparent;border-radius:var(--ui-radius-control);background:transparent;color:var(--ui-ink);font:var(--ui-weight-label) var(--ui-text-control)/1.45 var(--ui-font);transition:background-color var(--ui-duration) var(--ui-ease),border-color var(--ui-duration) var(--ui-ease),color var(--ui-duration) var(--ui-ease)}
+body.bk-shell nav button[aria-pressed=true]{background:var(--ui-selection);color:var(--ui-action);border-color:var(--ui-action);box-shadow:inset 0 0 0 1px var(--ui-action)}
+body.bk-shell nav button:hover:not([aria-pressed=true]),body.bk-shell #reader-menu:hover:not([aria-pressed=true]){background:var(--ui-hover);color:var(--ui-ink)}
+body.bk-shell #reader-menu{width:var(--ui-control-height);height:var(--ui-control-height);padding:8px;display:inline-flex;align-items:center;justify-content:center;background:var(--ui-raised);border-color:var(--ui-border)}
+body.bk-shell #reader-menu[aria-expanded=true],body.bk-shell #reader-menu[aria-pressed=true]{background:var(--ui-selection);color:var(--ui-action);border-color:var(--ui-action)}
+body.bk-shell #reader-menu svg{width:20px;height:20px;flex:none}
+body.bk-shell #website,body.bk-shell #retry{background:var(--ui-raised);border-color:var(--ui-border);text-decoration:none}
+body.bk-shell #website:hover,body.bk-shell #retry:hover:not(:disabled){background:var(--ui-hover);border-color:var(--ui-action)}
+body.bk-shell .theme-control{color:var(--ui-muted);font:var(--ui-weight-label) var(--ui-text-sm)/1.45 var(--ui-font)}
+body.bk-shell .theme-control select{box-sizing:border-box;min-height:var(--ui-control-height);padding:8px 30px 8px 12px;border:1px solid var(--ui-border);border-radius:var(--ui-radius-control);background:var(--ui-raised);color:var(--ui-ink);font:400 var(--ui-text-control)/1.45 var(--ui-font)}
+body.bk-shell #status,body.bk-shell #message{color:var(--ui-muted)}
+body.bk-shell #message{max-width:min(680px,calc(100vw - 40px));margin:auto;padding:20px;border:1px solid var(--ui-border);border-radius:var(--ui-radius-panel);background:var(--ui-surface);box-shadow:var(--ui-shadow)}
+body.bk-shell #error{color:var(--ui-danger);overflow-wrap:anywhere;line-height:var(--ui-leading)}
+@media(max-width:1000px){body.bk-shell .theme-control select,body.bk-shell nav button,body.bk-shell #reader-menu,body.bk-shell #retry,body.bk-shell #website{min-height:var(--ui-touch-height)}}

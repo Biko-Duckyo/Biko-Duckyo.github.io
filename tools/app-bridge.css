@@ -1,0 +1,87 @@
+/* Brand and touch adjustments, kept separate from the imported reference builds. */
+:root{--sans:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;--font-sans:var(--sans)}
+body,button,input,select,textarea{font-family:var(--sans)!important}
+button,input[type=text],input[type=url],input[type=password],select,textarea{border-radius:10px}
+button:focus-visible,a:focus-visible{outline:2px solid #7298c8;outline-offset:3px}
+html{scrollbar-width:thin}body{margin:0}button,input,select{touch-action:manipulation}
+html[data-biko-tool=qrcode] .hero-qr{display:none}
+html[data-biko-tool=qrcode] .workspace{min-height:100dvh;align-content:start;padding-top:24px}
+html[data-biko-tool=qrcode] .export-button{min-height:48px}
+html[data-biko-tool=qrcode] .preview{border-radius:20px}
+html[data-biko-tool=atlas] .g-top-import{min-height:40px}
+html[data-biko-tool=atlas] .g-sidebar .g-space-label{font-size:12px}
+@media(max-width:760px){
+  input[type=text],input[type=url],input[type=password],textarea,select{font-size:16px!important}
+  button{min-height:40px}
+  html[data-biko-tool=math],html[data-biko-tool=math] body{height:auto;overflow:auto}
+  html[data-biko-tool=math] #app{display:flex;flex-direction:column;height:auto;min-height:100dvh}
+  html[data-biko-tool=math] aside{overflow:visible;border-right:0}
+  html[data-biko-tool=math] main{min-height:620px;grid-template-rows:360px auto;flex:none}
+  html[data-biko-tool=math] #params{max-height:none}
+  html[data-biko-tool=math] #note{font-size:12px;left:12px;right:12px}
+  html[data-biko-tool=math] .hd .lead{font-size:14px}
+  html[data-biko-tool=mindmap] #bar{overflow-x:auto;flex-wrap:nowrap;justify-content:flex-start}
+  html[data-biko-tool=mindmap] #bar button{flex:none}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+@media(max-width:760px){
+  html[data-biko-tool=math] aside{display:contents}
+  html[data-biko-tool=math] .hd{order:0;background:var(--panel)}
+  html[data-biko-tool=math] .ctl{order:1;background:var(--panel)}
+  html[data-biko-tool=math] main{order:2;min-height:520px;grid-template-rows:320px auto}
+  html[data-biko-tool=math] #steps{order:3;overflow:visible;flex:none}
+}
+/* All local apps use the same surface, typography, focus and action tokens. */
+:root,:root[data-theme=light]{--bg:#eef2f7;--panel:#f9fbfe;--raised:#fff;--ink:#203249;--muted:#52657d;--faint:#657890;--line:#c3cfdc;--line-soft:#dce3ed;--accent:#345d89;--accent-ink:#fff;--accent-soft:#e0e9f5;--fill:#e0e9f5;--r:12px;--r-sm:10px;--r-lg:18px;color:var(--ink);background:var(--bg);color-scheme:light}
+:root[data-theme=dark]{--bg:#101822;--panel:#1b2839;--raised:#243448;--ink:#e7eef8;--muted:#b2c2d6;--faint:#a4b5cc;--line:#485b72;--line-soft:#34475c;--accent:#b7d0ee;--accent-ink:#192c42;--accent-soft:#2d425e;--fill:#2d425e;color:var(--ink);background:var(--bg);color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-size:14px;line-height:1.6}
+button,input,select,textarea{font-size:14px}
+button:disabled{cursor:not-allowed;opacity:.5}
+h1,h2,h3{font-weight:600}
+html[data-biko-tool=qrcode] :is(.workspace,.editor){background:var(--bg);color:var(--ink)}
+html[data-biko-tool=qrcode] .preview{background:var(--panel);color:var(--ink)}
+html[data-biko-tool=qrcode] :is(input,textarea,select,.preset){background:var(--raised);color:var(--ink);border-color:var(--line)}
+html[data-biko-tool=qrcode] .presets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+html[data-biko-tool=qrcode] .preset{min-width:0;padding:10px;border:1px solid var(--line);min-height:64px}
+html[data-biko-tool=qrcode] .export-button{background:var(--accent);color:var(--accent-ink);font-size:14px;font-weight:600}
+html[data-biko-tool=qrcode] button[aria-pressed=true]{background:var(--accent-soft);color:var(--ink)}
+html[data-biko-tool=qrcode] .preview :is(button,select){border:1px solid var(--line);color:var(--ink);background:var(--raised)}
+html[data-biko-tool=image] .ib-header,html[data-biko-tool=image] .ib-local,html[data-biko-tool=image] .ib-version,html[data-biko-tool=image] .ib-section-label{display:none}
+html[data-biko-tool=image] .ib-layout{height:100dvh}
+html[data-biko-tool=image] .ib-heading h1{font-size:24px}
+html[data-biko-tool=mindmap] .diagram-header{display:none}
+html[data-biko-tool=mindmap] #app{grid-template-rows:minmax(0,1fr);min-height:0}
+html[data-biko-tool=mindmap] :is(aside,main){grid-row:1}
+html[data-biko-tool=atlas] .g-brand{display:none}
+html[data-biko-tool=atlas] .g-topbar button[aria-label^="切换"]{display:none}
+html[data-biko-tool=atlas] .g-topbar{height:56px}
+html[data-biko-tool=atlas] .g-workspace{height:calc(100% - 56px)}
+@media(max-width:760px){
+ html[data-biko-tool=qrcode] .workspace{padding:16px}
+ html[data-biko-tool=qrcode] .preview{padding:16px}
+ html[data-biko-tool=image] .ib-layout{height:auto}
+ html[data-biko-tool=mindmap] #app{display:flex;min-height:100dvh}
+ html[data-biko-tool=mindmap] .src textarea{height:180px;min-height:180px}
+ html[data-biko-tool=atlas] .g-search{top:64px}
+}
+html[data-biko-tool=qrcode] .preview .export-button{background:var(--accent);color:var(--accent-ink)}
+html[data-biko-tool=qrcode] .export-button .shiny-text{background:none;color:inherit;-webkit-text-fill-color:currentColor;animation:none}
+html[data-biko-tool=qrcode] .proof-paper{color:#203249;--ink:#203249;--muted:#52657d;--line:#c3cfdc;--fill:#eef2f7}
+html[data-biko-tool=qrcode] .preset>span:first-child{border-radius:6px;background:#fff;padding:3px}
+html[data-biko-tool=portrait] :is(.topbar,.workspace,.controls,.canvas-bar,footer,#basic-dialog,.modal-head){background:var(--panel);color:var(--ink);border-color:var(--line)}
+html[data-biko-tool=portrait] :is(.back,.brand){display:none}
+html[data-biko-tool=portrait] .topbar{height:64px;padding:10px 20px;justify-content:flex-end}
+html[data-biko-tool=portrait] :is(.stage,.empty-icon){background:var(--raised);color:var(--ink)}
+html[data-biko-tool=portrait] :is(button,.text-button){background:var(--raised);border-color:var(--line);color:var(--ink)}
+html[data-biko-tool=portrait] button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+html[data-biko-tool=portrait] :is(.hint,.privacy,.section-label,#photo-info,#empty p,footer){color:var(--muted)}
+html[data-biko-tool=portrait] .section-label span{display:none}
+html[data-biko-tool=portrait] #empty h1{font-size:24px}
+html[data-biko-tool=portrait] #empty{padding:20px}
+html[data-biko-tool=portrait] #basic-dialog[hidden]{display:none}
+html[data-biko-tool=qrcode]{--proof-label:var(--muted)}
+html[data-biko-tool=qrcode] .preview .segmented button[aria-pressed=true]{background:var(--accent-soft);color:var(--ink);border-color:var(--accent)}
+html[data-biko-tool=qrcode] .preview .export-button:hover:not(:disabled){background:var(--accent);filter:brightness(1.08)}
+html[data-biko-tool=mindmap] #bg{visibility:hidden}
+html[data-biko-tool=mindmap] .diagram-stage{background:var(--bg)}

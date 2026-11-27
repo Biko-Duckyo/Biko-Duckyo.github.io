@@ -1,0 +1,95 @@
+;(function(){
+ 'use strict';
+ var initialized=false,histories={},view='diagnosis',selected='',epoch=0,paper,storageOk=true,profile={term:'',drawdown:''};
+ try{var storedProfile=JSON.parse(localStorage.getItem('finance-risk-profile:v1')||'null');if(storedProfile&&['','long','medium'].includes(storedProfile.term)&&['','10-15','5-10'].includes(storedProfile.drawdown))profile=storedProfile}catch(e){}
+ var R=window.FinanceResearch,P=window.FinancePaper;
+ function el(id){return document.getElementById(id)}
+ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(x){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]})}
+ function money(n){return Number(n).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2})}
+ function pct(n){return Number.isFinite(n)?n.toFixed(1)+'%':'—'}
+ function freshDate(d){var t=Date.parse(d+'T00:00:00Z');return Number.isFinite(t)&&Date.now()-t>=-86400000&&Date.now()-t<8*86400000}
+ function savePaper(next){try{localStorage.setItem('finance-paper:v1',JSON.stringify(next));storageOk=true}catch(e){storageOk=false}paper=next;renderPaper()}
+ function choose(next){view=next;document.querySelectorAll('[data-fin-panel]').forEach(function(x){x.hidden=x.dataset.finPanel!==view});document.querySelectorAll('[data-fin-view]').forEach(function(x){x.setAttribute('aria-pressed',String(x.dataset.finView===view))});}
+ function init(){
+  if(initialized||el('finMain').hidden)return;initialized=true;
+  var main=el('finMain'),content=main.querySelector('.fin-content'),sidebar=main.querySelector('.fin-sidebar'),right=main.querySelector('.fin-rightbar');
+  main.classList.add('fin-workbench');
+  var summary=content.querySelector('.fin-card');summary.classList.add('fin-overview');main.prepend(summary);
+  var nav=document.createElement('nav');nav.className='fin-worknav';nav.setAttribute('aria-label','金库工作区');nav.innerHTML=[['diagnosis','基金诊断'],['holdings','持仓与走势'],['market','市场观察'],['paper','情景沙盘'],['data','数据与流水']].map(function(x){return '<button type="button" data-fin-view="'+x[0]+'">'+x[1]+'</button>'}).join('');summary.after(nav);
+  sidebar.dataset.finPanel='holdings';content.dataset.finPanel='holdings';right.dataset.finPanel='data';
+  var diagnosis=document.createElement('section');diagnosis.className='fin-research-panel';diagnosis.dataset.finPanel='diagnosis';diagnosis.innerHTML='<div class="fin-card"><div class="fin-section-head"><div><p class="bss-eyebrow">Review first</p><h2>组合体检</h2></div><label>单只提醒线 <input id="fin-cap" type="number" min="5" max="50" value="20" step="1"> %</label></div><p class="fin-hint">仅统计已登记基金；分析不自动下单。</p><div id="fin-risk-review"></div></div><div class="fin-card"><h2>亏损情景</h2><p class="fin-hint">比较持有、加仓与减仓后的风险。</p><div class="fin-scenario-controls"><label>假设再投入 <input id="fin-extra" type="number" value="0" min="0" max="100000000" step="100"> 元</label><label>假设继续下跌 <input id="fin-fall" type="number" value="10" min="0" max="80" step="1"> %</label></div><div id="fin-loss-scenarios" aria-live="polite"></div></div><div class="fin-card"><h2>策略复盘</h2><p class="fin-hint">历史规则对照，不预测收益。</p><label>选择基金 <select id="fin-research-fund"></select></label><div id="fin-strategy-review"></div></div>';
+  nav.after(diagnosis);
+  // Optional calculations remain available without dominating the overview.
+  Array.from(diagnosis.children).slice(1).forEach(function(card){
+   var title=card.querySelector('h2'),fold=document.createElement('details'),heading=document.createElement('summary');
+   fold.className='fin-card fin-analysis-fold';heading.textContent=title.textContent;title.remove();fold.append(heading);
+   while(card.firstChild)fold.append(card.firstChild);card.replaceWith(fold);
+  });
+  el('fin-risk-review').insertAdjacentHTML('beforebegin','<form id="fin-risk-profile" class="fin-scenario-controls"><label>投资期限<select id="fin-profile-term"><option value="">待确认</option><option value="long">3 年以上</option><option value="medium">1–3 年</option></select></label><label>可承受回撤<select id="fin-profile-drawdown"><option value="">待确认</option><option value="10-15">约 10%–15%</option><option value="5-10">约 5%–10%</option></select></label><button class="fin-btn" type="submit">保存分析条件</button></form><p id="fin-profile-note" class="fin-hint" aria-live="polite"></p>');
+  el('fin-profile-term').value=profile.term;el('fin-profile-drawdown').value=profile.drawdown;
+  var conditions=document.createElement('details');conditions.className='fin-profile-details';conditions.innerHTML='<summary id="fin-profile-summary">设置分析条件</summary>';el('fin-risk-profile').before(conditions);conditions.append(el('fin-risk-profile'),el('fin-profile-note'));
+  el('fin-risk-profile').onsubmit=function(e){e.preventDefault();profile={term:el('fin-profile-term').value,drawdown:el('fin-profile-drawdown').value};try{localStorage.setItem('finance-risk-profile:v1',JSON.stringify(profile))}catch(err){window.BikoFeedback?.show('分析条件未保存，请检查浏览器存储。',{kind:'error'});return}window.BikoFeedback?.show('分析条件已保存',{kind:'success'});renderRisk();document.dispatchEvent(new CustomEvent('finance:profile-updated'));if(profile.term&&profile.drawdown)conditions.open=false};
+  var alloc=el('fin-allocation').closest('.fin-card');diagnosis.appendChild(alloc);
+  var market=document.createElement('section');market.className='fin-research-panel';market.dataset.finPanel='market';market.appendChild(el('fin-market-card'));market.insertAdjacentHTML('beforeend','<div class="fin-card"><h2>持仓基金观察</h2><p class="fin-hint">按已有基金最近 20 个净值间隔涨跌观察，不是全市场热门榜，也不把上涨当作买入理由。缺少资金流、估值和全市场数据时，不生成“热点推荐”。</p><div id="fin-fund-watch"></div><p class="fin-hint">研究新基金：先核对跟踪指数/投资范围、近年回撤、规模流动性、基金经理变更、A/C 费用及持有期，再决定是否进入候选池。</p><a href="https://eid.csrc.gov.cn/fund/" target="_blank" rel="noopener noreferrer">查阅基金法定披露资料 ↗</a></div>');main.appendChild(market);
+  var sim=document.createElement('section');sim.className='fin-research-panel';sim.dataset.finPanel='paper';sim.innerHTML='<div class="fin-card"><p class="bss-eyebrow">Local sandbox · 浏览器本地记账</p><h2>情景沙盘</h2><p>虚拟资金 10 万 · 最多持有 3 只 · 股票仓位 ≤50%</p><p class="fin-hint">仅按输入情景价在浏览器本地记账，不连接券商；本机实时模拟盘为独立进程，不在此页成交。</p><div id="fin-paper-summary"></div><form id="fin-paper-form" class="fin-paper-form"><label>观察股票<select id="fin-paper-symbol">'+P.universe.map(function(x){return '<option value="'+x[0]+'">'+x[1]+' · '+x[0]+' · '+x[2]+'</option>'}).join('')+'</select></label><label>方向<select id="fin-paper-side"><option value="buy">模拟买入</option><option value="sell">模拟卖出</option></select></label><label>情景价格<input id="fin-paper-price" type="number" min="0.01" max="1000000" step="0.01" required></label><label>股数<input id="fin-paper-qty" type="number" min="100" step="100" value="100" required></label><button class="fin-btn fin-btn-primary" type="submit">记录模拟成交</button></form><div class="fin-paper-actions"><button class="fin-btn" id="fin-paper-quotes" type="button">查看公开参考报价</button><button class="fin-btn" id="fin-paper-next" type="button">进入下个模拟交易日</button><button class="fin-btn" id="fin-paper-export" type="button">导出模拟账本</button></div><p id="fin-paper-quote" class="fin-hint">未读取报价；情景价须手动输入。</p><p id="fin-paper-message" role="status"></p><div id="fin-paper-positions"></div><details><summary>模拟规则与费用</summary><p>当前只实现普通 A 股整手练习：每笔 100 股整数倍，不支持零股、融资或做空。T+1 限制新买部分，可用旧底仓做 T；“下个模拟交易日”只推进沙盘，不代表真实日历开市。价格由你指定，不能当成已验证的量化回测。</p><p>示例佣金万三、每笔最低 5 元；过户费买卖双向十万分之一；印花税卖出万五，未计滑点。实际费率需核对券商。模拟记录仅保存在此浏览器，不同步真实持仓。<a href="https://www.sse.com.cn/lawandrules/sselawsrules2025/trade/universal/c/c_20260424_10816492.shtml" target="_blank" rel="noopener noreferrer">交易规则 ↗</a></p></details><div id="fin-paper-log"></div></div>';main.appendChild(sim);
+  right.querySelectorAll('.fin-card').forEach(function(card){var title=card.querySelector('h3');if(!title||card.querySelector('details'))return;var details=document.createElement('details'),sum=document.createElement('summary');sum.textContent=title.textContent.trim();title.remove();while(card.firstChild)details.appendChild(card.firstChild);details.prepend(sum);card.appendChild(details)});
+  el('fin-fund-list').insertAdjacentHTML('beforebegin','<div class="fin-list-modes" role="group" aria-label="持仓列表显示"><button type="button" data-fin-mode="confirmed" aria-pressed="true">已公布</button><button type="button" data-fin-mode="reference" aria-pressed="false">行情参考</button></div><p id="fin-hold-basis" class="fin-hint">已公布净值与市值</p>');
+  sidebar.querySelector('.fin-card').insertAdjacentHTML('beforeend','<label class="fin-search-label">查找持仓<input id="fin-fund-search" type="search" placeholder="名称或代码"><span id="fin-fund-count" class="fin-search-count"></span></label><label>排序<select id="fin-fund-sort"><option value="value">市值从高到低</option><option value="rate">收益率从高到低</option><option value="loss">亏损金额优先</option><option value="day">日涨跌从高到低</option><option value="navDate">净值日期最新</option><option value="cost">投入成本从高到低</option></select></label>');
+  document.querySelector('.fin-table-wrap').closest('.fin-card').insertAdjacentHTML('afterbegin','<label class="fin-detail-toggle"><input id="fin-table-details" type="checkbox"> 展开份额、成本和盘中参考列</label>');
+  el('fin-table-details').onchange=function(e){main.classList.toggle('fin-detail-columns',e.target.checked)};
+  nav.addEventListener('click',function(e){var b=e.target.closest('[data-fin-view]');if(b)choose(b.dataset.finView)});
+  ['fin-cap','fin-extra','fin-fall'].forEach(function(id){el(id).addEventListener('input',renderRisk)});
+  el('fin-research-fund').onchange=function(){selected=this.value;renderStrategy()};
+  try{var cached=JSON.parse(localStorage.getItem('finance-paper:v1')||'null');paper=cached&&cached.v===1&&Number.isFinite(cached.cash)&&cached.cash>=0&&Array.isArray(cached.trades)&&cached.positions&&cached.marks?cached:P.fresh()}catch(e){paper=P.fresh()}
+  el('fin-paper-form').onsubmit=function(e){e.preventDefault();try{var order={id:crypto.randomUUID(),sym:el('fin-paper-symbol').value,side:el('fin-paper-side').value,price:Number(el('fin-paper-price').value),qty:Number(el('fin-paper-qty').value)};var result=window.PaperResearch?PaperResearch.execute(paper,order):{state:P.trade(paper,order),accepted:true};savePaper(result.state);el('fin-paper-message').textContent=(result.accepted?'模拟成交已记录':'模拟订单被风控拒绝：'+result.reason)+(storageOk?'':'；浏览器拒绝保存，关闭后可能丢失，请导出')}catch(err){el('fin-paper-message').textContent=err.message}};
+  el('fin-paper-next').onclick=function(){savePaper(P.next(paper));el('fin-paper-message').textContent='已进入下一模拟交易日，昨日买入份额现可卖出'};
+  el('fin-paper-quotes').onclick=async function(){this.disabled=true;el('fin-paper-quote').textContent='读取公开参考报价…';try{var response=await fetch('/api/quote/batch?syms='+P.universe.map(function(x){return x[0]}).join(','));if(!response.ok)throw Error();var data=await response.json();el('fin-paper-quote').textContent=P.universe.map(function(x){var q=data.items?.[x[0]];return x[1]+(q?' '+q.price+'（行情时间 '+q.time+'）':' 暂无报价')}).join('；')+'。仅供参照，实际交易日及延迟以行情时间为准。'}catch(e){el('fin-paper-quote').textContent='参考报价暂不可用；沙盘仍可输入假设价格，不能视为实时交易。'}finally{this.disabled=false}};
+  el('fin-paper-export').onclick=function(){var u=URL.createObjectURL(new Blob([JSON.stringify(paper,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=u;a.download='finance-paper.json';a.click();setTimeout(function(){URL.revokeObjectURL(u)},1000)};
+  var remembered=window.BikoView?.read('finance');
+  if(remembered&&document.querySelector('[data-fin-view="'+remembered.view+'"]'))view=remembered.view;
+  if(remembered?.state){el('fin-fund-search').value=remembered.state.search||'';el('fin-fund-sort').value=remembered.state.sort||'value';}
+  choose(view);renderPaper();document.dispatchEvent(new Event('finance:workspace-ready'));
+  if(remembered)setTimeout(function(){
+   if(document.querySelector('[data-fin-view="'+remembered.view+'"]'))choose(remembered.view);
+   document.querySelectorAll('.fin-workbench details').forEach(function(item,i){item.open=remembered.details?.[i]===true});
+   window.BikoView?.restoreScroll(remembered.y,main);
+  },0);
+ }
+ function renderRisk(){
+  if(!initialized)return;var rows=FinanceStore.list(),capInput=el('fin-cap'),cap=Number(capInput.value);
+  if(!Number.isFinite(cap)||cap<5||cap>50){el('fin-risk-review').textContent='仓位提醒阈值请输入 5–50%。';return}
+  var p=R.portfolio(rows,{cap:cap}),stale=rows.filter(function(r){return !freshDate(r.navDate)}),over=p.rows.filter(function(r){return r.weight>cap}),tiny=p.rows.filter(function(r){return r.weight<1});
+  var ceiling=profile.drawdown==='10-15'?15:profile.drawdown==='5-10'?10:null,stress=p.equityWeight*0.2;
+  el('fin-profile-summary').textContent=profile.term&&ceiling?(profile.term==='long'?'3 年以上':'1–3 年')+' · 回撤 '+(ceiling===15?'10%–15%':'5%–10%')+(stress>ceiling?' · 压力超限':''):'设置投资期限与可承受回撤';
+  el('fin-profile-note').textContent=profile.term&&ceiling?'已设置：'+(profile.term==='long'?'3 年以上':'1–3 年')+'，回撤承受区间 '+(ceiling===15?'10%–15%':'5%–10%')+'。仅此浏览器保存；这是承受范围，不是可保证的组合回撤。若权益相关分类下跌 20%、其余资产不变，当前组合静态损失约 '+pct(stress)+(stress>ceiling?'，超过你设定的上限，应优先复核总风险暴露。':'；该单一情景未超上限，也不能保证真实回撤符合要求。'):'尚未确认分析条件，以下只展示通用复核规则和自选情景。';
+  el('fin-risk-review').innerHTML='<p class="fin-key-message">'+(ceiling&&stress>ceiling?'先复核权益集中度 · 压力情景 −'+pct(stress):'按计划复核集中度与持有期限')+'</p><div class="fin-review-metrics"><div><span>前三大持仓</span><strong>'+pct(p.top3)+'</strong></div><div><span>权益相关分类</span><strong>'+pct(p.equityWeight)+'</strong></div><div><span>当前回本所需涨幅</span><strong>'+pct(p.recovery)+'</strong></div></div><details class="fin-support"><summary>复核依据</summary><ul class="fin-action-list"><li><b>先核对数据：</b>'+ (stale.length?stale.length+' 只净值日期缺失或已超过 7 个自然日；刷新成功不代表净值日期是今天。':'净值日期均在 7 个自然日内，仍须逐只核对所属交易日。')+'</li><li><b>加仓条件：</b>仅在应急金、投资期限、目标配比已确认，且该方向低于你设定的目标、持有逻辑仍成立时考虑分批投入。亏损幅度本身不是加仓依据。</li><li><b>减仓复核：</b>'+ (over.length?over.map(function(r){return esc(r.name)+' '+pct(r.weight)}).join('；')+' 超过本页 '+cap+'% 提醒线。先核对税费/锁定期，再评估是否分批再平衡。':'当前没有单只超过 '+cap+'% 提醒线；仍需检查行业和底层持仓重叠。')+'</li><li><b>稳健性复核：</b>权益相关分类 '+pct(p.equityWeight)+'，不能因基金数量多就认定已分散；偏债也可能含权益或转债，需查看披露。'+(tiny.length?tiny.length+' 只不足组合 1%，可评估是否保留观察或合并同类，避免管理负担。':'')+'</li><li><b>亏损处置：</b>资金近期要用、投资逻辑改变或风险已超承受力时，优先降低暴露；逻辑未变且额度充足时才比较持有与分批补仓。支付宝实际费率与逐笔确认日期尚未核对，不能直接给出“今天卖多少”。</li></ul></details>';
+  var extra=Number(el('fin-extra').value),fall=Number(el('fin-fall').value);
+  if(!Number.isFinite(extra)||extra<0||extra>1e8||!Number.isFinite(fall)||fall<0||fall>80){el('fin-loss-scenarios').textContent='请填写有效的新增金额和 0–80% 跌幅。';return}
+  var scenario=R.lossScenario(p.value,p.cost,extra,fall);
+  el('fin-loss-scenarios').innerHTML='<div class="fin-scenario-grid">'+[['继续持有','再跌 '+fall+'% 时，新增浮亏约 ¥'+money(scenario.holdLoss)],['新增 ¥'+money(extra),'新增浮亏约 ¥'+money(scenario.addLoss)+'；账面回本需涨 '+pct(scenario.addRecovery)],['转出当前 20%','保留 80% 暴露时，新增浮亏约 ¥'+money(scenario.reduceLoss)]].map(function(x){return '<article><h3>'+x[0]+'</h3><p>'+x[1]+'</p></article>'}).join('')+'</div><p class="fin-hint">补仓可降低回本涨幅，也可能放大亏损。</p><details class="fin-support"><summary>情景口径</summary><p>假设风险资产同幅下跌，转出部分价格不变；未计费用、利息和税。结果不是收益预测。</p></details>';
+ }
+ function renderStrategy(){
+  if(!initialized)return;var a=FinanceStore.list().find(function(r){return r.code===selected});if(!a)return;
+  var pts=histories[selected],m=R.history(pts),b=R.backtest(pts);var box=el('fin-strategy-review');
+  if(!m){box.textContent='历史净值不足，暂不生成指标或策略结论。';return}
+  box.innerHTML='<p>样本 '+esc(m.start)+' ～ '+esc(m.end)+' · '+m.count+' 点'+(!freshDate(m.end)?' · 历史数据滞后，不能用于当前择时':'')+'</p><div class="fin-review-metrics"><div><span>样本单位净值涨跌</span><strong>'+pct(m.returnPct)+'</strong></div><div><span>样本最大回撤</span><strong>'+pct(m.maxDrawdown)+'</strong></div><div><span>年化波动估算</span><strong>'+pct(m.volatility)+'</strong></div></div>'+(b?'<p>同一起点 '+esc(b.start)+' ～ '+esc(b.end)+'：持有 '+pct(b.holdReturn)+'，趋势规则 '+pct(b.trendReturn)+'；最大回撤分别 '+pct(b.holdDD)+' / '+pct(b.trendDD)+'；趋势规则调仓 '+b.turns+' 次。</p><details class="fin-support"><summary>计算方法与限制</summary><p class="fin-hint">信号仅用前一净值日及更早数据，按下一净值点成交；每次买卖统一扣 0.15% 假设费用，现金收益为 0，末日持仓按市值计价未强制卖出。未计分红复权、实际申赎费/确认延迟、持有期及暂停申赎，不能直接作为可执行基金策略。没有验证出的“最优参数”。</p></details>':'');
+ }
+ function renderWatch(){
+  if(!initialized)return;var items=FinanceStore.list().map(function(r){return {row:r,m:R.history(histories[r.code])}}).filter(function(x){return x.m}).sort(function(a,b){return b.m.monthPct-a.m.monthPct});
+  el('fin-fund-watch').innerHTML=items.length?items.map(function(x){return '<article class="fin-watch-row"><div><b>'+esc(x.row.name)+'</b><small>'+esc(x.row.code)+' · 截至 '+esc(x.m.end)+(freshDate(x.m.end)?'':' · 数据滞后')+'</small></div><div>20 间隔 '+pct(x.m.monthPct)+'<small>样本最大回撤 '+pct(x.m.maxDrawdown)+'</small></div></article>'}).join(''):'历史数据加载中，暂不排名。';
+ }
+ function renderPaper(){
+  if(!initialized||!paper)return;document.dispatchEvent(new CustomEvent('finance:paper-updated',{detail:paper}));el('fin-paper-summary').innerHTML='<div class="fin-review-metrics"><div><span>模拟日</span><strong>D'+paper.day+'</strong></div><div><span>模拟现金</span><strong>¥'+money(paper.cash)+'</strong></div><div><span>情景账面资产</span><strong>¥'+money(P.value(paper))+'</strong></div></div><p class="fin-hint">按最后输入的情景价计价。'+(!storageOk?'浏览器保存不可用，请及时导出。':'仅此浏览器保存。')+'</p>';
+  var positions=Object.entries(paper.positions).filter(function(e){return e[1].qty>0});
+  el('fin-paper-positions').innerHTML='<h3>模拟底仓</h3>'+(positions.length?positions.map(function(e){var p=e[1],name=P.universe.find(function(x){return x[0]===e[0]})?.[1]||e[0];return '<p>'+esc(name)+' · 持有 '+p.qty+' 股 · 当日可卖 '+p.available+' 股 · 最后情景价 '+p.last+'</p>'}).join(''):'<p class="fin-hint">暂无模拟持仓。次日可卖出昨日买入部分。</p>');
+  el('fin-paper-log').innerHTML='<h3>模拟流水（最近 20 笔）</h3>'+paper.trades.slice(-20).reverse().map(function(t){var line='D'+t.day+' · '+esc(P.universe.find(function(x){return x[0]===t.sym})?.[1]||t.sym)+' · '+(t.side==='buy'?'买入':'卖出')+' '+t.qty+' 股 × '+t.price+' · 费用 ¥'+money(t.fee);if(t.side==='sell'&&Number.isFinite(t.realized)){var col=t.realized>=0?'#5fd6a8':'#ffbec7';line+=' · 已实现 <span style="color:'+col+'">'+(t.realized>=0?'+':'-')+'¥'+money(Math.abs(t.realized))+'</span>'}return '<p>'+line+'</p>'}).join('');
+ }
+ function update(){
+  init();if(!initialized)return;renderRisk();
+  var rows=FinanceStore.list(),select=el('fin-research-fund');
+  if(!selected||!rows.some(function(r){return r.code===selected}))selected=rows.slice().sort(function(a,b){return b.value-a.value})[0]?.code||'';
+  select.innerHTML=rows.map(function(r){return '<option value="'+esc(r.code)+'">'+esc(r.name)+'</option>'}).join('');select.value=selected;
+  var generation=++epoch;Promise.all(rows.map(async function(r){histories[r.code]=await FinanceStore.loadHistory(r.code)})).then(function(){if(generation!==epoch||typeof document==='undefined'||!el('fin-research-fund'))return;renderStrategy();renderWatch()});
+ }
+ document.addEventListener('finance:updated',update);document.addEventListener('finance:selected',function(e){selected=e.detail.code;if(initialized){el('fin-research-fund').value=selected;renderStrategy()}});update();
+})();

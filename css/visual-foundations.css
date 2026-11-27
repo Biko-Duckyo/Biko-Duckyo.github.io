@@ -1,0 +1,216 @@
+/* L2 bridge: values live in common_layout.css; no layout/grid changes here.
+   Loaded after legacy page styles, including standalone Scholar/Finance. */
+:is(body.biko-shell-sample,body.bss-workspace) {
+  --font-ui: var(--ui-font);
+  --bss-font: var(--ui-font);
+  --bss-surface: var(--ui-glass);
+  --bss-inset: var(--ui-inset);
+  --bss-line: var(--ui-border);
+  --bss-text: var(--ui-ink);
+  --bss-muted: var(--ui-muted);
+  --bss-selected: var(--ui-action);
+  --bss-on-selected: var(--ui-on-action);
+  --bss-focus: var(--ui-focus);
+  --bss-shadow: var(--ui-shadow);
+  font-family: var(--ui-font);
+  font-size: var(--ui-text-body);
+  color: var(--ui-ink);
+}
+/* Match explicit light/dark rules in the existing shell without !important. */
+html[data-theme] :is(body.biko-shell-sample,body.bss-workspace) {
+  --bss-surface: var(--ui-glass); --bss-inset: var(--ui-inset);
+  --bss-line: var(--ui-border); --bss-text: var(--ui-ink); --bss-muted: var(--ui-muted);
+  --bss-selected: var(--ui-action); --bss-on-selected: var(--ui-on-action);
+  --bss-focus: var(--ui-focus); --bss-shadow: var(--ui-shadow);
+}
+:is(body.biko-shell-sample,body.bss-workspace) :is(button,input,select,textarea) {
+  font-family: var(--ui-font);
+}
+:is(body.biko-shell-sample,body.bss-workspace) :is(button,summary,[role=button]) {
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--ui-duration) var(--ui-ease),border-color var(--ui-duration) var(--ui-ease),color var(--ui-duration) var(--ui-ease);
+}
+:is(body.biko-shell-sample,body.bss-workspace) :is(button,a,input,select,textarea,summary,[tabindex]):focus-visible {
+  outline: 2px solid var(--ui-focus); outline-offset: 3px;
+}
+:is(body.biko-shell-sample,body.bss-workspace) :is(button,input,select,textarea):disabled {
+  cursor: not-allowed; opacity: .5;
+}
+body.biko-shell-sample :is(.resources-hero,.wl-head,.anime-page-header) h1,
+body.biko-shell-sample :is(.bmpg-title,.gal-stats-title),
+body.bss-workspace :is(.fin-topbar h1,.page-title),body.bss-scholar .panel-title {
+  font-family: var(--ui-font); font-size: var(--ui-text-title);
+  font-weight: var(--ui-weight-heading); line-height: 1.3; letter-spacing: -.02em;
+}
+body.biko-shell-sample :is(.bss-eyebrow,.resources-hero .eyebrow,.wl-eyebrow,.bmpg-eyebrow,.gal-eyebrow),
+body.bss-workspace .bss-eyebrow {
+  font-size: var(--ui-text-xs); font-weight: var(--ui-weight-label); letter-spacing: .12em;
+}
+body.biko-shell-sample :is(.resources-search label,.resources-chip,.resources-search button,.resource-card p,.gal-film-card__count,.gal-stats-info,.bmpg-sub,.anime-page-header .subtitle),
+body.bss-workspace :is(.fin-card p,.fin-muted,.fin-note,.fin-hint) {
+  font-size: var(--ui-text-control); line-height: var(--ui-leading);
+}
+body.biko-shell-sample #resource-results {font-size: var(--ui-text-sm)}
+body.biko-shell-sample :is(.bss-island-trigger,.bss-shortcut,.bss-drawer-link) {
+  font-weight: var(--ui-weight-label);
+}
+body.bss-workspace.fin-page-body {
+  --fin-bg-0: var(--ui-canvas); --fin-bg-1: var(--ui-surface);
+  --fin-bg-2: var(--ui-raised); --fin-bg-3: var(--ui-raised);
+  --fin-fg-mute: var(--ui-muted); --fin-tint: var(--ui-inset);
+}
+html[data-theme=dark] body.bss-workspace.fin-page-body {--fin-bg-0: var(--ui-canvas)}
+body.bss-workspace :is(.fin-btn,.fin-domain-tab,.fin-lab-tab) {
+  font-family: var(--ui-font); font-size: var(--ui-text-control); font-weight: var(--ui-weight-label);
+}
+body.bss-workspace .fin-workbench :is(.fin-hint,.fin-status-tag,.fin-fee-status span,.fin-review-metrics span) {font-size:var(--ui-text-sm);line-height:1.65}
+body.bss-workspace .fin-workbench :is(button,summary,label) {font-family:var(--ui-font);font-size:var(--ui-text-control)}
+body.biko-shell-sample #bss-trigger {font-weight:var(--ui-weight-heading)}
+body.biko-shell-sample .ar-head h1 {font-size:var(--ui-text-title);font-weight:600;letter-spacing:-.02em}
+body.biko-shell-sample :is(.ar-sub,.ar-tabs button,.ar-filters>summary) {font-size:var(--ui-text-control)}
+body.biko-shell-sample .ar-eyebrow {font-size:var(--ui-text-xs);letter-spacing:.12em}
+html[data-theme] body.biko-shell-sample.home-dashboard {
+  --fg:var(--ui-ink);--fg-strong:var(--ui-ink);--fg-dim:var(--ui-muted);--fg-mute:var(--ui-muted);
+  --dash-line:var(--ui-border);--dash-glass:var(--ui-glass);
+}
+html[data-theme] body.biko-shell-sample.home-dashboard .dash-card {background-color:var(--ui-glass);border-color:var(--ui-border)}
+body.bss-workspace :is(.fin-kpi-value,.fin-kpi-val,.fin-holding-value) {font-variant-numeric: tabular-nums}
+/* Reading workspace: bridge its older aliases, without targeting PDF text spans. */
+body.bss-scholar {
+  --font-sans: var(--ui-font); --font-mono: var(--ui-mono);
+  --text: var(--ui-ink); --text-secondary: var(--ui-muted); --text-muted: var(--ui-muted);
+  --bg: var(--ui-canvas); --glass: var(--ui-surface); --glass-strong: var(--ui-raised);
+  --glass-thin: var(--ui-inset); --hairline: var(--ui-border); --card-border: var(--ui-border);
+  --accent: var(--ui-action); --accent-soft: var(--ui-action-hover); --btn-text: var(--ui-on-action);
+}
+body.bss-scholar :is(.brand-title,.panel-title,.section-title) {font-family: var(--ui-font); font-weight: 600}
+body.bss-scholar .today-title {font:600 var(--ui-text-section)/1.4 var(--ui-font);letter-spacing:0}
+body.bss-scholar :is(.today-sub,.today-empty,.today-col-head,.dashboard-section-title) {font:400 var(--ui-text-control)/1.65 var(--ui-font);letter-spacing:0}
+body.bss-scholar :is(.today-col-head,.dashboard-section-title) {font-weight:600}
+body.bss-scholar .today-count {font:500 var(--ui-text-xs)/1.5 var(--ui-font);font-variant-numeric:tabular-nums}
+body.bss-scholar .card-label {font:600 var(--ui-text-control)/1.5 var(--ui-font);letter-spacing:0}
+body.bss-scholar .todo-mini-empty {font:400 var(--ui-text-control)/1.65 var(--ui-font)}
+@media(max-width:600px) {
+  body.biko-shell-sample :is(.resources-hero,.wl-head,.anime-page-header) h1,
+  body.biko-shell-sample :is(.bmpg-title,.gal-stats-title,.ar-head h1),body.bss-workspace .fin-topbar h1,body.bss-scholar .panel-title {font-size: 24px}
+  /* iOS input zoom; no change to the homepage quick-tool card dimensions. */
+  :is(body.biko-shell-sample,body.bss-workspace) :is(input,textarea,select) {font-size: 16px}
+}
+@media(prefers-reduced-motion:reduce) {
+  :is(body.biko-shell-sample,body.bss-workspace) {scroll-behavior: auto}
+  :is(body.biko-shell-sample,body.bss-workspace) :is(button,summary,[role=button]) {transition: none}
+}
+@media(forced-colors:active) {
+  :is(body.biko-shell-sample,body.bss-workspace) :is(button,input,select,textarea) {border: 1px solid ButtonText}
+}
+
+/* P1 surface hierarchy. Geometry, controls, gates and the tool bookshelf are unchanged.
+   Wallpaper is drawn once; static surfaces do not each re-blur the same pixels. */
+body.biko-shell-sample #web_bg {display:none}
+body.biko-shell-sample::before {filter:blur(4px) saturate(.65)}
+html[data-theme] body.biko-shell-sample::after,
+html[data-theme] body.biko-shell-sample.home-dashboard .dash-veil {
+  background:var(--ui-wallpaper-veil);
+}
+html[data-theme] :is(body.biko-shell-sample,body.bss-workspace) {
+  --bss-surface:var(--ui-surface);
+  --bss-shadow:var(--ui-shadow);
+}
+html[data-theme] body.biko-shell-sample.home-dashboard {
+  --dash-glass:var(--ui-surface);
+  --dash-glass-strong:var(--ui-raised);
+  --dash-shadow:none;--dash-shadow-sm:none;--dash-glow:none;
+}
+/* Keep transparent border widths so no card or grid changes size. */
+html[data-theme] body.biko-shell-sample.home-dashboard .dash-card:not(.dash-siteinfo-blank),
+html[data-theme] body.biko-shell-sample :is(.ar,.resources-page,.wl-head,.wl-agenda-block,.wl-help,.wl-history,.bmpg-head,.bmpg-card,.gal-stats-card,.gal-wall,.anime-page-header),
+html[data-theme] body.bss-workspace :is(.fin-card,.fin-topbar),
+html[data-theme] body.bss-scholar :is(.topbar,.card,.today-board,.reader-masthead,.hs-masthead) {
+  background:var(--ui-surface);
+  border-color:var(--ui-separator);
+  box-shadow:none;
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+}
+html[data-theme] body.biko-shell-sample.home-dashboard .dash-card:not(.dash-siteinfo-blank):hover,
+html[data-theme] body.bss-scholar .card:hover {
+  box-shadow:none;transform:none;
+}
+html[data-theme] body.biko-shell-sample.home-dashboard #footer {
+  border-color:var(--ui-separator);box-shadow:none;
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+}
+/* Fade slides share one slot even if the plugin measured offsets during entry.
+   Existing active-slide visibility rules continue to select exactly one article. */
+body.biko-shell-sample.home-dashboard .dash-slider .swiper-container-fade .blog-slider__wrp {
+  position:relative;display:grid;grid-template-columns:minmax(0,1fr);
+}
+body.biko-shell-sample.home-dashboard .dash-slider .swiper-container-fade .blog-slider__item {
+  grid-area:1 / 1;position:relative;inset:auto;width:100%!important;transform:none!important;
+}
+/* Article pages keep a clear reading surface, independent of the wallpaper. */
+html[data-theme] body.biko-shell-sample :is(#post,#aside-content .card-widget,#recent-posts>.recent-post-item) {
+  background:var(--ui-surface);border-color:var(--ui-separator);box-shadow:none;
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+}
+/* Page components already provide their own surface; remove the legacy outer glass. */
+html[data-theme] body.biko-shell-sample #page:has(:is(.ar,.resources-page,.wl,.gal,.bmpg,.anime-page)) {
+  background:transparent;border-color:transparent;box-shadow:none;
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+}
+/* Insets are separated by tone, rather than another outlined floating card. */
+html[data-theme] body.biko-shell-sample :is(.resource-item,.gal-film-card) {
+  background:var(--ui-inset);border-color:transparent;box-shadow:none;
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+}
+html[data-theme] body.biko-shell-sample .resource-item:hover {
+  background:var(--ui-hover);border-color:transparent;box-shadow:none;
+}
+html[data-theme] body.biko-shell-sample .wl-board {
+  background:transparent;border-color:transparent;box-shadow:none;
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+}
+html[data-theme] body.biko-shell-sample .wl-history-head {
+  background:transparent;border-color:transparent;
+  border-bottom-color:var(--ui-separator);border-radius:0;box-shadow:none;
+}
+html[data-theme] body.biko-shell-sample :is(.ar-head,.resource-group-header,.wl-agenda-head,.dash-card__head) {
+  border-color:var(--ui-separator);
+}
+html[data-theme] body.biko-shell-sample .anime-page :is(.glass-card,.anime-timeline-item) {
+  background:var(--ui-surface);border-color:var(--ui-separator);box-shadow:none;
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+}
+/* Persistent navigation floats; its backdrop is the only everyday frosted layer. */
+html[data-theme] body :is(#bss-island,#bss-dock),
+html[data-theme] body.biko-shell-sample.bss-post #rightside {
+  background:var(--ui-glass);border-color:var(--ui-separator);
+  box-shadow:var(--ui-shadow);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+}
+html[data-theme] body #bss-drawer,
+html[data-theme] body.biko-shell-sample :is(.wl-panel,.anime-modal-content),
+html[data-theme] body.bss-workspace .fin-modal-dialog {
+  background:var(--ui-surface);box-shadow:var(--ui-floating-shadow);
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+}
+html[data-theme] body.biko-shell-sample .bmp-card {
+  background:var(--ui-surface);box-shadow:var(--ui-floating-shadow);
+  -webkit-backdrop-filter:none;backdrop-filter:none;
+}
+/* Workspaces use their existing canvas rather than additional decorative photo/orb layers. */
+body.bss-workspace :is(.bg-photo,.bg-orb) {display:none}
+html[data-theme] body.bss-workspace {
+  background-color:var(--ui-canvas);background-image:none;
+}
+/* Tool modals keep one obscuring layer, without frosting their inner panels. */
+html[data-theme] body.home-dashboard :is(.dash-compress-layer,.dash-anim-layer,.home-tool-layer) {
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+}
+@media(max-width:760px) {
+  html[data-theme] body :is(#bss-island,#bss-dock) {
+    -webkit-backdrop-filter:none;backdrop-filter:none;
+  }
+}
+@media(forced-colors:active) {
+  html[data-theme] body.biko-shell-sample :is(.resource-item,.gal-film-card) {border-color:CanvasText}
+}

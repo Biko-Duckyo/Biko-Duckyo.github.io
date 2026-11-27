@@ -1,79 +1,15 @@
-/* ============================================================
- * Biko · 个性化首屏 Home Hub
- * 鲸鱼星空全屏背景 + 问候胶囊 / 超大站名 / 猫耳时钟 / 建站时长
- * 蓝灰配色；飘落星点与气泡；CTA「翻开我的小世界」
- * ============================================================ */
-#biko-hub {
-  position: fixed;
-  inset: 0;
-  z-index: var(--z-overlay, 100);
-  overflow: hidden;
-  color: #fff;
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(1.03);
-  transition: opacity .7s ease, transform .7s ease;
-  font-family: var(--font-ui);
-}
-#biko-hub.show {
-  opacity: 1;
-  pointer-events: auto;
-  transform: scale(1);
-}
-#biko-hub.leaving {
-  opacity: 0;
-  pointer-events: none;
-  transform: scale(1.05);
-}
-
-/* 鲸鱼背景 + 对比遮罩 */
-.biko-hub-bg {
-  position: absolute;
-  inset: 0;
-  background: url('https://s2.loli.net/2022/04/11/oDZPBRxHn59rbYO.jpg') center center / cover no-repeat;
-}
-.biko-hub-bg::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(120% 90% at 18% 55%, rgba(12, 18, 30, .62) 0%, rgba(12, 18, 30, .18) 55%, rgba(12, 18, 30, .35) 100%),
-    linear-gradient(180deg, rgba(10, 15, 26, .35) 0%, rgba(10, 15, 26, .12) 40%, rgba(10, 15, 26, .5) 100%);
-}
-
-/* 内容容器：左对齐，落在画面较暗的左侧 */
-.biko-hub-inner {
-  position: relative;
-  z-index: 2;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 0 9vw;
-  max-width: 1200px;
-}
-
-/* 胶囊 */
-.biko-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 18px;
-  border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, .1);
-  border: 1px solid rgba(255, 255, 255, .26);
-  -webkit-backdrop-filter: blur(5px);
-  backdrop-filter: blur(5px);
-  font-size: 15px;
-  line-height: 1.2;
-}
-.biko-pill i { color: #c3d2e8; }
-.biko-pill b { color: #dbe6f5; font-weight: 700; margin: 0 2px; }
-
+/* Welcome composition: introduction first, one clear entrance, time as quiet metadata.
+   All rules stay inside the welcome overlay; dashboard and quick-tool geometry are untouched. */
+#biko-hub{position:fixed;inset:0;z-index:var(--z-overlay,100);overflow:auto;overscroll-behavior:contain;color:#f4f7fd;opacity:0;pointer-events:none;transform:none;transition:opacity .38s ease;font-family:var(--ui-font,var(--font-ui,system-ui))}
+#biko-hub.show{opacity:1;pointer-events:auto;transform:none}
+#biko-hub.leaving{opacity:0;pointer-events:none;transform:none}
+#biko-hub .biko-hub-bg{position:absolute;inset:0;background:#182336 url('/img/welcome-desktop.webp') center center / cover no-repeat}
+#biko-hub .biko-hub-bg::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(9,17,30,.93) 0%,rgba(9,17,30,.80) 38%,rgba(9,17,30,.22) 75%,rgba(9,17,30,.10) 100%),linear-gradient(0deg,rgba(9,17,30,.70),transparent 45%)}
+#biko-hub .biko-hub-inner{position:relative;z-index:2;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:16px;min-height:100%;width:100%;max-width:1440px;margin:0 auto;padding:clamp(32px,5vh,64px) clamp(28px,8vw,120px)}
+#biko-hub .biko-pill{display:inline-flex;align-items:center;gap:9px;max-width:100%;box-sizing:border-box;padding:7px 12px;border:1px solid #dbe7fa28;border-radius:999px;background:#c8d9f00c;color:#d0def0;font-size:12px;line-height:1.5;letter-spacing:.03em}
+#biko-hub .biko-pill i{color:#b9cceb}
 /* 大标题 */
-.biko-hub-title {
+#biko-hub .biko-hub-title {
   margin: 4px 0 0;
   color: #fff;
   font-size: clamp(52px, 11vw, 132px);
@@ -85,7 +21,7 @@
   align-items: center;
   gap: .12em;
 }
-.biko-hub-title .biko-heart {
+#biko-hub .biko-hub-title .biko-heart {
   color: #9db4d3;
   font-size: .62em;
   transform: translateY(-.1em);
@@ -96,7 +32,7 @@
   25% { transform: translateY(-.1em) scale(1.18); }
   45% { transform: translateY(-.1em) scale(1); }
 }
-.biko-hub-sub {
+#biko-hub .biko-hub-sub {
   font-size: clamp(22px, 3.4vw, 40px);
   font-weight: 600;
   margin-top: -2px;
@@ -108,7 +44,7 @@
  * 改为挂到真实的时分秒盒子两端：.biko-hub-clock 上找出首/末盒子，
  * 由 CSS 通过 :has() 无法定位兄弟节点，故用 JS 写入 --bh-ear-l / --bh-ear-r
  * （home_hub.js），此处只保留兜底值，并用 em 跟随字号缩放。 */
-.biko-hub-clock {
+#biko-hub .biko-hub-clock {
   position: relative;
   display: flex;
   align-items: center;
@@ -116,7 +52,7 @@
   margin-top: 14px;
   padding-top: 20px;
 }
-.biko-ear {
+#biko-hub .biko-ear {
   position: absolute;
   top: -6px;
   width: 0;
@@ -126,7 +62,7 @@
   border-bottom: .46em solid #9db4d3;
   font-size: clamp(26px, 4.6vw, 48px);
 }
-.biko-ear::after {
+#biko-hub .biko-ear::after {
   content: '';
   position: absolute;
   left: -.15em;
@@ -140,9 +76,9 @@
 /* 兜底定位（JS 未执行时）；JS 会写入更精确的 --bh-ear-l / --bh-ear-r
  * 注意：这里的 -44px / -2px 与 JS 的 EAR_SHIFT(10) 是同一套坐标系，
  * 两边要同步改，否则 JS 一执行耳朵会跳 10px。 */
-.biko-ear-l { left: var(--bh-ear-l, calc(50% - 44px)); }
-.biko-ear-r { left: var(--bh-ear-r, calc(50% - 2px)); }
-.biko-time-box {
+#biko-hub .biko-ear-l { left: var(--bh-ear-l, calc(50% - 44px)); }
+#biko-hub .biko-ear-r { left: var(--bh-ear-r, calc(50% - 2px)); }
+#biko-hub .biko-time-box {
   background: rgba(255, 255, 255, .94);
   color: #4a5b75;
   font-weight: 800;
@@ -155,21 +91,21 @@
   box-shadow: 0 6px 18px rgba(0, 0, 0, .25);
   font-variant-numeric: tabular-nums;
 }
-.biko-colon {
+#biko-hub .biko-colon {
   font-size: clamp(24px, 4vw, 42px);
   font-weight: 800;
   color: rgba(255, 255, 255, .9);
 }
 
 /* 日期 */
-.biko-hub-date {
+#biko-hub .biko-hub-date {
   display: flex;
   align-items: center;
   gap: 12px;
   font-size: clamp(15px, 2vw, 18px);
   opacity: .92;
 }
-.biko-weekday {
+#biko-hub .biko-weekday {
   padding: 3px 12px;
   border-radius: var(--r-pill);
   background: rgba(126, 150, 184, .4);
@@ -178,36 +114,23 @@
 }
 
 /* 标语 */
-.biko-hub-tagline {
+#biko-hub .biko-hub-tagline {
   margin: 6px 0 0;
   font-size: clamp(15px, 2.1vw, 19px);
   opacity: .86;
 }
 
-/* CTA */
-.biko-hub-cta {
-  margin-top: 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 14px 30px;
-  border: none;
-  border-radius: var(--r-pill);
-  background: linear-gradient(135deg, #7e96b8 0%, #9db4d3 100%);
-  color: #fff;
-  font-size: 17px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 10px 26px rgba(126, 150, 184, .45);
-  transition: transform .25s ease, box-shadow .25s ease, filter .25s ease;
-}
-.biko-hub-cta:hover {
-  transform: translateY(-2px);
-  filter: brightness(1.06);
-  box-shadow: 0 14px 32px rgba(126, 150, 184, .55);
-}
-.biko-hub-cta i { transition: transform .25s ease; }
-.biko-hub-cta:hover i { transform: translateY(3px); }
+#biko-hub .biko-hub-cta{display:inline-flex;align-items:center;justify-content:center;gap:18px;box-sizing:border-box;min-height:52px;margin:0;padding:13px 26px;border:1px solid #ffffff38;border-radius:14px;background:#d8e6f8;color:#172c45;font:600 16px/1.5 var(--ui-font,var(--font-ui,system-ui));cursor:pointer;box-shadow:0 5px 18px #030a1830;transition:background-color .18s ease,transform .18s ease}
+#biko-hub .biko-hub-cta:hover{background:#edf4ff;transform:translateY(-2px)}
+#biko-hub .biko-hub-cta:focus-visible{outline:3px solid #edf4ff;outline-offset:5px}
+#biko-hub .biko-hub-cta:active{transform:translateY(0)}
+#biko-hub .biko-hub-cta i{font-size:14px;transition:transform .18s ease}
+#biko-hub .biko-hub-cta:hover i{transform:translateX(3px)}
+#biko-hub .biko-hub-uptime{white-space:nowrap;font-size:12px}
+#biko-hub .biko-hub-uptime b{font-weight:500;color:#d9e5f6}
+#biko-hub .biko-hub-fall{opacity:.35}
+#biko-hub:not(.show) :is(.biko-star,.biko-bubble,.biko-heart),
+#biko-hub[data-page-hidden] :is(.biko-star,.biko-bubble,.biko-heart){animation-play-state:paused}
 
 /* 飘落层：星点 + 气泡 */
 .biko-hub-fall {
@@ -254,14 +177,24 @@
   100% { transform: translateY(-112vh) translateX(-14px); opacity: 0; }
 }
 
-/* 移动端 */
-@media (max-width: 768px) {
-  .biko-hub-inner { padding: 0 7vw; gap: 12px; }
-  .biko-pill { font-size: 13px; padding: 7px 14px; }
-  .biko-hub-cta { padding: 12px 24px; font-size: 15px; }
+
+
+@media(max-width:768px){
+ #biko-hub .biko-hub-bg{background-position:65% center}
+ #biko-hub .biko-hub-bg::after{background:linear-gradient(90deg,rgba(9,17,30,.85),rgba(9,17,30,.62)),linear-gradient(0deg,rgba(9,17,30,.60),transparent 65%)}
+ #biko-hub .biko-hub-inner{padding:max(32px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) max(28px,env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left));gap:12px}
+ #biko-hub .biko-hub-cta{width:100%;font-size:15px;min-height:52px}
 }
-@media (prefers-reduced-motion: reduce) {
-  .biko-star, .biko-bubble, .biko-hub-title .biko-heart { animation: none; }
+@media(max-height:640px){
+ #biko-hub .biko-hub-inner{padding-top:24px;padding-bottom:20px;gap:20px}
+}
+@media(max-width:600px) and (max-aspect-ratio:1/2){
+ #biko-hub .biko-hub-bg{background-image:url('/img/welcome-mobile.webp');background-position:center}
+}
+@media(prefers-reduced-motion:reduce){
+ #biko-hub,#biko-hub .biko-hub-cta,#biko-hub .biko-hub-cta i{transition:none}
+ #biko-hub .biko-star,#biko-hub .biko-bubble{animation:none;display:none}
+ #biko-hub .biko-heart{animation:none}
 }
 
 /* ============================================================

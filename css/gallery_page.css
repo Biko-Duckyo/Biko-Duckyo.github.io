@@ -461,10 +461,11 @@ body.is-open #gal-root { display: block; }
   backdrop-filter: blur(16px);
   opacity: 0;
   visibility: hidden;
+  pointer-events: none;
   transition: opacity 0.25s ease, visibility 0.25s ease;
 }
 
-.gal-lb.is-open { opacity: 1; visibility: visible; }
+.gal-lb.is-open { opacity: 1; visibility: visible; pointer-events: auto; }
 
 .gal-lb-top,
 .gal-lb-bot {
@@ -514,18 +515,27 @@ body.is-open #gal-root { display: block; }
 .gal-lb-stage {
   position: relative;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   place-items: center;
+  min-width: 0;
   min-height: 0;
-  padding: 0 clamp(12px, 4vw, 64px);
 }
 
 .gal-lb-stage img {
+  position: absolute;
+  inset: 0;
   display: block;
+  margin: 0;
+  padding: 0 clamp(12px, 4vw, 64px);
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
   max-width: 100%;
   max-height: 100%;
+  object-fit: contain;
   border-radius: 6px;
-  background: #0d1119;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.5);
+  background: transparent;
   transition: opacity 0.25s ease;
 }
 
@@ -653,7 +663,7 @@ body.gal-lb-lock { overflow: hidden; }
   box-shadow: none;
 }
 .page.type-gallery .layout > div:first-child:not(.nc):hover { box-shadow: none; }
-.page.type-gallery #article-container { padding: 0; }
+.page.type-gallery #article-container { padding: 0; margin-top: 0; }
 
 /* 5) 版心宽度：主题 .layout.hide-aside 锁 1000px（_page/common.styl:44），
    墙要铺满到 1180px 以上。只在桌面断点里放开，不给 pjax 的替换容器造成宽度跳变。 */
@@ -750,8 +760,17 @@ body.gal-lb-lock { overflow: hidden; }
   background: var(--gal-sheet);
   border-radius: var(--r-panel);
   padding: 24px;
-  margin: 24px 0;
+  margin: 0 0 var(--layout-gap);
 }
+
+.gal-sync-status {
+  margin: 0 0 12px;
+  color: var(--fg-mute);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.gal-sync-status[hidden] { display: none; }
 
 .gal-stats-head {
   display: flex;
@@ -891,3 +910,32 @@ body.gal-lb-lock { overflow: hidden; }
   }
 }
 
+
+/* 照片优先：紧凑页头、无装饰嵌套、所有相册直接可见。 */
+#gal-root .gal-stats-card { padding: 20px 24px; margin-bottom: 20px; }
+#gal-root .gal-stats-head { gap: 16px 24px; margin: 0; }
+#gal-root .gal-stats-info { margin: 4px 0 0; font-size: 13px; }
+#gal-root .gal-search { min-width: 0; width: 100%; max-width: 320px; }
+#gal-root .gal-search input { height: 42px; font-size: 14px; }
+#gal-root .gal-sync-status { margin: 12px 0 0; }
+#gal-root .gal-wall { padding: 0; border: 0; background: none; backdrop-filter: none; }
+#gal-root .gal-grid--film { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 20px; overflow: visible; padding: 0; }
+#gal-root .gal-film-card { min-width: 0; padding: 0; overflow: hidden; border: 1px solid var(--line); border-radius: var(--r-card); background: var(--card-2); display: grid; grid-template-columns: minmax(0, 1fr) auto; align-content: start; }
+#gal-root .gal-film-card:focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
+#gal-root .gal-film-card__cover { grid-column: 1 / -1; aspect-ratio: 4 / 3; margin: 0; border-radius: 0; background: var(--gal-photo); }
+#gal-root .gal-film-card__cover img { display: block; object-fit: contain; }
+#gal-root .gal-film-card__cover.is-empty { display: grid; place-items: center; color: var(--fg-mute); font-size: 14px; }
+#gal-root .gal-film-card__name { min-width: 0; padding: 14px 0 14px 16px; margin: 0; text-align: left; font-size: 15px; font-weight: 650; color: var(--fg-strong); overflow-wrap: anywhere; }
+#gal-root .gal-film-card__count { padding: 16px; margin: 0; font-size: 12px; color: var(--fg-mute); white-space: nowrap; }
+@media (max-width: 640px) {
+  #gal-root .gal-stats-card { padding: 16px; margin-bottom: 16px; }
+  #gal-root .gal-stats-head { align-items: stretch; gap: 12px; }
+  #gal-root .gal-search { max-width: none; }
+  #gal-root .gal-grid--film { gap: 16px; }
+}
+#gal-root .gal-grid--film { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+#gal-root .gal-album-title { margin: 0 0 12px; padding: 0; border: 0; color: var(--fg-strong); font-size: 16px; line-height: 1.5; }
+#gal-root .gal-album-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr)); gap: 20px; }
+#gal-root .gal-film-card__name { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.5; }
+@media (max-width: 640px) { #gal-root .gal-album-grid { gap: 16px; } }
+#gal-root .gal-wall { box-shadow: none; -webkit-backdrop-filter: none; }

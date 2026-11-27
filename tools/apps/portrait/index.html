@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#f7f8fa"><title>随手修图 · 鸭喵屋</title><link rel="icon" href="/favicon.ico">  <script type="module" crossorigin src="/image-editor/assets/index-B8UhVg8i.js"></script>
+  <link rel="stylesheet" crossorigin href="/image-editor/assets/index-icv1x7xH.css">
+<script src="/tools/knowledge-core.js"></script><script src="/tools/app-bridge.js"></script><link rel="stylesheet" href="/tools/app-bridge.css"></head>
+<body>
+<header class="topbar"><a href="/" class="back" aria-label="返回首页">← <span>鸭喵屋</span></a><div class="brand">随手修图 <span>照片，在这里轻一点</span></div><button id="choose" class="primary">选择照片</button><input id="file" type="file" accept="image/jpeg,image/png,image/webp,image/avif" hidden></header>
+<main>
+  <section class="workspace" aria-label="图片预览">
+    <div class="canvas-bar"><span id="photo-info">还没有选择照片</span><button id="compare" disabled aria-pressed="false">查看原图</button></div>
+    <div class="stage" id="stage"><div id="empty"><div class="empty-icon">✧</div><h1>给照片一点好气色</h1><p>磨皮、瘦脸、微笑、眼神与背景虚化<br>从一张清晰的人像开始</p><button id="empty-choose" class="primary">选择本地照片</button><button id="sample" class="text-button">先用示例体验 →</button></div><canvas id="result" hidden aria-label="编辑后的照片"></canvas></div>
+    <p id="status" role="status" aria-live="polite">照片在你的设备上处理，不上传照片。</p>
+  </section>
+  <aside class="controls" aria-label="修图工具">
+    <div class="section-label">人像美化 <span>FaceStudio</span></div><h2>自然一点，刚刚好</h2><p class="hint">调整强度后点「应用效果」。多人照片默认处理最大的人脸。</p>
+    <fieldset id="beauty" disabled><label for="smooth">磨皮 <output id="smooth-value">0</output></label><input id="smooth" type="range" min="0" max="100" value="0"><label for="slim">瘦脸 <output id="slim-value">0</output></label><input id="slim" type="range" min="0" max="100" value="0"><label for="blur">背景虚化 <output id="blur-value">0</output></label><input id="blur" type="range" min="0" max="100" value="0"><label for="teeth">牙齿美白 <output id="teeth-value">0</output></label><input id="teeth" type="range" min="0" max="100" value="0"><label for="smile">微笑 <output id="smile-value">0</output></label><input id="smile" type="range" min="-50" max="50" value="0"><label for="eyes">眼睛大小 <output id="eyes-value">0</output></label><input id="eyes" type="range" min="-50" max="50" value="0"><label for="nose">鼻型收窄 <output id="nose-value">0</output></label><input id="nose" type="range" min="0" max="100" value="0"><label for="brow">眉形清晰 <output id="brow-value">0</output></label><input id="brow" type="range" min="0" max="100" value="0"><div class="actions"><button id="reset">重置</button><button id="apply" class="primary">应用效果</button></div></fieldset>
+    <div class="divider"></div><div class="section-label">基础编辑 <span>Filerobot</span></div><p class="hint">裁剪、旋转、调色、标注；模糊/标注可遮挡杂物，不提供 AI 物体消除。保存后回到这里，继续美化。</p><button id="basic" class="wide" disabled>打开基础编辑 ↗</button>
+    <div class="divider"></div><div class="section-label">本地放大 <span>ONNX · general</span></div><p class="hint">基于当前画面做轻量 4x 放大；属于像素级超分，不做去模糊、老照片修复或生成式补纹理。首次下载约 1.8MB 模型。</p><button id="upscale" class="wide" disabled>本地放大 4x</button>
+    <button id="download" class="primary wide download" disabled>下载图片</button><p class="privacy">首次应用会按需下载模型与运行组件（约 85 MB）；本地放大模型另约 1.8MB，后续使用缓存。大图长边最多 1600 px；手机上最多 1280 px。</p>
+  </aside>
+</main>
+<footer><span>本地处理 · 原文件不变</span><a href="/image-editor/about.html" target="_blank" rel="noopener">开源与许可</a></footer>
+<div id="basic-dialog" role="dialog" aria-modal="true" aria-labelledby="basic-title" hidden><div class="modal-head"><h2 id="basic-title">基础编辑</h2><button id="close-basic" aria-label="关闭基础编辑">关闭</button></div><div id="filerobot"></div><p id="basic-status" role="status"></p></div></body></html>

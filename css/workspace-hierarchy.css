@@ -1,0 +1,31 @@
+/* Common operations first; supplementary information stays available on demand. */
+.workspace-support { min-width: 0; border: 1px solid var(--ui-separator,var(--ui-border)); border-radius: 16px; padding: 0 18px; color: var(--ui-ink); }
+.workspace-support > summary { cursor: pointer; min-height: 52px; padding: 14px 0; box-sizing: border-box; line-height: 1.6; font-size: 15px; font-weight: 600; }
+.workspace-support > summary > span { margin-left: 12px; font-size: 12px; font-weight: 400; color: var(--ui-muted); }
+.workspace-support[open] { padding-bottom: 18px; }
+.workspace-support summary:focus-visible,.scholar-start :is(button,a):focus-visible,.wl-head-actions a:focus-visible { outline: 2px solid var(--ui-focus,#235c9a); outline-offset: 3px; }
+body.bss-scholar .topbar { padding: 18px 24px; }
+/* Let the document own scrolling instead of a second fixed-height body scroller. */
+body.bss-scholar { height: auto; min-height: 100%; }
+body.bss-scholar .topbar-date { display: none; }
+.scholar-start { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 12px; margin: 0 0 20px; }
+.scholar-start :is(button,a) { width: 100%; display: flex; align-items: center; gap: 14px; padding: 16px; box-sizing: border-box; text-align: left; font: 600 16px/1.5 var(--ui-font,system-ui); color: var(--ui-ink); background: var(--ui-surface); border: 1px solid var(--ui-separator,var(--ui-border)); border-radius: 16px; text-decoration: none; cursor: pointer; }
+.scholar-start :is(button,a):hover { background: var(--ui-hover); }
+.scholar-start small { display: block; color: var(--ui-muted); font-size: 12px; font-weight: 400; margin-top: 3px; }
+.scholar-start .btn-goto::after { display: none; }
+.scholar-start :is(button,a)>i:last-child { margin-left: auto; font-size: 12px; }
+.scholar-support { margin-top: 20px; }
+.scholar-support[open] > .grid-2 { margin-top: 8px; }
+body.bss-workspace .fin-title .fin-total { display: none; }
+body.bss-workspace .fin-main.fin-workbench,
+body.bss-workspace .fin-workbench .fin-rightbar { align-content: start; }
+body.bss-workspace .fin-workbench .workspace-support summary { line-height: 1.6; }
+body.bss-workspace .fin-rightbar .workspace-support { align-self: start; }
+body.bss-workspace .fin-notes { font-size: 13px; line-height: 1.85; }
+@media(max-width:640px) {
+ .scholar-start { grid-template-columns: 1fr; gap: 8px; }
+ .scholar-start :is(button,a) { padding: 12px 14px; font-size: 15px; border-radius: 12px; }
+ body.bss-scholar .topbar { padding: 16px; }
+ .workspace-support { padding-inline: 14px; }
+ .workspace-support > summary > span { display: block; margin: 4px 0 0; }
+}

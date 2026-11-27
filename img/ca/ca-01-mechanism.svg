@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 430" font-family="'Microsoft YaHei','PingFang SC','Noto Sans SC',sans-serif">
+  <defs>
+    <marker id="c01" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#2563eb"/></marker>
+  </defs>
+  <rect x="8" y="8" width="804" height="414" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="410" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="#334155">MRI 对比剂：材料示例 · 弛豫机制 · 分布策略</text>
+
+  <!-- 三类金属 -->
+  <g font-size="12" text-anchor="middle">
+    <rect x="40" y="70" width="236" height="92" rx="8" fill="#dbeafe" stroke="#93c5fd"/>
+    <text x="158" y="96" fill="#1d4ed8" font-weight="700" font-size="13">钆基 Gd(III)</text>
+    <text x="158" y="118" fill="#475569">配体结构、水交换与稳定性需逐品种核对</text>
+    <text x="158" y="138" fill="#475569">具体产品使用以正式说明书为准</text>
+    <text x="158" y="154" fill="#94a3b8">安全顾虑：NSF、脑内累积</text>
+
+    <rect x="292" y="70" width="236" height="92" rx="8" fill="#dcfce7" stroke="#86efac"/>
+    <text x="410" y="96" fill="#15803d" font-weight="700" font-size="13">铁基（氧化铁）</text>
+    <text x="410" y="118" fill="#475569">SPION / USPIO / ESION</text>
+    <text x="410" y="138" fill="#475569">部分超小颗粒用于 T1 对比研究</text>
+    <text x="410" y="154" fill="#94a3b8">易被 RES 肝脾摄取；铁并入代谢池</text>
+
+    <rect x="544" y="70" width="236" height="92" rx="8" fill="#ede9fe" stroke="#c4b5fd"/>
+    <text x="662" y="96" fill="#6d28d9" font-weight="700" font-size="13">锰基 Mn(II/III/IV)</text>
+    <text x="662" y="118" fill="#475569">MnO / MnO₂ / Mn₃O₄ / MnFe₂O₄</text>
+    <text x="662" y="138" fill="#475569">部分体系可设计为环境响应释放</text>
+    <text x="662" y="154" fill="#94a3b8">典型可激活 T1 体系</text>
+  </g>
+
+  <!-- T1/T2 分工 -->
+  <g font-size="12" text-anchor="middle">
+    <rect x="90" y="190" width="290" height="76" rx="8" fill="#fef3c7" stroke="#fcd34d"/>
+    <text x="235" y="216" fill="#b45309" font-weight="700" font-size="13">T1 正对比（亮信号）</text>
+    <text x="235" y="240" fill="#475569">影响纵向恢复；机制依赖具体体系</text>
+    <text x="235" y="258" fill="#475569">Gd 基、顺磁 Mn 基；T1WI 上变亮</text>
+
+    <rect x="440" y="190" width="290" height="76" rx="8" fill="#fee2e2" stroke="#fca5a5"/>
+    <text x="585" y="216" fill="#b91c1c" font-weight="700" font-size="13">T2 负对比（暗信号）</text>
+    <text x="585" y="240" fill="#475569">缩短横向弛豫 T2/T2*；外球磁场扰动为主</text>
+    <text x="585" y="258" fill="#475569">铁基超顺磁颗粒；T2WI 上变暗</text>
+  </g>
+
+  <!-- 给药途径 -->
+  <g font-size="12" text-anchor="middle">
+    <rect x="40" y="296" width="236" height="86" rx="8" fill="#f1f5f9" stroke="#cbd5e1"/>
+    <text x="158" y="322" fill="#334155" font-weight="700">细胞外液 ECF</text>
+    <text x="158" y="344" fill="#475569">小分子快速外渗、肾清除</text>
+    <text x="158" y="364" fill="#475569">分布与清除时间依赖具体制剂</text>
+
+    <rect x="292" y="296" width="236" height="86" rx="8" fill="#f1f5f9" stroke="#cbd5e1"/>
+    <text x="410" y="322" fill="#334155" font-weight="700">血池 Blood-pool</text>
+    <text x="410" y="344" fill="#475569">白蛋白结合 / 大尺寸 / 长循环氧化铁</text>
+    <text x="410" y="364" fill="#475569">动态期 → 血池期 → 延迟期</text>
+
+    <rect x="544" y="296" width="236" height="86" rx="8" fill="#f1f5f9" stroke="#cbd5e1"/>
+    <text x="662" y="322" fill="#334155" font-weight="700">靶向 / 器官特异</text>
+    <text x="662" y="344" fill="#475569">配体-受体结合；如 Gd-EOB-DTPA 经 OATP</text>
+    <text x="662" y="364" fill="#475569">局部富集提升靶背景比</text>
+  </g>
+
+  <text x="410" y="404" text-anchor="middle" font-size="12" fill="#94a3b8">ri 比较需统一浓度基准、场强、温度与介质；图像对比还依赖序列，不能只看 r2/r1</text>
+</svg>

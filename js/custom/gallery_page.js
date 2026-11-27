@@ -92,6 +92,13 @@
   var keyBytes = null        // 记住最近一次的密钥，用于失败后免重复派生
   var listeners = []         // [target, type, fn, opts]
   var lbState = { open: false, album: -1, photo: 0, returnTo: null }
+  var imageRequest = 0
+  var alive = true
+  var remoteMode = typeof window.fetch === 'function'
+  var remoteRevision = ''
+  var poll = null
+  var refreshing = false
+  var controllers = []
   var layoutMode = 'film'    // 布局模式：film（胶片风格） / stack（一摞相纸）
 
   /* ---------- 小工具 ---------- */
@@ -147,6 +154,7 @@
   function unlockUI (data) {
     albums = normalize(data)
     unlocked = true
+    window.BikoAccessGate?.ready('unlocked')
     /* is-open 现在只负责「墙登场」（见 gallery_page.css 的
        #gal-root { display: none } / body.is-open #gal-root { display: block }）。
        必须先加上它，再 focus 卡片 —— 否则 display:none 的元素 focus 不上。 */
@@ -157,7 +165,7 @@
     }
     wall.hidden = false
     render()
-    var first = gridEl.querySelector('.gal-card')
+    var first = gridEl.querySelector('.gal-card, .gal-film-card')
     if (first) { try { first.focus({ preventScroll: true }) } catch (e) { first.focus() } }
     // 门是 position:fixed 的遮罩，淡出后要从布局里摘掉，否则挡住墙的点击
     timer = setTimeout(function () {
@@ -168,7 +176,23 @@
 
   /* 用给定暗号解密：成功则缓存「密钥 + 明文」并解锁 */
   function attempt (pass) {
+    if (remoteMode) {
+      return remoteRequest('POST', { password: pass }).then(function (data) {
+        if (!alive) return
+        if (data === null) {
+          remoteMode = false
+          return attempt(pass)
+        }
+        store(KEY_STORE, null)
+        store(DATA_STORE, null)
+        setBusy(false)
+        if (passEl) passEl.value = ''
+        applyRemote(data)
+        startPolling()
+      })
+    }
     return seal.open(pass).then(function (data) {
+      if (!alive) return
       keyBytes = seal.getKey()
       raw = data
       unlockUI(data)
@@ -183,8 +207,13 @@
     setBusy(true)
     text(errEl, '')
     attempt(value).catch(function (err) {
+      if (!alive) return
       setBusy(false)
       keyBytes = null
+      if (remoteMode) {
+        shake(err.message || '暂时无法读取相册，请稍后重试。')
+        return
+      }
       if (err && /fetch|HTTP|payload|network/i.test(err.message || '')) {
         shake('暂时读取不到相册数据，请刷新后重试。')
       } else if (err && (err.name === 'OperationError' || /decrypt/i.test(err.name || ''))) {
@@ -204,12 +233,13 @@
 
   /* 自动填充 / 浏览器残留可能塞入脏值：进页面先清干净再聚焦 */
   function resetInput () {
+    window.BikoAccessGate?.ready('locked')
     if (passEl && passEl.value && !passEl.dataset.touched) passEl.value = ''
     try { passEl.focus({ preventScroll: true }) } catch (e) { /* 忽略 */ }
   }
 
   /* 进入页面：明文 → 密钥 → 手动输，三条路依次尝试 */
-  function bootFromCache () {
+  function bootLegacy () {
     var plain = seal.getData()
     if (plain) {
       raw = plain
@@ -250,6 +280,142 @@
     }
   }
 
+  function remoteRequest (method, data) {
+    var controller = new AbortController()
+    controllers.push(controller)
+    var timeout = setTimeout(function () { controller.abort() }, 25000)
+    return window.fetch('/api/gallery', {
+      method: method,
+      credentials: 'same-origin',
+      cache: 'no-store',
+      signal: controller.signal,
+      headers: data ? { 'Content-Type': 'application/json' } : {},
+      body: data ? JSON.stringify(data) : undefined
+    }).then(function (response) {
+      // Static Hexo previews retain the original encrypted album entry point.
+      if (response.status === 404) return null
+      return response.json().then(function (result) {
+        if (!response.ok) {
+          var error = new Error(result.error || '相册暂时不可用，请稍后重试。')
+          error.status = response.status
+          throw error
+        }
+        if (!Array.isArray(result.albums) || typeof result.revision !== 'string') throw new Error('相册数据格式无效。')
+        return result
+      })
+    }).finally(function () {
+      clearTimeout(timeout)
+      controllers = controllers.filter(function (item) { return item !== controller })
+    })
+  }
+
+  function syncStatus (data, failed) {
+    var status = $('gal-sync-status')
+    if (!status) return
+    status.hidden = !(failed || data && data.stale)
+    var date = data && new Date(data.syncedAt)
+    var time = date && !isNaN(date.getTime()) ? date.toLocaleString('zh-CN') : ''
+    text(status, failed || data && data.stale
+      ? '暂时无法更新，继续显示上次成功内容' + (time ? ' · ' + time : '')
+      : '自动更新 · 最近同步 ' + time)
+  }
+
+  function applyRemote (data) {
+    if (!alive) return
+    syncStatus(data, false)
+    if (data.revision === remoteRevision && unlocked) { raw = data; return }
+    var oldAlbum = albums[lbState.album]
+    var oldPhoto = oldAlbum && oldAlbum.photos[lbState.photo]
+    var wasOpen = lbState.open
+    var scrollLeft = gridEl.scrollLeft
+    var focusedCard = document.activeElement && gridEl.contains(document.activeElement)
+    raw = data
+    remoteRevision = data.revision
+    if (!unlocked) {
+      unlockUI(data)
+      return
+    }
+    albums = normalize(data)
+    render()
+    gridEl.scrollLeft = scrollLeft
+    if (focusedCard) {
+      var first = gridEl.querySelector('.gal-card, .gal-film-card')
+      if (first) first.focus({ preventScroll: true })
+    }
+    if (wasOpen) {
+      var albumIndex = albums.findIndex(function (album) { return oldAlbum && album.id === oldAlbum.id })
+      var photoIndex = albumIndex < 0 ? -1 : albums[albumIndex].photos.findIndex(function (photo) { return oldPhoto && photo.id === oldPhoto.id })
+      if (photoIndex < 0) {
+        closeLb()
+      } else {
+        lbState.album = albumIndex
+        lbState.photo = photoIndex
+        lbState.returnTo = Array.from(gridEl.querySelectorAll('[data-album-id]')).find(function (card) {
+          return card.dataset.albumId === albums[albumIndex].id
+        }) || null
+        paintLb()
+      }
+    }
+  }
+
+  function expireSession () {
+    if (timer) { clearTimeout(timer); timer = null }
+    closeLb()
+    unlocked = false
+    albums = []
+    raw = null
+    remoteRevision = ''
+    gridEl.textContent = ''
+    document.body.classList.remove('is-open')
+    wall.hidden = true
+    gate.hidden = false
+    gate.classList.remove('is-leaving')
+    gate.setAttribute('aria-hidden', 'false')
+    text(errEl, '浏览会话已到期，请重新输入暗号。')
+    if (poll) { clearInterval(poll); poll = null }
+    resetInput()
+  }
+
+  function refreshRemote () {
+    if (!alive || !remoteMode || !unlocked || refreshing || document.visibilityState === 'hidden') return
+    refreshing = true
+    remoteRequest('GET').then(function (data) {
+      if (data === null) throw new Error('自动相册暂时不可用。')
+      applyRemote(data)
+    }).catch(function (error) {
+      if (!alive) return
+      if (error.status === 401) expireSession()
+      else syncStatus(raw, true)
+    }).finally(function () { refreshing = false })
+  }
+
+  function startPolling () {
+    if (poll) return
+    poll = setInterval(refreshRemote, 60000)
+  }
+
+  function bootFromCache () {
+    if (!remoteMode) { bootLegacy(); return }
+    remoteRequest('GET').then(function (data) {
+      if (!alive || busy) return
+      if (data === null) {
+        remoteMode = false
+        bootLegacy()
+        return
+      }
+      store(KEY_STORE, null)
+      store(DATA_STORE, null)
+      applyRemote(data)
+      startPolling()
+    }).catch(function (error) {
+      if (!alive || busy) return
+      store(KEY_STORE, null)
+      store(DATA_STORE, null)
+      if (error.status !== 401) text(errEl, error.message || '暂时读取不到相册，请稍后重试。')
+      resetInput()
+    })
+  }
+
   /* ------------------------------------------------------------
    * 三、墙（渲染 + 搜索）
    * ---------------------------------------------------------- */
@@ -270,6 +436,7 @@
     var photo = album.photos[idx]
     if (photo && photo.thumb) {
       var img = document.createElement('img')
+      img.className = 'no-lightbox'
       img.src = photo.thumb
       img.alt = ''
       img.loading = 'lazy'
@@ -288,6 +455,7 @@
     var card = document.createElement('button')
     card.type = 'button'
     card.className = 'gal-card is-in'
+    card.dataset.albumId = album.id
     card.style.setProperty('--i', String(Math.min(i, 8)))
     card.setAttribute('aria-label', album.name + '，' + n + ' 张照片')
 
@@ -336,57 +504,62 @@
   }
 
   /* 胶片风格卡片 */
-  function buildFilmCard (album, i) {
+  function buildFilmCard (album, i, photoIndex) {
+    photoIndex = photoIndex || 0
+    var photo = album.photos[photoIndex]
     var n = album.photos.length
     var card = document.createElement('div')
     card.className = 'gal-film-card'
-
-    // 胶片齿孔
-    var holes = document.createElement('div')
-    holes.className = 'gal-film-card__holes'
-    for (var h = 0; h < 5; h++) {
-      var hole = document.createElement('div')
-      hole.className = 'gal-film-card__hole'
-      holes.appendChild(hole)
-    }
-    card.appendChild(holes)
+    card.dataset.albumId = album.id
+    card.tabIndex = 0
+    card.setAttribute('role', 'button')
+    card.setAttribute('aria-label', album.name + '，第 ' + (photoIndex + 1) + ' 张，' + (photo && photo.caption || '查看照片'))
 
     // 封面图
     var cover = document.createElement('div')
     cover.className = 'gal-film-card__cover'
-    if (album.photos[0] && album.photos[0].thumb) {
+    if (photo && photo.thumb) {
       var img = document.createElement('img')
-      img.src = album.photos[0].thumb
-      img.alt = album.name
+      img.className = 'no-lightbox'
+      img.src = photo.thumb
+      img.alt = photo.caption || album.name
       img.loading = 'lazy'
+      img.decoding = 'async'
       cover.appendChild(img)
     } else {
-      // 没有封面图时用星空鲸鱼图占位
-      var img2 = document.createElement('img')
-      img2.src = 'https://s2.loli.net/2022/04/11/oDZPBRxHn59rbYO.jpg'
-      img2.alt = album.name
-      img2.loading = 'lazy'
-      cover.appendChild(img2)
+      cover.classList.add('is-empty')
+      cover.textContent = '暂无照片'
     }
     card.appendChild(cover)
 
     // 相册名
     var name = document.createElement('p')
     name.className = 'gal-film-card__name'
-    name.textContent = album.name
+    name.textContent = photo && photo.caption || album.name
+    name.title = name.textContent
     card.appendChild(name)
 
     // 照片数
     var count = document.createElement('p')
     count.className = 'gal-film-card__count'
-    count.textContent = n + ' 张照片'
+    count.textContent = (photoIndex + 1) + ' / ' + n
     card.appendChild(count)
 
-    on(card, 'click', function () { openLb(i, 0) })
+    on(card, 'click', function () { openLb(i, photoIndex) })
+    on(card, 'keydown', function (event) {
+      if (event.key !== 'Enter' && event.key !== ' ') return
+      event.preventDefault()
+      openLb(i, photoIndex)
+    })
     return card
   }
 
   function render () {
+    listeners = listeners.filter(function (item) {
+      if (!item[0].nodeType || !gridEl.contains(item[0])) return true
+      item[0].removeEventListener(item[1], item[2], item[3])
+      return false
+    })
     var q = (searchEl && searchEl.value || '').trim().toLowerCase()
     var shown = 0
     var frag = document.createDocumentFragment()
@@ -398,7 +571,20 @@
         if (!matches(album, q)) return
         // 根据布局模式渲染不同卡片
         if (layoutMode === 'film') {
-          frag.appendChild(buildFilmCard(album, i))
+          var section = document.createElement('section')
+          section.className = 'gal-album-section'
+          var title = document.createElement('h2')
+          title.className = 'gal-album-title'
+          title.textContent = album.name + ' · ' + album.photos.length + ' 张'
+          section.appendChild(title)
+          var photos = document.createElement('div')
+          photos.className = 'gal-album-grid'
+          album.photos.forEach(function (photo, j) {
+            photos.appendChild(buildFilmCard(album, i, j))
+          })
+          if (!album.photos.length) photos.appendChild(emptyBox('fa-image', '暂无照片'))
+          section.appendChild(photos)
+          frag.appendChild(section)
         } else {
           frag.appendChild(buildCard(album, i))
         }
@@ -463,14 +649,21 @@
     if (!photo) return
 
     if (lbImg) {
+      var request = ++imageRequest
       lbImg.classList.add('is-loading')
       var loader = new Image()
       loader.onload = function () {
-        if (!lbState.open) return
+        if (!lbState.open || request !== imageRequest) return
         if (lbImg.getAttribute('src') !== photo.src) lbImg.src = photo.src
         lbImg.classList.remove('is-loading')
       }
-      loader.onerror = function () { if (lbImg) lbImg.classList.remove('is-loading') }
+      loader.onerror = function () {
+        if (!lbState.open || request !== imageRequest) return
+        lbImg.removeAttribute('src')
+        lbImg.alt = '图片加载失败，可点“查看原图”重试'
+        lbImg.classList.remove('is-loading')
+      }
+      lbImg.alt = photo.caption || album.name
       loader.src = photo.src
       // 命中缓存时 onload 可能同步前已触发，兜底一次
       if (loader.complete && loader.naturalWidth) {
@@ -483,7 +676,7 @@
     text(lbCount, (lbState.photo + 1) + ' / ' + album.photos.length)
     text(lbCaption, photo.caption || album.desc || '')
     if (lbOpen) {
-      lbOpen.href = photo.src
+      lbOpen.href = photo.original || photo.src
       lbOpen.title = album.name + ' · 第 ' + (lbState.photo + 1) + ' 张'
     }
     if (lbPrev) lbPrev.disabled = album.photos.length < 2
@@ -506,6 +699,7 @@
 
   function closeLb () {
     if (!lbState.open) return
+    imageRequest++
     lbState.open = false
     lb.classList.remove('is-open')
     lb.setAttribute('aria-hidden', 'true')
@@ -575,6 +769,8 @@
   var searchTimer = null
 
   function bind () {
+    on(document, 'visibilitychange', refreshRemote)
+    on(window, 'online', refreshRemote)
     on(form, 'submit', onSubmit)
     on(searchEl, 'input', onSearchInput)
     on(searchEl, 'search', onSearchInput)      // 点原生 ✕ 时只触发 search
@@ -609,6 +805,11 @@
   }
 
   function destroy () {
+    alive = false
+    controllers.forEach(function (controller) { controller.abort() })
+    controllers = []
+    if (poll) { clearInterval(poll); poll = null }
+    imageRequest++
     listeners.forEach(function (item) {
       try { item[0].removeEventListener(item[1], item[2], item[3]) } catch (e) { /* 忽略 */ }
     })
@@ -647,7 +848,10 @@
   document.addEventListener('pjax:complete', function () {
     setTimeout(function () {
       /* 不在本页就什么都不做（boot 自身也会在拿不到 #gal-wall 时退出） */
-      if (!document.getElementById('gal-wall')) return
+      if (!document.getElementById('gal-wall')) {
+        if (window.__BIKO_GALLERY__) window.__BIKO_GALLERY__.destroy()
+        return
+      }
       boot()
     }, 0)
   })

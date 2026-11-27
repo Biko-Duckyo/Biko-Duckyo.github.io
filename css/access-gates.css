@@ -1,0 +1,74 @@
+/* One high-obscuration lock screen for Gallery, Anime and Finance. */
+html body :is(#gg-gate,#animeGate,#finGate){
+  --access-surface:#f6f8fc;--access-text:#263951;--access-muted:#566b85;--access-line:rgba(91,115,150,.23);
+  --access-input:rgba(90,118,158,.07);--access-active:#36597f;--access-on-active:#fff;
+  position:fixed;inset:0;z-index:1200;display:grid;place-items:center;align-items:safe center;
+  box-sizing:border-box;padding:calc(80px + env(safe-area-inset-top,0px)) 20px calc(24px + env(safe-area-inset-bottom,0px));
+  background:rgba(8,13,22,.9);background-image:none;
+  -webkit-backdrop-filter:blur(32px) saturate(70%);backdrop-filter:blur(32px) saturate(70%);
+  overflow:auto;overscroll-behavior:contain;transition:opacity 160ms ease;transform:none;
+  color:var(--access-text);font-family:var(--font-ui,var(--bss-font,"Segoe UI","PingFang SC",sans-serif));
+}
+html[data-theme=dark] body :is(#gg-gate,#animeGate,#finGate){
+  --access-surface:#162030;--access-text:#e6edf7;--access-muted:#b1bfd1;--access-line:rgba(184,205,234,.21);
+  --access-input:rgba(255,255,255,.05);--access-active:#c2d4ed;--access-on-active:#1a2b42;
+}
+html body :is(#gg-gate,#animeGate,#finGate)[hidden]{display:none!important}
+html body :is(#gg-panel,#animeGateBox,#finGateBox){
+  box-sizing:border-box;width:min(100%,480px);max-width:480px;min-width:0;padding:32px;
+  border:1px solid var(--access-line);border-radius:24px;background:var(--access-surface);background-image:none;
+  box-shadow:0 24px 72px #03081460;backdrop-filter:none;-webkit-backdrop-filter:none;text-align:center;
+}
+/* Specify each text role explicitly: article-heading styles must not pull
+   Gallery/Anime titles left, or give the three gates different type scales. */
+html body :is(#gg-panel,#animeGateBox,#finGateBox) :is(h1,h2){
+  color:var(--access-text);font:600 26px/1.4 var(--ui-font,var(--font-ui,"Segoe UI",sans-serif));
+  display:block;box-sizing:border-box;width:100%;max-width:none;
+  text-align:center;letter-spacing:0;margin:0;
+}
+html body :is(#gg-panel,#animeGateBox,#finGateBox) :is(.gg-eyebrow,.anime-gate-eyebrow,.bss-eyebrow){
+  font:500 12px/1.5 var(--ui-font,var(--font-ui,"Segoe UI",sans-serif));
+  text-align:center;letter-spacing:.12em;margin:0 0 12px;text-transform:uppercase;
+}
+html body :is(#gg-panel,#animeGateBox,#finGateBox) :is(.gg-hint,.anime-gate-hint,.fin-gate-sub){
+  font:400 14px/1.7 var(--ui-font,var(--font-ui,"Segoe UI",sans-serif));
+  text-align:center;letter-spacing:0;text-wrap:pretty;margin:12px auto 20px;max-width:38ch;
+}
+html body :is(#gg-panel,#animeGateBox,#finGateBox) :is(.gg-back,.anime-gate-back,.fin-gate-back){
+  font:400 14px/1.5 var(--ui-font,var(--font-ui,"Segoe UI",sans-serif));text-align:center;letter-spacing:0;
+}
+html body :is(#gg-panel,#animeGateBox,#finGateBox) :is(.gg-err,.anime-gate-err,.fin-gate-err){
+  font:400 14px/1.7 var(--ui-font,var(--font-ui,"Segoe UI",sans-serif));text-align:center;letter-spacing:0;
+}
+html body :is(#gg-panel,#animeGateBox,#finGateBox) :is(.gg-hint,.gg-back,.fin-gate-back,.gg-eyebrow,.anime-gate-hint,.anime-gate-back,.anime-gate-eyebrow,.fin-gate-sub,.bss-eyebrow){color:var(--access-muted)}
+html body :is(#gg-panel,#animeGateBox,#finGateBox) :is(.gg-emblem,.anime-gate-emblem,.fin-gate-icon){width:56px;height:56px;margin:0 auto 18px;border:1px solid var(--access-line);border-radius:18px;background:var(--access-input);color:var(--access-active)}
+html body :is(#gg-panel,#animeGateBox,#finGateBox) input{box-sizing:border-box;width:100%;min-height:46px;font:400 16px/1.5 var(--ui-font,var(--font-ui,"Segoe UI",sans-serif));text-align:center;letter-spacing:0;border:1px solid var(--access-line);border-radius:12px;background:var(--access-input);color:var(--access-text)}
+html body :is(#gg-panel,#animeGateBox,#finGateBox) input::placeholder{color:var(--access-muted);opacity:1}
+html body :is(#gg-panel,#animeGateBox,#finGateBox) button[type=submit]{min-height:46px;border:0;border-radius:12px;background:var(--access-active);color:var(--access-on-active);box-shadow:none;font:500 14px/1.5 var(--ui-font,var(--font-ui,"Segoe UI",sans-serif));text-align:center;letter-spacing:0;display:flex;align-items:center;justify-content:center;gap:8px}
+html body :is(#gg-panel,#animeGateBox,#finGateBox) :focus-visible{outline:2px solid var(--access-active);outline-offset:3px}
+html[data-access-state=locked] :is(#live2d-widget,#nanaly-cat-hotspot,#bss-dock){display:none!important}
+html body :is(#gg-gate,#animeGate,#finGate).is-leaving{opacity:0;pointer-events:none;transform:none}
+@media(max-width:760px){
+  html body :is(#gg-gate,#animeGate,#finGate){padding-inline:16px;padding-top:calc(68px + env(safe-area-inset-top,0px))}
+  html body :is(#gg-panel,#animeGateBox,#finGateBox){padding:24px 20px;border-radius:18px}
+  html body :is(#gg-panel,#animeGateBox,#finGateBox) :is(h1,h2){font-size:24px}
+}
+@media(prefers-reduced-motion:reduce){html body :is(#gg-gate,#animeGate,#finGate){transition:none}}
+
+/* Same geometry and icon on every private-page gate. Reserve feedback space
+   so validation does not move the submit action or resize the card. */
+html body :is(#gg-panel,#animeGateBox,#finGateBox){display:flex;flex-direction:column;align-items:stretch}
+html body :is(#gg-panel,#animeGateBox,#finGateBox) :is(.gg-emblem,.anime-gate-emblem,.fin-gate-icon){box-sizing:border-box;flex:none;display:grid;place-items:center;font-size:24px}
+html body :is(#gg-panel,#animeGateBox,#finGateBox) :is(.gg-emblem,.anime-gate-emblem,.fin-gate-icon) svg{display:block;width:24px;height:24px;flex:none}
+html body :is(#gg-panel,#animeGateBox,#finGateBox) :is(.gg-hint,.anime-gate-hint,.fin-gate-sub){box-sizing:border-box;min-height:48px;max-width:none;width:100%}
+html body :is(#gg-form,#animeGateForm,.fin-gate-fields){display:grid;grid-template-columns:minmax(0,1fr);gap:12px;margin:0;padding:0;width:100%}
+html body :is(#gg-panel,#animeGateBox,#finGateBox) input{height:48px;min-height:48px;padding:0 14px;margin:0}
+html body :is(#gg-panel,#animeGateBox,#finGateBox) button[type=submit]{box-sizing:border-box;width:100%;height:48px;min-height:48px;padding:0 16px;margin:0;cursor:pointer}
+html body :is(#gg-panel,#animeGateBox,#finGateBox) :is(.gg-err,.anime-gate-err,.fin-gate-err){display:block;min-height:24px;line-height:24px;margin:0;color:#bf4e55}
+html body :is(#gg-panel,#animeGateBox,#finGateBox) .fin-gate-err[hidden]{display:block;visibility:hidden}
+html body :is(#gg-panel,#animeGateBox,#finGateBox) :is(.gg-back,.anime-gate-back,.fin-gate-back){display:block;margin:20px 0 0;text-decoration:none}
+html body :is(#gg-panel,#animeGateBox,#finGateBox) button[type=submit]:disabled{cursor:wait;opacity:.65}
+
+html body :is(#gg-gate,#animeGate,#finGate){grid-template-columns:minmax(0,1fr);justify-items:center;scrollbar-width:none}
+html body :is(#gg-gate,#animeGate,#finGate)::-webkit-scrollbar{display:none}
+html body :is(#gg-panel,#animeGateBox,#finGateBox){width:min(480px,calc(100vw - 40px));max-width:none}@media(max-width:760px){html body :is(#gg-panel,#animeGateBox,#finGateBox){width:calc(100vw - 32px)}}

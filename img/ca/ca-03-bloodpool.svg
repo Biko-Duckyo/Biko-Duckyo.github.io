@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 430" font-family="'Microsoft YaHei','PingFang SC','Noto Sans SC',sans-serif">
+  <defs>
+    <marker id="c03" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#2563eb"/></marker>
+  </defs>
+  <rect x="8" y="8" width="804" height="414" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="410" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="#334155">心血管成像：先确定目标，再核对方法与证据</text>
+
+  <!-- 上排对比 -->
+  <g font-size="12" text-anchor="middle">
+    <rect x="44" y="66" width="340" height="84" rx="8" fill="#fee2e2" stroke="#fca5a5"/>
+    <text x="214" y="92" fill="#b91c1c" font-weight="700">非增强：TOF 与 PC 机制不同</text>
+    <text x="214" y="116" fill="#475569">TOF 利用流入效应；PC 利用运动相位</text>
+    <text x="214" y="136" fill="#475569">慢流、方向与 VENC 等限制需分别讨论</text>
+
+    <rect x="436" y="66" width="340" height="84" rx="8" fill="#dcfce7" stroke="#86efac"/>
+    <text x="606" y="92" fill="#15803d" font-weight="700">对比增强：匹配采集窗口</text>
+    <text x="606" y="116" fill="#475569">检查血液背景、采集时序和清除</text>
+    <text x="606" y="136" fill="#475569">长循环并非对所有成像任务都更好</text>
+  </g>
+
+  <!-- 代表体系 -->
+  <g font-size="12" text-anchor="middle">
+    <rect x="34" y="172" width="240" height="112" rx="8" fill="#dbeafe" stroke="#93c5fd"/>
+    <text x="154" y="198" fill="#1d4ed8" font-weight="700">① 血池研究</text>
+    <text x="154" y="222" fill="#475569">统一场强、剂量和序列</text>
+    <text x="154" y="242" fill="#475569">记录循环与背景时间曲线</text>
+    <text x="154" y="266" fill="#94a3b8">不同物种半衰期不直接排名</text>
+
+    <rect x="290" y="172" width="240" height="112" rx="8" fill="#ede9fe" stroke="#c4b5fd"/>
+    <text x="410" y="198" fill="#6d28d9" font-weight="700">② 靶向研究</text>
+    <text x="410" y="222" fill="#475569">确认靶点和探针身份</text>
+    <text x="410" y="242" fill="#475569">设置非靶向与阻断对照</text>
+    <text x="410" y="266" fill="#94a3b8">用组织学或分布测量验证</text>
+
+    <rect x="546" y="172" width="240" height="112" rx="8" fill="#fef3c7" stroke="#fcd34d"/>
+    <text x="666" y="198" fill="#b45309" font-weight="700">③ 可见性与应用</text>
+    <text x="666" y="222" fill="#475569">区分动物和临床条件</text>
+    <text x="666" y="242" fill="#475569">记录分辨率、信噪比与伪影</text>
+    <text x="666" y="266" fill="#94a3b8">不能由小鼠结果保证临床显示</text>
+  </g>
+
+  <!-- 三成像对象 -->
+  <g font-size="12" text-anchor="middle">
+    <rect x="64" y="306" width="216" height="76" rx="8" fill="#f1f5f9" stroke="#cbd5e1"/>
+    <text x="172" y="332" fill="#334155" font-weight="700">动脉粥样硬化研究</text>
+    <text x="172" y="356" fill="#475569">区分血管壁、血池与病变背景</text>
+    <text x="172" y="374" fill="#475569">分子富集需要独立证据</text>
+
+    <rect x="302" y="306" width="216" height="76" rx="8" fill="#f1f5f9" stroke="#cbd5e1"/>
+    <text x="410" y="332" fill="#334155" font-weight="700">血流与血管生成研究</text>
+    <text x="410" y="356" fill="#475569">区分血管形态和功能参数</text>
+    <text x="410" y="374" fill="#475569">序列与时间点应匹配研究任务</text>
+
+    <rect x="540" y="306" width="216" height="76" rx="8" fill="#f1f5f9" stroke="#cbd5e1"/>
+    <text x="648" y="332" fill="#334155" font-weight="700">缺血与心肌研究</text>
+    <text x="648" y="356" fill="#475569">分别评价灌注与组织改变</text>
+    <text x="648" y="374" fill="#475569">不以单一信号判定组织存活</text>
+  </g>
+
+  <text x="410" y="404" text-anchor="middle" font-size="12" fill="#94a3b8">证据表：材料 DOI · 模型 · 剂量 · 时间 · 场强/序列 · 对照 · 验证终点 · 局限性</text>
+</svg>

@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 430" font-family="'Microsoft YaHei','PingFang SC','Noto Sans SC',sans-serif">
+  <defs>
+    <marker id="w19" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 z" fill="#2563eb"/></marker>
+  </defs>
+  <rect x="8" y="8" width="804" height="414" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="410" y="38" text-anchor="middle" font-size="16" font-weight="700" fill="#334155">水运动与交换影响 T1 / T2（简化定性图）</text>
+
+  <!-- 两态对比 -->
+  <g font-size="12" text-anchor="middle">
+    <rect x="44" y="74" width="350" height="170" rx="10" fill="#dbeafe" stroke="#93c5fd"/>
+    <text x="219" y="102" fill="#1d4ed8" font-weight="700" font-size="14">自由水 free water</text>
+    <text x="219" y="128" fill="#475569">自由流动，几乎不被大分子束缚</text>
+    <text x="219" y="152" fill="#475569">翻滚速率快（τc 小，处于快运动区）</text>
+    <text x="219" y="180" fill="#1d4ed8" font-weight="700">T1 长 · T2 长，接近纯水</text>
+    <text x="219" y="208" fill="#475569">组织信号还受交换与微结构影响</text>
+    <text x="219" y="228" fill="#475569">不可仅由自由水比例判定病变</text>
+
+    <rect x="426" y="74" width="350" height="170" rx="10" fill="#ede9fe" stroke="#c4b5fd"/>
+    <text x="601" y="102" fill="#6d28d9" font-weight="700" font-size="14">束缚水 bound water</text>
+    <text x="601" y="128" fill="#475569">紧密吸附于蛋白 / 细胞膜 / 大分子表面</text>
+    <text x="601" y="152" fill="#475569">翻滚受牵制（τc 大，运动变慢）</text>
+    <text x="601" y="180" fill="#6d28d9" font-weight="700">T2 常缩短；T1 趋势依赖运动区间</text>
+    <text x="601" y="208" fill="#475569">交换、扩散和局部场也影响读数</text>
+    <text x="601" y="228" fill="#475569">不同组织和测量条件不能共用固定数值</text>
+  </g>
+
+  <!-- τc 趋势条 -->
+  <rect x="84" y="278" width="652" height="96" rx="10" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="410" y="304" text-anchor="middle" font-size="13" fill="#334155" font-weight="700">BPP 定性趋势（τc = 分子相邻两次取向改变的平均时间）</text>
+  <text x="410" y="330" text-anchor="middle" font-size="13" fill="#475569">T1：随 τc 呈 U 形，在 τc ≈ 1/ω₀ 处最短；翻滚远慢于拉莫尔频率时 T1 弛豫变慢</text>
+  <text x="410" y="354" text-anchor="middle" font-size="13" fill="#475569">简单 BPP 模型中慢运动可增强横向弛豫；真实组织还需考虑交换和多组分</text>
+
+  <text x="410" y="404" text-anchor="middle" font-size="12" fill="#94a3b8">多核对象：²³Na(I=3/2)、³¹P/¹⁹F(I=1/2)、超极化³He/¹²⁹Xe(I=1/2)；I=1/2 不保证所有条件下窄线宽</text>
+</svg>

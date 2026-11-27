@@ -25,6 +25,7 @@
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',attach,{once:true});else attach()
   window.addEventListener('pjax:complete',attach)
+  window.addEventListener('biko:assistant-ready',attach)
   window.addEventListener('storage',event=>{
     if(event.key==='nanaly-backup-restore-v1'&&event.newValue&&!window.NANALY_BACKUP_PENDING){
       window.NANALY_BACKUP_PENDING=true;document.documentElement.style.visibility='hidden';window.location.replace(destination+'?recovery=1')
